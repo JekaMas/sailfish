@@ -121,6 +121,9 @@ There is no mutable lazy cache, so concurrent reads do not race.
 | Overflow-style arithmetic | `AddOverflow`, `SubUnderflow` |
 
 JSON values are quoted decimal strings. Bare JSON numbers are rejected.
+JSON integration and escaped-string decoding use
+[`github.com/goccy/go-json`](https://github.com/goccy/go-json); Sailfish's
+ordinary unescaped decimal-string decode path remains allocation-free.
 
 ## Errors
 

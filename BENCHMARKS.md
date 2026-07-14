@@ -70,8 +70,8 @@ Escape analysis identifies only these relevant classes:
 
 - `string(out)` in `unitString`: required owned string result;
 - `make([]byte, n)` in `growBy`: only when caller capacity is insufficient;
-- `MarshalText` and `MarshalJSON` result slices: required owned standard-library
-  encoding results;
+- `MarshalText` and `MarshalJSON` result slices: required owned encoding
+  results;
 - unknown future `Error` values may box on the cold fallback path. All exported
   fixed errors are pre-boxed once and return with zero per-call allocations.
 

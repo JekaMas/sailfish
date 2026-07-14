@@ -2,7 +2,8 @@ package sailfish
 
 import (
 	"bytes"
-	"encoding/json"
+
+	"github.com/goccy/go-json"
 )
 
 // AppendText implements the append-style text encoding contract available in
@@ -31,7 +32,7 @@ func (d Decimal[V, U]) MarshalJSON() ([]byte, error) {
 }
 
 // UnmarshalJSON uses an allocation-free fast path for ordinary unescaped JSON
-// strings and encoding/json only for escaped strings.
+// strings and go-json only for escaped strings.
 func (d *Decimal[V, U]) UnmarshalJSON(data []byte) error {
 	if len(data) >= 2 && data[0] == '"' && data[len(data)-1] == '"' {
 		text := data[1 : len(data)-1]

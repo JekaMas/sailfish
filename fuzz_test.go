@@ -1,9 +1,9 @@
 package sailfish
 
 import (
-	"encoding/json"
 	"testing"
 
+	"github.com/goccy/go-json"
 	"github.com/holiman/uint256"
 )
 

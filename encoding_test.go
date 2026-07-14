@@ -2,9 +2,10 @@ package sailfish
 
 import (
 	"encoding"
-	"encoding/json"
 	"errors"
 	"testing"
+
+	"github.com/goccy/go-json"
 )
 
 func TestTextEncodingRoundTrip(t *testing.T) {
