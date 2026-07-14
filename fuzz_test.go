@@ -126,3 +126,67 @@ func FuzzJSONRoundTrip(f *testing.F) {
 		}
 	})
 }
+
+func FuzzCBORUint64RoundTrip(f *testing.F) {
+	for _, seed := range []uint64{0, 1, 23, 24, 255, 256, 65_535, 65_536, ^uint64(0)} {
+		f.Add(seed)
+	}
+
+	codec := MustCodec[PriceUint64[Fraction9]]()
+	f.Fuzz(func(t *testing.T, units uint64) {
+		value := codec.FromUnits(units)
+		var buffer [MaxCBORSize]byte
+		wire := value.AppendCBOR(buffer[:0])
+		decoded, err := codec.ParseCBOR(wire)
+		if err != nil || decoded.Units() != units {
+			t.Fatalf("%d -> %x -> %d, %v", units, wire, decoded.Units(), err)
+		}
+	})
+}
+
+func FuzzCBORUint256RoundTrip(f *testing.F) {
+	seeds := []uint256.Int{{}, {1}, {^uint64(0)}, {0, 1}, {1, 2, 3, 4}, {^uint64(0), ^uint64(0), ^uint64(0), ^uint64(0)}}
+	for _, seed := range seeds {
+		f.Add(seed[0], seed[1], seed[2], seed[3])
+	}
+
+	codec := MustCodec[AmountUint256[Fraction18]]()
+	f.Fuzz(func(t *testing.T, limb0, limb1, limb2, limb3 uint64) {
+		units := uint256.Int{limb0, limb1, limb2, limb3}
+		value := codec.FromUnits(units)
+		var buffer [MaxCBORSize]byte
+		wire := value.AppendCBOR(buffer[:0])
+		decoded, err := codec.ParseCBOR(wire)
+		if err != nil || decoded.Units() != units {
+			t.Fatalf("%#v -> %x -> %#v, %v", units, wire, decoded.Units(), err)
+		}
+	})
+}
+
+func FuzzCBORDecoderAcceptsOnlyPreferredRoundTrips(f *testing.F) {
+	for _, seed := range [][]byte{
+		{0x00},
+		{0x17},
+		{0x18, 0x18},
+		{0x1b, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff},
+		{0xc2, 0x49, 0x01, 0, 0, 0, 0, 0, 0, 0, 0},
+		{},
+		{0x18, 0x00},
+		{0x81, 0x00},
+	} {
+		f.Add(seed)
+	}
+
+	codec := MustCodec[AmountUint256[Fraction18]]()
+	f.Fuzz(func(t *testing.T, raw []byte) {
+		value, err := codec.ParseCBOR(raw)
+		if err != nil {
+			return
+		}
+		var buffer [MaxCBORSize]byte
+		canonical := value.AppendCBOR(buffer[:0])
+		if string(canonical) != string(raw) {
+			t.Fatalf("decoder accepted non-preferred %x; preferred is %x", raw, canonical)
+		}
+	})
+}

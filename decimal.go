@@ -14,9 +14,13 @@ type decimalInput interface {
 type Decimal[V Venue[U], U Unit] struct {
 	// representation is cache state, not numeric state. The zero-length field
 	// intentionally makes Decimal incomparable so callers cannot accidentally
-	// include cache state in numeric equality.
+	// include cache state in numeric equality. It stays first because a trailing
+	// zero-sized field can increase the enclosing struct size.
 	_ [0]func()
 
+	// Keep inline numeric state before the pointer-bearing string header. On
+	// 64-bit Go this yields the minimum 24-byte native and 48-byte uint256
+	// layouts verified by layout_test.go.
 	units U
 
 	// A string is smaller than a []byte slice header and can be returned by

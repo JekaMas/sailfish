@@ -9,28 +9,32 @@ type Error string
 func (e Error) Error() string { return string(e) }
 
 const (
-	ErrSyntax             Error = "sailfish: invalid syntax"
-	ErrRange              Error = "sailfish: value does not fit unit type"
-	ErrPrecision          Error = "sailfish: too many fractional digits"
-	ErrScale              Error = "sailfish: scale is unsupported by unit type"
-	ErrOverflow           Error = "sailfish: addition overflow"
-	ErrUnderflow          Error = "sailfish: subtraction underflow"
-	ErrUninitializedCodec Error = "sailfish: uninitialized codec"
-	ErrNilDestination     Error = "sailfish: nil destination"
+	ErrSyntax               Error = "sailfish: invalid syntax"
+	ErrRange                Error = "sailfish: value does not fit unit type"
+	ErrPrecision            Error = "sailfish: too many fractional digits"
+	ErrScale                Error = "sailfish: scale is unsupported by unit type"
+	ErrOverflow             Error = "sailfish: addition overflow"
+	ErrUnderflow            Error = "sailfish: subtraction underflow"
+	ErrUninitializedCodec   Error = "sailfish: uninitialized codec"
+	ErrNilDestination       Error = "sailfish: nil destination"
+	ErrCBORSyntax           Error = "sailfish: invalid CBOR"
+	ErrCBORNonDeterministic Error = "sailfish: non-deterministic CBOR"
 )
 
 // Pre-box the fixed errors once. Returning an Error directly as an error
 // interface from generic code otherwise allocates a string header on each
 // failure. The exported source of truth remains the typed string constants.
 var (
-	boxedErrSyntax             error = ErrSyntax
-	boxedErrRange              error = ErrRange
-	boxedErrPrecision          error = ErrPrecision
-	boxedErrScale              error = ErrScale
-	boxedErrOverflow           error = ErrOverflow
-	boxedErrUnderflow          error = ErrUnderflow
-	boxedErrUninitializedCodec error = ErrUninitializedCodec
-	boxedErrNilDestination     error = ErrNilDestination
+	boxedErrSyntax               error = ErrSyntax
+	boxedErrRange                error = ErrRange
+	boxedErrPrecision            error = ErrPrecision
+	boxedErrScale                error = ErrScale
+	boxedErrOverflow             error = ErrOverflow
+	boxedErrUnderflow            error = ErrUnderflow
+	boxedErrUninitializedCodec   error = ErrUninitializedCodec
+	boxedErrNilDestination       error = ErrNilDestination
+	boxedErrCBORSyntax           error = ErrCBORSyntax
+	boxedErrCBORNonDeterministic error = ErrCBORNonDeterministic
 )
 
 func boxedError(err Error) error {
@@ -53,6 +57,10 @@ func boxedError(err Error) error {
 		return boxedErrUninitializedCodec
 	case ErrNilDestination:
 		return boxedErrNilDestination
+	case ErrCBORSyntax:
+		return boxedErrCBORSyntax
+	case ErrCBORNonDeterministic:
+		return boxedErrCBORNonDeterministic
 	default:
 		// Internal callers only produce the constants above. Preserve correct
 		// behavior for a future Error value even if it takes the cold allocation.

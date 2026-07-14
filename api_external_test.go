@@ -1,9 +1,11 @@
 package sailfish_test
 
 import (
+	"encoding/hex"
 	"testing"
 
 	"github.com/JekaMas/sailfish"
+	"github.com/fxamacker/cbor/v2"
 	"github.com/holiman/uint256"
 )
 
@@ -46,6 +48,33 @@ func TestPublicAPITypeInference(t *testing.T) {
 	}
 	if runtimeUnits != (uint256.Int{123_456_789}) {
 		t.Fatal(runtimeUnits)
+	}
+}
+
+func TestPublicCBORToArrayAPI(t *testing.T) {
+	t.Parallel()
+
+	type quote struct {
+		_ struct{} `cbor:",toarray"`
+
+		Price sailfish.Decimal[sailfish.PriceUint64[sailfish.Fraction5], uint64]
+	}
+
+	codec := sailfish.MustCodec[sailfish.PriceUint64[sailfish.Fraction5]]()
+	original := quote{Price: codec.FromUnits(12_331_232)}
+	wire, err := cbor.Marshal(original)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if got := hex.EncodeToString(wire); got != "811a00bc28e0" {
+		t.Fatalf("wire = %s", got)
+	}
+	var decoded quote
+	if err = cbor.Unmarshal(wire, &decoded); err != nil {
+		t.Fatal(err)
+	}
+	if !decoded.Price.Equal(original.Price) {
+		t.Fatal(decoded.Price.Units())
 	}
 }
 

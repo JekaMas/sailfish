@@ -98,3 +98,37 @@ func (c Uint256Codec) AppendTo(dst []byte, units uint256.Int) []byte {
 func (c Uint256Codec) Len(units uint256.Int) int {
 	return Uint256Units{}.unitLen(units, c.scale())
 }
+
+// CBORLen returns the exact preferred deterministic CBOR size for units.
+func (c Uint256Codec) CBORLen(units uint256.Int) int {
+	_ = c.scale()
+	return Uint256Units{}.unitCBORLen(units)
+}
+
+// AppendCBOR appends the preferred deterministic CBOR encoding for units. It
+// allocates only when dst has insufficient capacity.
+func (c Uint256Codec) AppendCBOR(dst []byte, units uint256.Int) []byte {
+	_ = c.scale()
+	return Uint256Units{}.unitAppendCBOR(dst, units)
+}
+
+// ParseCBOR decodes preferred deterministic CBOR into scaled units.
+func (c Uint256Codec) ParseCBOR(raw []byte) (uint256.Int, Error) {
+	_ = c.scale()
+	return Uint256Units{}.unitParseCBOR(raw)
+}
+
+// ParseCBORInto decodes preferred deterministic CBOR into dst. It leaves dst
+// unchanged on failure.
+func (c Uint256Codec) ParseCBORInto(raw []byte, dst *uint256.Int) Error {
+	_ = c.scale()
+	if dst == nil {
+		return ErrNilDestination
+	}
+	value, err := Uint256Units{}.unitParseCBOR(raw)
+	if err != "" {
+		return err
+	}
+	*dst = value
+	return ""
+}

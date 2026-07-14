@@ -18,3 +18,6 @@ fuzz:
 	GOWORK=off go test -run '^$$' -fuzz '^FuzzNativeUnitWidthsRoundTrip$$' -fuzztime=5s
 	GOWORK=off go test -run '^$$' -fuzz '^FuzzUint256UnitsRoundTrip$$' -fuzztime=5s
 	GOWORK=off go test -run '^$$' -fuzz '^FuzzJSONRoundTrip$$' -fuzztime=5s
+	GOWORK=off go test -run '^$$' -fuzz '^FuzzCBORUint64RoundTrip$$' -fuzztime=5s
+	GOWORK=off go test -run '^$$' -fuzz '^FuzzCBORUint256RoundTrip$$' -fuzztime=5s
+	GOWORK=off go test -run '^$$' -fuzz '^FuzzCBORDecoderAcceptsOnlyPreferredRoundTrips$$' -fuzztime=5s

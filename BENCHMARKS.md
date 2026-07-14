@@ -66,6 +66,39 @@ GOMAXPROCS=1 GOWORK=off go test -run '^$' \
 | `AddAssign/uint256` | 13.8 ns/op | 0 | 0 |
 | `ReferenceStrconvSplitUint64` | 19.3 ns/op | 0 | 0 |
 
+## CBOR
+
+Sailfish encodes a decimal as its scaled unsigned integer. This is the compact
+scalar representation used when the decimal is embedded in a parent
+`cbor:",toarray"` record. Scale and retained source text are not serialized.
+
+| Benchmark | Typical result | B/op | allocs/op |
+|---|---:|---:|---:|
+| `CBORDispatchLayers/append/codec_uint64` | 4.73 ns/op | 0 | 0 |
+| `CBORDispatchLayers/decode/codec_uint64` | 5.08 ns/op | 0 | 0 |
+| `CBORDispatchLayers/append/decimal_uint64` | 7.51 ns/op | 0 | 0 |
+| `CBORDispatchLayers/decode/decimal_uint64` | 8.55 ns/op | 0 | 0 |
+| `CBORUint256Widths/runtime_codec_append/one_limb` | 4.21 ns/op | 0 | 0 |
+| `CBORUint256Widths/runtime_codec_append/maximum` | 6.91 ns/op | 0 | 0 |
+| `CBORUint256Widths/runtime_codec_decode/one_limb` | 7.27 ns/op | 0 | 0 |
+| `CBORUint256Widths/runtime_codec_decode/maximum` | 9.29 ns/op | 0 | 0 |
+| `CBORToArrayIntegration/marshal` | 206 ns/op | 120 | 4 |
+| `CBORToArrayIntegration/unmarshal` | 154 ns/op | 0 | 0 |
+
+The direct caller-buffer path is the MDBX hot path. `MarshalCBOR` must return
+an owned slice and therefore has one required result allocation. Reflective
+`fxamacker` aggregate marshal additionally invokes that interface for each
+decimal; its allocations are library/interface ownership, not decimal parsing
+or unit conversion. Aggregate decode and direct strict decode are allocation-
+free in the measured fixed-array cases.
+
+CPU profiles place direct CBOR work in shortest-form integer validation,
+`uint256` byte-width selection, big-endian limb transfer, and scale validation.
+Memory profiles contain no per-operation allocation from append or decode.
+Cached `Codec` methods avoid repeated generic scale metadata work and are the
+recommended hot-loop surface. The figures above are means of ten
+`GOMAXPROCS=1`, 200 ms runs on the documented host.
+
 ## Scale and backend composition
 
 Fractional scale does not imply storage width. Explicit `uint8`, `uint16`,

@@ -33,6 +33,9 @@ type unitSystem[U Unit] interface {
 	unitString(U, int) string
 	unitLen(U, int) int
 	unitCompare(U, U) int
+	unitCBORLen(U) int
+	unitAppendCBOR([]byte, U) []byte
+	unitParseCBOR([]byte) (U, Error)
 }
 
 // Venue binds a fixed scale to one unit backend.

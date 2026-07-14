@@ -178,6 +178,8 @@ There is no mutable lazy cache, so concurrent reads do not race.
 | Inspect backend integer capacity | `Codec.MaxIntegerDigits` |
 | Runtime-scale uint256 boundary | `Uint256Codec.Parse`, `ParseInto`, `AppendTo` |
 | Caller-buffer serialization | `AppendTo`, `AppendJSON`, `AppendText` |
+| Caller-buffer CBOR | `AppendCBOR`, `Codec.AppendCBOR`, `Uint256Codec.AppendCBOR` |
+| Strict CBOR decode | `UnmarshalCBOR`, `Codec.ParseCBOR`, `Uint256Codec.ParseCBOR` |
 | Owned serialization | `String`, `MarshalText`, `MarshalJSON` |
 | Same-venue ordering | `Compare`, `Cmp`, `Equal`, `Less` methods |
 | Cross-scale/backend ordering | package-level `Compare` |
@@ -188,6 +190,56 @@ JSON values are quoted decimal strings. Bare JSON numbers are rejected.
 JSON integration and escaped-string decoding use
 [`github.com/goccy/go-json`](https://github.com/goccy/go-json); Sailfish's
 ordinary unescaped decimal-string decode path remains allocation-free.
+
+## Compact deterministic CBOR
+
+CBOR stores only the scaled unsigned integer. The decimal scale and semantic
+kind are compile-time format identity, while retained source text is cache
+state; none of them is duplicated in storage.
+
+```text
+Decimal[PriceUint64[Fraction5]] units 12331232 -> 1a00bc28e0
+Decimal[AmountUint256[Fraction18]] units 2^64 -> c249010000000000000000
+```
+
+Native values use RFC 8949's shortest unsigned-integer representation. A
+`uint256.Int` uses the same representation while it fits in `uint64`, then tag
+2 with a minimal big-endian magnitude. Decode accepts only preferred,
+definite-length encodings and rejects trailing data, longer integer forms,
+leading-zero bignums, and values outside the selected unit backend.
+
+Sailfish decimals implement `MarshalCBOR` and `UnmarshalCBOR` for
+`github.com/fxamacker/cbor/v2`. They remain scalar elements inside a compact
+parent array:
+
+```go
+type Quote struct {
+	_ struct{} `cbor:",toarray"`
+
+	Price  sailfish.Decimal[PriceFormat, uint64]
+	Amount sailfish.Decimal[AmountFormat, uint256.Int]
+}
+```
+
+This encodes as `[priceUnits, amountUnits]`, not nested one-element arrays.
+Wire sizes are 1-9 bytes for native units and 1-35 bytes for `uint256` units,
+before the enclosing array header.
+
+Use `AppendCBOR` or the cached codec equivalent when building a hot MDBX value:
+
+```go
+dst := make([]byte, 0, 1+2*sailfish.MaxCBORSize)
+dst = append(dst, 0x82) // fixed two-field CBOR array
+dst = priceCodec.AppendCBOR(dst, price)
+dst = amountCodec.AppendCBOR(dst, amount)
+```
+
+These append APIs and all direct decode APIs are `0 B/op, 0 allocs/op` with a
+sized caller buffer. `MarshalCBOR` necessarily allocates one owned result
+slice. The reflective `fxamacker` parent marshal also invokes that owned-slice
+interface for each decimal; use the append path when aggregate encoding must
+remain allocation-free. Reflective `toarray` decode remains allocation-free
+for the tested fixed quote shape.
 
 ## Errors
 
@@ -228,6 +280,9 @@ Codec                       1 byte
 Narrow native units enforce smaller ranges and reduce standalone/raw unit
 arrays. They do not reduce the current `Decimal` struct below 24 bytes because
 its retained immutable string header and alignment dominate the layout.
+The incomparability marker is the first zero-sized field so it does not create
+trailing zero-field padding. Layout tests lock unit and string offsets, struct
+alignment, and these sizes on 64-bit targets.
 
 ## Deliberate boundaries
 
