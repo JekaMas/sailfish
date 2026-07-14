@@ -78,27 +78,11 @@ func TestPriceAndAmountFormatsAreDistinct(t *testing.T) {
 		t.Fatalf("generic amount = %v %d", err, genericAmount.Units())
 	}
 
-	amount, err := New[AmountScale18]("1.000000000000000001")
+	amount, err := New[AmountUint256[Fraction18]]("1.000000000000000001")
 	if err != nil || amount.Units() != (uint256.Int{1_000_000_000_000_000_001}) {
 		t.Fatalf("amount = %v %#v", err, amount.Units())
 	}
-	acceptBuiltInAmountScale18(amount)
-}
-
-func TestBuiltInPriceScalesRemainWideRangeDefaults(t *testing.T) {
-	t.Parallel()
-
-	price, err := New[PriceScale1]("1844674407370955161.5")
-	if err != nil || price.Units() != ^uint64(0) {
-		t.Fatalf("PriceScale1 = %v %d", err, price.Units())
-	}
-	acceptBuiltInPriceScale1(price)
-
-	generic, err := New[PriceUint64[Fraction1]]("1844674407370955161.5")
-	if err != nil || generic.Units() != price.Units() {
-		t.Fatalf("generic PriceUint64 = %v %d", err, generic.Units())
-	}
-	acceptGenericPriceScale1(generic)
+	acceptAmountUint256Fraction18(amount)
 }
 
 func TestNarrowUnitEncodingRoundTrips(t *testing.T) {
@@ -136,7 +120,7 @@ func TestCodecReportsBackendIntegerCapacity(t *testing.T) {
 		{name: "uint16 scale2", got: MustCodec[PriceUint16[Fraction2]]().MaxIntegerDigits(), want: 3},
 		{name: "uint32 scale5", got: MustCodec[PriceUint32[Fraction5]]().MaxIntegerDigits(), want: 5},
 		{name: "uint64 scale9", got: MustCodec[PriceUint64[Fraction9]]().MaxIntegerDigits(), want: 11},
-		{name: "uint256 scale18", got: MustCodec[AmountScale18]().MaxIntegerDigits(), want: 60},
+		{name: "uint256 scale18", got: MustCodec[AmountUint256[Fraction18]]().MaxIntegerDigits(), want: 60},
 	}
 	for _, tt := range tests {
 		if tt.got != tt.want {
@@ -205,7 +189,7 @@ func TestNarrowAndWideFormatsCompareExactly(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	wide, err := New[AmountScale18]("1.200000000000000000")
+	wide, err := New[AmountUint256[Fraction18]]("1.200000000000000000")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -240,8 +224,4 @@ func codecError[V Venue[U], U Unit]() error {
 	return err
 }
 
-func acceptGenericPriceScale1(Decimal[PriceUint64[Fraction1], uint64]) {}
-
-func acceptBuiltInPriceScale1(Decimal[PriceScale1, uint64]) {}
-
-func acceptBuiltInAmountScale18(Decimal[AmountScale18, uint256.Int]) {}
+func acceptAmountUint256Fraction18(Decimal[AmountUint256[Fraction18], uint256.Int]) {}

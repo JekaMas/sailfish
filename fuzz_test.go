@@ -7,7 +7,7 @@ import (
 	"github.com/holiman/uint256"
 )
 
-func FuzzPriceScale9ParseRoundTrip(f *testing.F) {
+func FuzzPriceUint64Fraction9ParseRoundTrip(f *testing.F) {
 	for _, seed := range []string{
 		"0", "1", "1.2", "123.312320000", "18446744073.709551615",
 		"", "!!!", " 1", "+1", "-1", "1e3", "1.0000000000",
@@ -15,7 +15,7 @@ func FuzzPriceScale9ParseRoundTrip(f *testing.F) {
 		f.Add(seed)
 	}
 
-	codec := MustCodec[PriceScale9]()
+	codec := MustCodec[PriceUint64[Fraction9]]()
 	f.Fuzz(func(t *testing.T, input string) {
 		value, err := codec.ParseCompact(input)
 		if err != nil {
@@ -34,7 +34,7 @@ func FuzzUint64UnitsRoundTrip(f *testing.F) {
 		f.Add(seed)
 	}
 
-	codec := MustCodec[PriceScale9]()
+	codec := MustCodec[PriceUint64[Fraction9]]()
 	f.Fuzz(func(t *testing.T, units uint64) {
 		value := codec.FromUnits(units)
 		round, err := codec.ParseCompact(value.String())

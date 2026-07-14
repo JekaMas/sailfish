@@ -18,10 +18,10 @@ Sailfish requires Go 1.26.5 or newer.
 
 ## Quick start
 
-The package provides ready-to-use uint64 price scales from 1 through 9:
+Select semantic kind, unit capacity, and fractional scale explicitly:
 
 ```go
-codec := sailfish.MustCodec[sailfish.PriceScale5]()
+codec := sailfish.MustCodec[sailfish.PriceUint64[sailfish.Fraction5]]()
 
 price, err := codec.Parse("123.31232")
 if err != nil {
@@ -42,9 +42,8 @@ request = codec.AppendTo(request, price)
 // request == "123.31233"
 ```
 
-`PriceScale1` through `PriceScale9` describe only the number of fractional
-digits. Their ready-to-use defaults retain the broad `uint64` range. At scale
-9, the maximum representable value is `18446744073.709551615`.
+For `PriceUint64[Fraction9]`, the maximum representable value is
+`18446744073.709551615`.
 
 ## Scale and storage range
 
@@ -84,25 +83,25 @@ types can represent other supported scales.
 format. It is a capacity description, not a promise that every number with
 that many digits fits the binary backend.
 
-The built-in `PriceScale1` through `PriceScale9` remain concrete `uint64`
-formats. Benchmarks found generic scale metadata equivalent for cached
-`Codec.Parse`, but about 1 ns slower for one-shot `New` and direct
-`Decimal.AppendTo`. Explicit `PriceUint*` and `AmountUint*` formats provide
-generic composition without adding a generic backend dispatch.
+There is one format API: `PriceUint*` and `AmountUint*`. Cached `Codec`
+operations resolve scale once and benchmark equivalently to a test-local
+concrete venue; use a codec on hot paths. Each generic format embeds a concrete
+backend, so it does not pay generic backend dispatch.
 
 ## Wide values
 
-The common 18-decimal on-chain amount is built in:
+The common 18-decimal on-chain amount is explicit:
 
 ```go
-type Amount = sailfish.Decimal[sailfish.AmountScale18, uint256.Int]
+type AmountFormat = sailfish.AmountUint256[sailfish.Fraction18]
+type Amount = sailfish.Decimal[AmountFormat, uint256.Int]
 
-var amountCodec = sailfish.MustCodec[sailfish.AmountScale18]()
+var amountCodec = sailfish.MustCodec[AmountFormat]()
 ```
 
-Other amount scales and ranges use the generic `AmountUint*` formats. The
-format selects semantic kind, fractional scale, and unit backend. The sealed
-unit-provider interface prevents pairing a format with the wrong unit type.
+The format selects semantic kind, fractional scale, and unit backend. The
+sealed unit-provider interface prevents pairing a format with the wrong unit
+type.
 
 When trusted venue metadata resolves a scale at runtime, use the concrete
 `Uint256Codec` to avoid generic venue dispatch:
@@ -241,8 +240,8 @@ The initial package does not define:
 - mutable shared caches;
 - a runtime-varying scale carried by every value.
 
-Those are separate financial contracts, not parser conveniences. Custom venue
-types cover compile-time scales beyond the built-in price scales.
+Those are separate financial contracts, not parser conveniences. Custom
+zero-sized `VenueScale` types cover compile-time scales beyond `Fraction20`.
 
 ## Performance
 

@@ -11,7 +11,7 @@ import (
 func TestTextEncodingRoundTrip(t *testing.T) {
 	t.Parallel()
 
-	value, _ := New[PriceScale5]("12.30000")
+	value, _ := New[PriceUint64[Fraction5]]("12.30000")
 	var _ encoding.TextMarshaler = value
 	var _ encoding.TextUnmarshaler = (*price5)(nil)
 
@@ -33,7 +33,7 @@ func TestTextEncodingRoundTrip(t *testing.T) {
 func TestJSONEncodingRoundTrip(t *testing.T) {
 	t.Parallel()
 
-	value, _ := New[PriceScale5]("12.30000")
+	value, _ := New[PriceUint64[Fraction5]]("12.30000")
 	encoded, err := json.Marshal(value)
 	if err != nil || string(encoded) != `"12.30000"` {
 		t.Fatalf("MarshalJSON = %q, %v", encoded, err)
@@ -61,7 +61,7 @@ func TestJSONRejectsNonStringAndInvalidDecimal(t *testing.T) {
 func TestAppendTextAndJSON(t *testing.T) {
 	t.Parallel()
 
-	value := MustCodec[PriceScale5]().FromUnits(1_230_000)
+	value := MustCodec[PriceUint64[Fraction5]]().FromUnits(1_230_000)
 	text, err := value.AppendText(make([]byte, 0, 16))
 	if err != nil || string(text) != "12.30000" {
 		t.Fatalf("AppendText = %q, %v", text, err)
@@ -74,7 +74,7 @@ func TestAppendTextAndJSON(t *testing.T) {
 func TestUnmarshalPreservesReceiverOnError(t *testing.T) {
 	t.Parallel()
 
-	value, _ := New[PriceScale5]("1.00000")
+	value, _ := New[PriceUint64[Fraction5]]("1.00000")
 	before := value
 	if err := value.UnmarshalText([]byte("bad")); !errors.Is(err, ErrSyntax) {
 		t.Fatalf("UnmarshalText error = %v", err)

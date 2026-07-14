@@ -15,7 +15,7 @@ func TestErrorsAreTypedConstants(t *testing.T) {
 	const copied Error = ErrSyntax
 	var _ error = copied
 
-	_, err := New[PriceScale5]("")
+	_, err := New[PriceUint64[Fraction5]]("")
 	if !errors.Is(err, ErrSyntax) {
 		t.Fatalf("errors.Is(%v, ErrSyntax) = false", err)
 	}
@@ -55,7 +55,7 @@ func TestUint64ParseCases(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
 
-			got, err := New[PriceScale5](tt.input)
+			got, err := New[PriceUint64[Fraction5]](tt.input)
 			if tt.wantErr != "" {
 				if !errors.Is(err, tt.wantErr) {
 					t.Fatalf("New(%q) error = %v, want %v", tt.input, err, tt.wantErr)
@@ -85,10 +85,10 @@ func TestParserRejectsEveryNonDigitByte(t *testing.T) {
 		}
 
 		input := string([]byte{'1', '.', b})
-		if _, err := New[PriceScale1](input); !errors.Is(err, ErrSyntax) {
+		if _, err := New[PriceUint64[Fraction1]](input); !errors.Is(err, ErrSyntax) {
 			t.Fatalf("byte 0x%02x accepted by string parser: %v", b, err)
 		}
-		if _, err := NewBytes[PriceScale1]([]byte(input)); !errors.Is(err, ErrSyntax) {
+		if _, err := NewBytes[PriceUint64[Fraction1]]([]byte(input)); !errors.Is(err, ErrSyntax) {
 			t.Fatalf("byte 0x%02x accepted by byte parser: %v", b, err)
 		}
 	}
@@ -152,8 +152,8 @@ func TestStringAndBytesParsersAgree(t *testing.T) {
 		".5", "5.", "-1", "+1", "1e2", "1 2", "1.123456",
 	}
 	for _, input := range inputs {
-		fromString, stringErr := NewCompact[PriceScale5](input)
-		fromBytes, bytesErr := NewBytes[PriceScale5]([]byte(input))
+		fromString, stringErr := NewCompact[PriceUint64[Fraction5]](input)
+		fromBytes, bytesErr := NewBytes[PriceUint64[Fraction5]]([]byte(input))
 		if !sameError(stringErr, bytesErr) {
 			t.Fatalf("%q errors differ: string=%v bytes=%v", input, stringErr, bytesErr)
 		}
@@ -170,22 +170,22 @@ func sameError(a, b error) bool {
 	return a.Error() == b.Error()
 }
 
-func TestBuiltInPriceScales(t *testing.T) {
+func TestPriceUint64Fractions(t *testing.T) {
 	t.Parallel()
 
 	tests := []struct {
 		name string
 		got  string
 	}{
-		{name: "scale1", got: mustText(New[PriceScale1]("1"))},
-		{name: "scale2", got: mustText(New[PriceScale2]("1"))},
-		{name: "scale3", got: mustText(New[PriceScale3]("1"))},
-		{name: "scale4", got: mustText(New[PriceScale4]("1"))},
-		{name: "scale5", got: mustText(New[PriceScale5]("1"))},
-		{name: "scale6", got: mustText(New[PriceScale6]("1"))},
-		{name: "scale7", got: mustText(New[PriceScale7]("1"))},
-		{name: "scale8", got: mustText(New[PriceScale8]("1"))},
-		{name: "scale9", got: mustText(New[PriceScale9]("1"))},
+		{name: "scale1", got: mustText(New[PriceUint64[Fraction1]]("1"))},
+		{name: "scale2", got: mustText(New[PriceUint64[Fraction2]]("1"))},
+		{name: "scale3", got: mustText(New[PriceUint64[Fraction3]]("1"))},
+		{name: "scale4", got: mustText(New[PriceUint64[Fraction4]]("1"))},
+		{name: "scale5", got: mustText(New[PriceUint64[Fraction5]]("1"))},
+		{name: "scale6", got: mustText(New[PriceUint64[Fraction6]]("1"))},
+		{name: "scale7", got: mustText(New[PriceUint64[Fraction7]]("1"))},
+		{name: "scale8", got: mustText(New[PriceUint64[Fraction8]]("1"))},
+		{name: "scale9", got: mustText(New[PriceUint64[Fraction9]]("1"))},
 	}
 	for i, tt := range tests {
 		want := "1." + strings.Repeat("0", i+1)

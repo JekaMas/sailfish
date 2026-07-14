@@ -12,7 +12,7 @@ func TestUint64FormatParseProperties(t *testing.T) {
 	t.Parallel()
 
 	rng := rand.New(rand.NewSource(1))
-	codec := MustCodec[PriceScale9]()
+	codec := MustCodec[PriceUint64[Fraction9]]()
 	for range 20_000 {
 		units := rng.Uint64()
 		value := codec.FromUnits(units)

@@ -19,68 +19,72 @@ var (
 	benchU256Sink   uint256.Int
 )
 
-func BenchmarkCodecParsePriceScales(b *testing.B) {
-	benchmarkParsePrice[PriceScale1](b, "scale_1", "123456789012345678.9")
-	benchmarkParsePrice[PriceScale2](b, "scale_2", "12345678901234567.89")
-	benchmarkParsePrice[PriceScale3](b, "scale_3", "1234567890123456.789")
-	benchmarkParsePrice[PriceScale4](b, "scale_4", "123456789012345.6789")
-	benchmarkParsePrice[PriceScale5](b, "scale_5", "12345678901234.56789")
-	benchmarkParsePrice[PriceScale6](b, "scale_6", "1234567890123.456789")
-	benchmarkParsePrice[PriceScale7](b, "scale_7", "123456789012.3456789")
-	benchmarkParsePrice[PriceScale8](b, "scale_8", "12345678901.23456789")
-	benchmarkParsePrice[PriceScale9](b, "scale_9", "1234567890.123456789")
+func BenchmarkCodecParsePriceFractions(b *testing.B) {
+	benchmarkParsePrice[PriceUint64[Fraction1]](b, "scale_1", "123456789012345678.9")
+	benchmarkParsePrice[PriceUint64[Fraction2]](b, "scale_2", "12345678901234567.89")
+	benchmarkParsePrice[PriceUint64[Fraction3]](b, "scale_3", "1234567890123456.789")
+	benchmarkParsePrice[PriceUint64[Fraction4]](b, "scale_4", "123456789012345.6789")
+	benchmarkParsePrice[PriceUint64[Fraction5]](b, "scale_5", "12345678901234.56789")
+	benchmarkParsePrice[PriceUint64[Fraction6]](b, "scale_6", "1234567890123.456789")
+	benchmarkParsePrice[PriceUint64[Fraction7]](b, "scale_7", "123456789012.3456789")
+	benchmarkParsePrice[PriceUint64[Fraction8]](b, "scale_8", "12345678901.23456789")
+	benchmarkParsePrice[PriceUint64[Fraction9]](b, "scale_9", "1234567890.123456789")
 }
 
-// BenchmarkGenericFormatMetadata measures generic kind/scale composition
-// against the concrete built-in format. Codec caches scale metadata, while
-// one-shot constructors and direct Decimal methods resolve it on every call.
-func BenchmarkGenericFormatMetadata(b *testing.B) {
-	b.Run("new/generic_format", func(b *testing.B) {
+type benchmarkConcreteFraction5 struct{ Uint64Units }
+
+func (benchmarkConcreteFraction5) NotionScale() Notion { return 5 }
+
+// BenchmarkScaleMetadataDispatch measures the explicit generic format against
+// a test-local concrete venue. Codec caches scale metadata, while one-shot
+// constructors and direct Decimal methods resolve it on every call.
+func BenchmarkScaleMetadataDispatch(b *testing.B) {
+	b.Run("new/explicit_format", func(b *testing.B) {
 		b.ReportAllocs()
 		for b.Loop() {
 			value, _ := New[PriceUint64[Fraction5]]("123.31232")
 			_ = value
 		}
 	})
-	b.Run("new/builtin_concrete", func(b *testing.B) {
+	b.Run("new/test_concrete", func(b *testing.B) {
 		b.ReportAllocs()
 		for b.Loop() {
-			value, _ := New[PriceScale5]("123.31232")
+			value, _ := New[benchmarkConcreteFraction5]("123.31232")
 			_ = value
 		}
 	})
 
-	genericCodec := MustCodec[PriceUint64[Fraction5]]()
-	builtinCodec := MustCodec[PriceScale5]()
-	b.Run("codec_parse/generic_format", func(b *testing.B) {
+	explicitCodec := MustCodec[PriceUint64[Fraction5]]()
+	concreteCodec := MustCodec[benchmarkConcreteFraction5]()
+	b.Run("codec_parse/explicit_format", func(b *testing.B) {
 		b.ReportAllocs()
 		for b.Loop() {
-			value, _ := genericCodec.Parse("123.31232")
+			value, _ := explicitCodec.Parse("123.31232")
 			_ = value
 		}
 	})
-	b.Run("codec_parse/builtin_concrete", func(b *testing.B) {
+	b.Run("codec_parse/test_concrete", func(b *testing.B) {
 		b.ReportAllocs()
 		for b.Loop() {
-			value, _ := builtinCodec.Parse("123.31232")
+			value, _ := concreteCodec.Parse("123.31232")
 			_ = value
 		}
 	})
 
-	genericValue := genericCodec.FromUnits(12_331_232)
-	builtinValue := builtinCodec.FromUnits(12_331_232)
+	explicitValue := explicitCodec.FromUnits(12_331_232)
+	concreteValue := concreteCodec.FromUnits(12_331_232)
 	buffer := make([]byte, 0, 32)
-	b.Run("decimal_append/generic_format", func(b *testing.B) {
+	b.Run("decimal_append/explicit_format", func(b *testing.B) {
 		b.ReportAllocs()
 		for b.Loop() {
-			out := genericValue.AppendTo(buffer[:0])
+			out := explicitValue.AppendTo(buffer[:0])
 			_ = out
 		}
 	})
-	b.Run("decimal_append/builtin_concrete", func(b *testing.B) {
+	b.Run("decimal_append/test_concrete", func(b *testing.B) {
 		b.ReportAllocs()
 		for b.Loop() {
-			out := builtinValue.AppendTo(buffer[:0])
+			out := concreteValue.AppendTo(buffer[:0])
 			_ = out
 		}
 	})
@@ -200,21 +204,21 @@ func benchmarkParsePrice[V Venue[uint64]](b *testing.B, name, input string) {
 
 func BenchmarkCodecParse(b *testing.B) {
 	b.Run("uint64/canonical", func(b *testing.B) {
-		codec := MustCodec[PriceScale5]()
+		codec := MustCodec[PriceUint64[Fraction5]]()
 		b.ReportAllocs()
 		for b.Loop() {
 			benchPriceSink, _ = codec.Parse("123.31232")
 		}
 	})
 	b.Run("uint64/compact", func(b *testing.B) {
-		codec := MustCodec[PriceScale5]()
+		codec := MustCodec[PriceUint64[Fraction5]]()
 		b.ReportAllocs()
 		for b.Loop() {
 			benchPriceSink, _ = codec.ParseCompact("123.31232")
 		}
 	})
 	b.Run("uint64/bytes", func(b *testing.B) {
-		codec := MustCodec[PriceScale5]()
+		codec := MustCodec[PriceUint64[Fraction5]]()
 		input := []byte("123.31232")
 		b.ReportAllocs()
 		for b.Loop() {
@@ -222,14 +226,14 @@ func BenchmarkCodecParse(b *testing.B) {
 		}
 	})
 	b.Run("uint64/noncanonical", func(b *testing.B) {
-		codec := MustCodec[PriceScale5]()
+		codec := MustCodec[PriceUint64[Fraction5]]()
 		b.ReportAllocs()
 		for b.Loop() {
 			benchPriceSink, _ = codec.ParseCompact("00123.31")
 		}
 	})
 	b.Run("uint64/invalid", func(b *testing.B) {
-		codec := MustCodec[PriceScale5]()
+		codec := MustCodec[PriceUint64[Fraction5]]()
 		b.ReportAllocs()
 		for b.Loop() {
 			benchPriceSink, _ = codec.ParseCompact("123x31232")
@@ -264,7 +268,7 @@ func BenchmarkReferenceStrconvSplitUint64(b *testing.B) {
 
 func BenchmarkAppendTo(b *testing.B) {
 	b.Run("uint64/retained", func(b *testing.B) {
-		codec := MustCodec[PriceScale5]()
+		codec := MustCodec[PriceUint64[Fraction5]]()
 		value, _ := codec.Parse("123.31232")
 		buffer := make([]byte, 0, 32)
 		b.ReportAllocs()
@@ -273,7 +277,7 @@ func BenchmarkAppendTo(b *testing.B) {
 		}
 	})
 	b.Run("uint64/formatted", func(b *testing.B) {
-		codec := MustCodec[PriceScale5]()
+		codec := MustCodec[PriceUint64[Fraction5]]()
 		value := codec.FromUnits(12_331_232)
 		buffer := make([]byte, 0, 32)
 		b.ReportAllocs()
@@ -483,14 +487,14 @@ func BenchmarkUint256MarketHotPaths(b *testing.B) {
 
 func BenchmarkString(b *testing.B) {
 	b.Run("uint64/retained", func(b *testing.B) {
-		value, _ := New[PriceScale5]("123.31232")
+		value, _ := New[PriceUint64[Fraction5]]("123.31232")
 		b.ReportAllocs()
 		for b.Loop() {
 			benchStringSink = value.String()
 		}
 	})
 	b.Run("uint64/formatted", func(b *testing.B) {
-		value := MustCodec[PriceScale5]().FromUnits(12_331_232)
+		value := MustCodec[PriceUint64[Fraction5]]().FromUnits(12_331_232)
 		b.ReportAllocs()
 		for b.Loop() {
 			benchStringSink = value.String()
@@ -500,7 +504,7 @@ func BenchmarkString(b *testing.B) {
 
 func BenchmarkCompare(b *testing.B) {
 	b.Run("uint64/same-scale", func(b *testing.B) {
-		codec := MustCodec[PriceScale5]()
+		codec := MustCodec[PriceUint64[Fraction5]]()
 		a := codec.FromUnits(12_331_232)
 		c := codec.FromUnits(12_331_233)
 		b.ReportAllocs()
@@ -518,7 +522,7 @@ func BenchmarkCompare(b *testing.B) {
 		}
 	})
 	b.Run("cross-scale", func(b *testing.B) {
-		a := MustCodec[PriceScale5]().FromUnits(12_331_232)
+		a := MustCodec[PriceUint64[Fraction5]]().FromUnits(12_331_232)
 		c := MustCodec[uint256Scale18]().FromUnits(uint256.Int{12_331_232_000_000_000_000})
 		b.ReportAllocs()
 		for b.Loop() {
@@ -529,7 +533,7 @@ func BenchmarkCompare(b *testing.B) {
 
 func BenchmarkAddAssign(b *testing.B) {
 	b.Run("uint64", func(b *testing.B) {
-		codec := MustCodec[PriceScale5]()
+		codec := MustCodec[PriceUint64[Fraction5]]()
 		base := codec.FromUnits(12_300_000)
 		delta := codec.FromUnits(1)
 		b.ReportAllocs()

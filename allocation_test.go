@@ -20,7 +20,7 @@ var (
 )
 
 func TestHotPathAllocations(t *testing.T) {
-	priceCodec := MustCodec[PriceScale5]()
+	priceCodec := MustCodec[PriceUint64[Fraction5]]()
 	wideCodec := MustCodec[uint256Scale18]()
 	priceBytes := []byte("123.31232")
 	appendBuffer := make([]byte, 0, 96)

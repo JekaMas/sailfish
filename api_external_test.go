@@ -10,11 +10,11 @@ import (
 func TestPublicAPITypeInference(t *testing.T) {
 	t.Parallel()
 
-	price, err := sailfish.New[sailfish.PriceScale5]("123.31232")
+	price, err := sailfish.New[sailfish.PriceUint64[sailfish.Fraction5]]("123.31232")
 	if err != nil {
 		t.Fatal(err)
 	}
-	acceptPriceScale5(price)
+	acceptPriceUint64Fraction5(price)
 	if price.Units() != 12_331_232 {
 		t.Fatal(price.Units())
 	}
@@ -29,12 +29,12 @@ func TestPublicAPITypeInference(t *testing.T) {
 		t.Fatal(small.Units(), smallCodec.MaxIntegerDigits())
 	}
 
-	codec := sailfish.MustCodec[sailfish.AmountScale18]()
+	codec := sailfish.MustCodec[sailfish.AmountUint256[sailfish.Fraction18]]()
 	amount, err := codec.Parse("1.000000000000000001")
 	if err != nil {
 		t.Fatal(err)
 	}
-	acceptAmountScale18(amount)
+	acceptAmountUint256Fraction18(amount)
 	if amount.Units() != (uint256.Int{1_000_000_000_000_000_001}) {
 		t.Fatal(amount.Units())
 	}
@@ -49,8 +49,11 @@ func TestPublicAPITypeInference(t *testing.T) {
 	}
 }
 
-func acceptPriceScale5(sailfish.Decimal[sailfish.PriceScale5, uint64]) {}
+func acceptPriceUint64Fraction5(sailfish.Decimal[sailfish.PriceUint64[sailfish.Fraction5], uint64]) {}
 
 func acceptSmallPrice(sailfish.Decimal[sailfish.PriceUint16[sailfish.Fraction2], uint16]) {}
 
-func acceptAmountScale18(sailfish.Decimal[sailfish.AmountScale18, uint256.Int]) {}
+func acceptAmountUint256Fraction18(
+	sailfish.Decimal[sailfish.AmountUint256[sailfish.Fraction18], uint256.Int],
+) {
+}

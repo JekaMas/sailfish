@@ -11,8 +11,8 @@ import (
 func TestUint64Arithmetic(t *testing.T) {
 	t.Parallel()
 
-	base, _ := New[PriceScale5]("1.20000")
-	delta, _ := New[PriceScale5]("0.00001")
+	base, _ := New[PriceUint64[Fraction5]]("1.20000")
+	delta, _ := New[PriceUint64[Fraction5]]("0.00001")
 
 	sum, err := base.Add(delta)
 	if err != nil || sum.String() != "1.20001" {
@@ -23,8 +23,8 @@ func TestUint64Arithmetic(t *testing.T) {
 		t.Fatalf("difference = %q, %v", difference.String(), err)
 	}
 
-	max, _ := NewFromUnits[PriceScale5](uint64(math.MaxUint64))
-	one := MustCodec[PriceScale5]().FromUnits(1)
+	max, _ := NewFromUnits[PriceUint64[Fraction5]](uint64(math.MaxUint64))
+	one := MustCodec[PriceUint64[Fraction5]]().FromUnits(1)
 	wrapped, overflow := max.AddOverflow(one)
 	if !overflow || !wrapped.IsZero() {
 		t.Fatalf("wrapped=%d overflow=%v", wrapped.Units(), overflow)
@@ -34,7 +34,7 @@ func TestUint64Arithmetic(t *testing.T) {
 		t.Fatal("overflowing AddAssign changed receiver")
 	}
 
-	zero := MustCodec[PriceScale5]().FromUnits(0)
+	zero := MustCodec[PriceUint64[Fraction5]]().FromUnits(0)
 	if _, err := zero.Sub(one); !errors.Is(err, ErrUnderflow) {
 		t.Fatalf("underflow error = %v", err)
 	}

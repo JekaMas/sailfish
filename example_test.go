@@ -8,7 +8,7 @@ import (
 )
 
 func Example() {
-	codec := sailfish.MustCodec[sailfish.PriceScale5]()
+	codec := sailfish.MustCodec[sailfish.PriceUint64[sailfish.Fraction5]]()
 	price, _ := codec.Parse("123.31232")
 	delta, _ := codec.Parse("0.00001")
 

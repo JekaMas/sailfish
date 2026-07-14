@@ -37,11 +37,11 @@ type unitSystem[U Unit] interface {
 
 // Venue binds a fixed scale to one unit backend.
 //
-// A custom venue is normally a zero-sized type. Prefer the built-in
-// PriceUint* and AmountUint* formats when their semantic distinction applies:
+// A custom venue is normally a zero-sized type. Prefer PriceUint* and
+// AmountUint* when their semantic distinction applies:
 //
-//	type PriceScale5 struct{ sailfish.Uint64Units }
-//	func (PriceScale5) NotionScale() sailfish.Notion { return 5 }
+//	type QuoteFraction5 struct{ sailfish.Uint64Units }
+//	func (QuoteFraction5) NotionScale() sailfish.Notion { return 5 }
 type Venue[U Unit] interface {
 	VenueScale
 	unitSystem[U]

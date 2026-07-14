@@ -38,7 +38,7 @@ type uint256Scale78 struct{ Uint256Units }
 
 func (uint256Scale78) NotionScale() Notion { return 78 }
 
-type price5 = Decimal[PriceScale5, uint64]
+type price5 = Decimal[PriceUint64[Fraction5], uint64]
 type wide18 = Decimal[uint256Scale18, uint256.Int]
 
 const maxUint256Decimal = "115792089237316195423570985008687907853269984665640564039457584007913129639935"

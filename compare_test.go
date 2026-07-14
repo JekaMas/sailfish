@@ -11,8 +11,8 @@ import (
 func TestSameVenueCompare(t *testing.T) {
 	t.Parallel()
 
-	a, _ := New[PriceScale5]("1.20000")
-	b, _ := New[PriceScale5]("1.20001")
+	a, _ := New[PriceUint64[Fraction5]]("1.20000")
+	b, _ := New[PriceUint64[Fraction5]]("1.20001")
 	if a.Compare(b) != -1 || b.Cmp(a) != 1 || !a.Less(b) || a.Equal(b) {
 		t.Fatal("same-venue comparison contract failed")
 	}
@@ -21,13 +21,13 @@ func TestSameVenueCompare(t *testing.T) {
 func TestCrossScaleAndBackendCompare(t *testing.T) {
 	t.Parallel()
 
-	a, _ := New[PriceScale2]("1.20")
+	a, _ := New[PriceUint64[Fraction2]]("1.20")
 	b, _ := New[uint256Scale18]("1.200000000000000000")
 	if Compare(a, b) != 0 || Compare(b, a) != 0 {
 		t.Fatal("cross-backend equal values differ")
 	}
 
-	less, _ := New[PriceScale2]("0.01")
+	less, _ := New[PriceUint64[Fraction2]]("0.01")
 	more, _ := New[uint256Scale18]("0.010000000000000001")
 	if Compare(less, more) != -1 || Compare(more, less) != 1 {
 		t.Fatal("cross-backend ordering failed")

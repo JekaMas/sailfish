@@ -36,7 +36,7 @@ GOMAXPROCS=1 GOWORK=off go test -run '^$' \
   -benchmem -benchtime=1s -count=10
 
 GOMAXPROCS=1 GOWORK=off go test -run '^$' \
-  -bench 'Benchmark(GenericFormatMetadata|GenericBackendDispatch|ExplicitUnitWidths)$' \
+  -bench 'Benchmark(ScaleMetadataDispatch|GenericBackendDispatch|ExplicitUnitWidths)$' \
   -benchmem -benchtime=500ms -count=10
 ```
 
@@ -86,17 +86,18 @@ Generic semantic-kind/scale composition has no heap cost. Cached codecs also
 erase the measured scale-method difference, while direct methods retain a
 small generic metadata cost:
 
-| Operation | Generic format | Concrete built-in | B/op | allocs/op |
+| Operation | Explicit format | Test-local concrete | B/op | allocs/op |
 |---|---:|---:|---:|---:|
-| `New` | 12.0 ns/op | 11.4 ns/op | 0 | 0 |
-| cached `Codec.Parse` | 9.70 ns/op | 9.77 ns/op | 0 | 0 |
-| direct `Decimal.AppendTo` | 16.8 ns/op | 16.0 ns/op | 0 | 0 |
+| `New` | 12.1 ns/op | 11.3 ns/op | 0 | 0 |
+| cached `Codec.Parse` | 9.62 ns/op | 9.62 ns/op | 0 | 0 |
+| direct `Decimal.AppendTo` | 16.4 ns/op | 15.7 ns/op | 0 | 0 |
 
-The public generic formats embed concrete backend providers. A measured
+The only public format path is explicit `PriceUint*` / `AmountUint*`
+composition. These formats embed concrete backend providers. A measured
 alternative that selected backend operations through a generic type switch
 cost roughly 21-29% on parse/format microbenchmarks, so it was not adopted.
-The ready-to-use `PriceScale1` through `PriceScale9` and `AmountScale18` stay
-concrete to preserve the faster direct-call path.
+Cached codecs remove the measured generic scale-metadata difference and are
+the intended hot-path API.
 
 ## Go 1.26 review
 
