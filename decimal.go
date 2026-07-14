@@ -262,14 +262,11 @@ func Compare[VA Venue[UA], UA Unit, VB Venue[UB], UB Unit](
 		return 1
 	}
 
-	maxScale := as
-	if bs > maxScale {
-		maxScale = bs
-	}
+	maxScale := max(bs, as)
 	alignedLen := adLen + maxScale - as
 
 	// Compare scaled integers with conceptual trailing zeroes.
-	for i := 0; i < alignedLen; i++ {
+	for i := range alignedLen {
 		ac := byte('0')
 		if i < len(ad) {
 			ac = ad[i]

@@ -81,7 +81,7 @@ func TestUint256CodecRoundTripAllScalesAndLimbs(t *testing.T) {
 	random := rand.New(rand.NewPCG(0x51a1f15, 0xc0dec))
 	for scale := 0; scale <= maxUint256Scale; scale++ {
 		codec := MustUint256Codec(Notion(scale))
-		for sample := 0; sample < 256; sample++ {
+		for range 256 {
 			want := uint256.Int{
 				random.Uint64(), random.Uint64(), random.Uint64(), random.Uint64(),
 			}

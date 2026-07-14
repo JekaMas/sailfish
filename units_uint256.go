@@ -179,10 +179,7 @@ func appendUint256Digits[S decimalInput](
 	begin, end int,
 ) (uint256.Int, Error) {
 	for begin < end {
-		digits := end - begin
-		if digits > 19 {
-			digits = 19
-		}
+		digits := min(end-begin, 19)
 		chunk, err := parseUint64Chunk(s, begin, begin+digits)
 		if err != "" {
 			return uint256.Int{}, err

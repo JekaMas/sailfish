@@ -13,6 +13,8 @@ value = units / 10^venue scale
 Supported unit backends are `uint64` and `uint256.Int`. The common parse,
 append, compare, and arithmetic paths perform no heap allocations.
 
+Sailfish requires Go 1.26.5 or newer.
+
 ## Quick start
 
 The package provides ready-to-use uint64 price scales from 1 through 9:
@@ -190,21 +192,21 @@ types cover compile-time scales beyond the built-in price scales.
 
 ## Performance
 
-Representative local results on Go 1.26.2, darwin/arm64, Apple M1 Max:
+Representative local results on Go 1.26.5, darwin/arm64, Apple M1 Max:
 
 | Operation | Approximate time | B/op | allocs/op |
 |---|---:|---:|---:|
-| Parse canonical scale-5 `uint64` | 9.9-10.1 ns | 0 | 0 |
-| Parse runtime scale-6 `uint256.Int` into caller storage | 9.4 ns | 0 | 0 |
-| Parse canonical 38-digit `uint256.Int` | 52-56 ns | 0 | 0 |
-| Append retained `uint64` | 2.9 ns | 0 | 0 |
-| Append retained four-limb `uint256.Int` | 4.4 ns | 0 | 0 |
-| Append formatted `uint64` | 13.5 ns | 0 | 0 |
-| Append formatted one-limb `uint256.Int` | 14.2 ns | 0 | 0 |
-| Append formatted four-limb `uint256.Int` | 146-152 ns | 0 | 0 |
-| Same-scale `uint64` compare | 2.1 ns | 0 | 0 |
-| Cross-scale/backend compare | 52 ns | 0 | 0 |
-| Formatted owned `String` | 30.1 ns | 16 | 1 |
+| Parse canonical scale-5 `uint64` | 9.79 ns | 0 | 0 |
+| Parse runtime scale-6 `uint256.Int` into caller storage | 10.2 ns | 0 | 0 |
+| Parse canonical 38-digit `uint256.Int` | 51.7 ns | 0 | 0 |
+| Append retained `uint64` | 2.73 ns | 0 | 0 |
+| Append retained four-limb `uint256.Int` | 4.22 ns | 0 | 0 |
+| Append formatted `uint64` | 13.7 ns | 0 | 0 |
+| Append formatted one-limb `uint256.Int` | 13.1 ns | 0 | 0 |
+| Append formatted four-limb `uint256.Int` | 138-152 ns | 0 | 0 |
+| Same-scale `uint64` compare | 2.14 ns | 0 | 0 |
+| Cross-scale/backend compare | 52.7 ns | 0 | 0 |
+| Formatted owned `String` | 32.8 ns | 16 | 1 |
 
 The one `String` allocation is the returned string's ownership contract.
 Detailed commands and profile interpretation are in [BENCHMARKS.md](BENCHMARKS.md).

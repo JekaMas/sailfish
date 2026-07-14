@@ -3,7 +3,7 @@
 ## Environment
 
 ```text
-Go:    go1.26.2
+Go:    go1.26.5
 OS:    darwin
 Arch:  arm64
 CPU:   Apple M1 Max
@@ -40,27 +40,65 @@ GOMAXPROCS=1 GOWORK=off go test -run '^$' \
 
 | Benchmark | Typical result | B/op | allocs/op |
 |---|---:|---:|---:|
-| `CodecParse/uint64/canonical` | 9.9-10.1 ns/op | 0 | 0 |
-| `CodecParse/uint64/compact` | 9.9 ns/op | 0 | 0 |
-| `CodecParse/uint64/bytes` | 9.8 ns/op | 0 | 0 |
+| `CodecParse/uint64/canonical` | 9.79 ns/op | 0 | 0 |
+| `CodecParse/uint64/compact` | 9.55 ns/op | 0 | 0 |
+| `CodecParse/uint64/bytes` | 9.77 ns/op | 0 | 0 |
 | `CodecParse/uint64/invalid` | 10.6 ns/op | 0 | 0 |
-| `CodecParse/uint256/canonical` | 52-56 ns/op | 0 | 0 |
-| `CodecParse/uint256/max` | 77-84 ns/op | 0 | 0 |
-| `Uint256MarketHotPaths/parse_into_runtime_codec/cex_scale6_one_limb` | 9.4 ns/op | 0 | 0 |
-| `Uint256MarketHotPaths/append_retained/cex_scale6_one_limb` | 3.5 ns/op | 0 | 0 |
-| `Uint256MarketHotPaths/append_retained/scale18_four_limb` | 4.4 ns/op | 0 | 0 |
-| `Uint256MarketHotPaths/append_runtime_codec/cex_scale6_one_limb` | 14.2 ns/op | 0 | 0 |
-| `AppendTo/uint64/retained` | 2.9 ns/op | 0 | 0 |
-| `AppendTo/uint64/formatted` | 13.8 ns/op | 0 | 0 |
-| `AppendTo/uint256/formatted` | 146-152 ns/op | 0 | 0 |
-| `String/uint64/retained` | 2.1 ns/op | 0 | 0 |
-| `String/uint64/formatted` | 30.1 ns/op | 16 | 1 |
-| `Compare/uint64/same-scale` | 2.1 ns/op | 0 | 0 |
-| `Compare/uint256/same-scale` | 6.4 ns/op | 0 | 0 |
-| `Compare/cross-scale` | 52 ns/op | 0 | 0 |
-| `AddAssign/uint64` | 4.3 ns/op | 0 | 0 |
-| `AddAssign/uint256` | 13.5 ns/op | 0 | 0 |
-| `ReferenceStrconvSplitUint64` | 20.7 ns/op | 0 | 0 |
+| `CodecParse/uint256/canonical` | 51.7 ns/op | 0 | 0 |
+| `CodecParse/uint256/max` | 80.3 ns/op | 0 | 0 |
+| `Uint256MarketHotPaths/parse_into_runtime_codec/cex_scale6_one_limb` | 10.2 ns/op | 0 | 0 |
+| `Uint256MarketHotPaths/append_retained/cex_scale6_one_limb` | 3.52 ns/op | 0 | 0 |
+| `Uint256MarketHotPaths/append_retained/scale18_four_limb` | 4.22 ns/op | 0 | 0 |
+| `Uint256MarketHotPaths/append_runtime_codec/cex_scale6_one_limb` | 13.1 ns/op | 0 | 0 |
+| `AppendTo/uint64/retained` | 2.73 ns/op | 0 | 0 |
+| `AppendTo/uint64/formatted` | 13.7 ns/op | 0 | 0 |
+| `AppendTo/uint256/formatted` | 152 ns/op | 0 | 0 |
+| `String/uint64/retained` | 2.14 ns/op | 0 | 0 |
+| `String/uint64/formatted` | 32.8 ns/op | 16 | 1 |
+| `Compare/uint64/same-scale` | 2.14 ns/op | 0 | 0 |
+| `Compare/uint256/same-scale` | 6.57 ns/op | 0 | 0 |
+| `Compare/cross-scale` | 52.7 ns/op | 0 | 0 |
+| `AddAssign/uint64` | 4.48 ns/op | 0 | 0 |
+| `AddAssign/uint256` | 13.8 ns/op | 0 | 0 |
+| `ReferenceStrconvSplitUint64` | 19.3 ns/op | 0 | 0 |
+
+## Go 1.26 review
+
+The module requires Go 1.26.5. The upgrade was reviewed against the
+[Go 1.26 release notes](https://go.dev/doc/go1.26) and measured on identical
+benchmark workloads with Go 1.26.2, 1.26.3, and 1.26.5 before changing source.
+
+Useful changes adopted here:
+
+- Benchmarks use `testing.B.Loop`. Go 1.26 permits the loop body to inline
+  while still keeping inputs and results alive, reducing benchmark-harness
+  distortion.
+- Production loops use the built-in `min`, `max`, and integer `range` forms
+  selected by the Go 1.26 modernizer.
+- Go 1.26 can place more variable-sized slice backing stores on the stack.
+  Sailfish's caller-buffer hot paths were already at zero allocations, so the
+  final allocation matrix remains unchanged rather than claiming an
+  unobserved gain.
+
+Changes reviewed but not adopted:
+
+- Self-referential generic constraints do not provide associated types or
+  remove the backend operations needed for `uint64` and the external
+  `uint256.Int`; changing the public type model would add wrappers without a
+  measured hot-path benefit.
+- `new(expr)`, `errors.AsType`, and `bytes.Buffer.Peek` are not used on decimal
+  parse, format, compare, or arithmetic paths.
+- Green Tea GC improves allocation-heavy programs, while the measured Sailfish
+  hot paths do not allocate. The one formatted `String` allocation is required
+  ownership of the returned immutable string.
+- Experimental architecture SIMD is unstable, amd64-only in Go 1.26, and does
+  not fit this arm64-tested branchy decimal parser well enough to justify a
+  production dependency.
+
+Patch-release benchmark differences were small and inconsistent; no
+toolchain-only speedup is claimed. The reason for pinning the current patch is
+compiler/runtime correctness and security maintenance, plus the corrected
+benchmarking contract.
 
 ## Allocation ownership
 

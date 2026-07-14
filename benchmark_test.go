@@ -36,7 +36,7 @@ func benchmarkParsePrice[V Venue[uint64]](b *testing.B, name, input string) {
 	codec := MustCodec[V]()
 	b.Run(name, func(b *testing.B) {
 		b.ReportAllocs()
-		for i := 0; i < b.N; i++ {
+		for b.Loop() {
 			value, _ := codec.Parse(input)
 			benchUint64Sink = value.Units()
 		}
@@ -47,14 +47,14 @@ func BenchmarkCodecParse(b *testing.B) {
 	b.Run("uint64/canonical", func(b *testing.B) {
 		codec := MustCodec[PriceScale5]()
 		b.ReportAllocs()
-		for i := 0; i < b.N; i++ {
+		for b.Loop() {
 			benchPriceSink, _ = codec.Parse("123.31232")
 		}
 	})
 	b.Run("uint64/compact", func(b *testing.B) {
 		codec := MustCodec[PriceScale5]()
 		b.ReportAllocs()
-		for i := 0; i < b.N; i++ {
+		for b.Loop() {
 			benchPriceSink, _ = codec.ParseCompact("123.31232")
 		}
 	})
@@ -62,35 +62,35 @@ func BenchmarkCodecParse(b *testing.B) {
 		codec := MustCodec[PriceScale5]()
 		input := []byte("123.31232")
 		b.ReportAllocs()
-		for i := 0; i < b.N; i++ {
+		for b.Loop() {
 			benchPriceSink, _ = codec.ParseBytes(input)
 		}
 	})
 	b.Run("uint64/noncanonical", func(b *testing.B) {
 		codec := MustCodec[PriceScale5]()
 		b.ReportAllocs()
-		for i := 0; i < b.N; i++ {
+		for b.Loop() {
 			benchPriceSink, _ = codec.ParseCompact("00123.31")
 		}
 	})
 	b.Run("uint64/invalid", func(b *testing.B) {
 		codec := MustCodec[PriceScale5]()
 		b.ReportAllocs()
-		for i := 0; i < b.N; i++ {
+		for b.Loop() {
 			benchPriceSink, _ = codec.ParseCompact("123x31232")
 		}
 	})
 	b.Run("uint256/canonical", func(b *testing.B) {
 		codec := MustCodec[uint256Scale18]()
 		b.ReportAllocs()
-		for i := 0; i < b.N; i++ {
+		for b.Loop() {
 			benchWideSink, _ = codec.Parse("12345678901234567890.123456789012345678")
 		}
 	})
 	b.Run("uint256/max", func(b *testing.B) {
 		codec := MustCodec[uint256Scale0]()
 		b.ReportAllocs()
-		for i := 0; i < b.N; i++ {
+		for b.Loop() {
 			_, _ = codec.Parse(maxUint256Decimal)
 		}
 	})
@@ -99,7 +99,7 @@ func BenchmarkCodecParse(b *testing.B) {
 func BenchmarkReferenceStrconvSplitUint64(b *testing.B) {
 	const input = "123.31232"
 	b.ReportAllocs()
-	for i := 0; i < b.N; i++ {
+	for b.Loop() {
 		point := strings.IndexByte(input, '.')
 		whole, _ := strconv.ParseUint(input[:point], 10, 64)
 		fraction, _ := strconv.ParseUint(input[point+1:], 10, 64)
@@ -113,7 +113,7 @@ func BenchmarkAppendTo(b *testing.B) {
 		value, _ := codec.Parse("123.31232")
 		buffer := make([]byte, 0, 32)
 		b.ReportAllocs()
-		for i := 0; i < b.N; i++ {
+		for b.Loop() {
 			benchBytesSink = codec.AppendTo(buffer[:0], value)
 		}
 	})
@@ -122,7 +122,7 @@ func BenchmarkAppendTo(b *testing.B) {
 		value := codec.FromUnits(12_331_232)
 		buffer := make([]byte, 0, 32)
 		b.ReportAllocs()
-		for i := 0; i < b.N; i++ {
+		for b.Loop() {
 			benchBytesSink = codec.AppendTo(buffer[:0], value)
 		}
 	})
@@ -131,7 +131,7 @@ func BenchmarkAppendTo(b *testing.B) {
 		value := codec.FromUnits(uint256.Int{1, 2, 3, 4})
 		buffer := make([]byte, 0, 96)
 		b.ReportAllocs()
-		for i := 0; i < b.N; i++ {
+		for b.Loop() {
 			benchBytesSink = codec.AppendTo(buffer[:0], value)
 		}
 	})
@@ -145,14 +145,14 @@ func BenchmarkUint256MarketHotPaths(b *testing.B) {
 	b.Run("parse_string/cex_scale6_one_limb", func(b *testing.B) {
 		codec := MustCodec[uint256Scale6]()
 		b.ReportAllocs()
-		for i := 0; i < b.N; i++ {
+		for b.Loop() {
 			value, _ := codec.ParseCompact("123.456789")
 			benchU256Sink = value.Units()
 		}
 	})
 	b.Run("parse_internal/cex_scale6_one_limb", func(b *testing.B) {
 		b.ReportAllocs()
-		for i := 0; i < b.N; i++ {
+		for b.Loop() {
 			value, _, _ := parseUint256("123.456789", 6)
 			benchU256Sink = value
 		}
@@ -160,7 +160,7 @@ func BenchmarkUint256MarketHotPaths(b *testing.B) {
 	b.Run("parse_runtime_codec/cex_scale6_one_limb", func(b *testing.B) {
 		codec := MustUint256Codec(6)
 		b.ReportAllocs()
-		for i := 0; i < b.N; i++ {
+		for b.Loop() {
 			benchU256Sink, _ = codec.Parse("123.456789")
 		}
 	})
@@ -168,21 +168,21 @@ func BenchmarkUint256MarketHotPaths(b *testing.B) {
 		codec := MustUint256Codec(6)
 		var value uint256.Int
 		b.ReportAllocs()
-		for i := 0; i < b.N; i++ {
+		for b.Loop() {
 			_ = codec.ParseInto("123.456789", &value)
 		}
 		benchU256Sink = value
 	})
 	b.Run("parse_uint64_internal/cex_scale6_one_limb", func(b *testing.B) {
 		b.ReportAllocs()
-		for i := 0; i < b.N; i++ {
+		for b.Loop() {
 			value, _, _ := parseUint64("123.456789", 6)
 			benchUint64Sink = value
 		}
 	})
 	b.Run("parse_uint64_with_dot_internal/cex_scale6_one_limb", func(b *testing.B) {
 		b.ReportAllocs()
-		for i := 0; i < b.N; i++ {
+		for b.Loop() {
 			value, _ := parseUint64WithDot("123.456789", 3)
 			benchUint64Sink = value
 		}
@@ -191,7 +191,7 @@ func BenchmarkUint256MarketHotPaths(b *testing.B) {
 		codec := MustCodec[uint256Scale6]()
 		input := []byte("123.456789")
 		b.ReportAllocs()
-		for i := 0; i < b.N; i++ {
+		for b.Loop() {
 			value, _ := codec.ParseBytes(input)
 			benchU256Sink = value.Units()
 		}
@@ -199,7 +199,7 @@ func BenchmarkUint256MarketHotPaths(b *testing.B) {
 	b.Run("parse_string/scale18_one_limb", func(b *testing.B) {
 		codec := MustCodec[uint256Scale18]()
 		b.ReportAllocs()
-		for i := 0; i < b.N; i++ {
+		for b.Loop() {
 			value, _ := codec.ParseCompact("0.123456789012345678")
 			benchU256Sink = value.Units()
 		}
@@ -207,7 +207,7 @@ func BenchmarkUint256MarketHotPaths(b *testing.B) {
 	b.Run("parse_string/scale18_two_limb", func(b *testing.B) {
 		codec := MustCodec[uint256Scale18]()
 		b.ReportAllocs()
-		for i := 0; i < b.N; i++ {
+		for b.Loop() {
 			value, _ := codec.ParseCompact("12345678901234567890.123456789012345678")
 			benchU256Sink = value.Units()
 		}
@@ -215,7 +215,7 @@ func BenchmarkUint256MarketHotPaths(b *testing.B) {
 	b.Run("parse_string/scale0_four_limb", func(b *testing.B) {
 		codec := MustCodec[uint256Scale0]()
 		b.ReportAllocs()
-		for i := 0; i < b.N; i++ {
+		for b.Loop() {
 			value, _ := codec.ParseCompact(maxUint256Decimal)
 			benchU256Sink = value.Units()
 		}
@@ -226,7 +226,7 @@ func BenchmarkUint256MarketHotPaths(b *testing.B) {
 		value := codec.FromUnits(uint256.Int{123_456_789})
 		buffer := make([]byte, 0, 32)
 		b.ReportAllocs()
-		for i := 0; i < b.N; i++ {
+		for b.Loop() {
 			benchBytesSink = codec.AppendTo(buffer[:0], value)
 		}
 	})
@@ -238,7 +238,7 @@ func BenchmarkUint256MarketHotPaths(b *testing.B) {
 		}
 		buffer := make([]byte, 0, 32)
 		b.ReportAllocs()
-		for i := 0; i < b.N; i++ {
+		for b.Loop() {
 			benchBytesSink = codec.AppendTo(buffer[:0], value)
 		}
 	})
@@ -246,7 +246,7 @@ func BenchmarkUint256MarketHotPaths(b *testing.B) {
 		value := uint256.Int{123_456_789}
 		buffer := make([]byte, 0, 32)
 		b.ReportAllocs()
-		for i := 0; i < b.N; i++ {
+		for b.Loop() {
 			benchBytesSink = appendUint256Decimal(buffer[:0], value, 6)
 		}
 	})
@@ -255,21 +255,21 @@ func BenchmarkUint256MarketHotPaths(b *testing.B) {
 		value := uint256.Int{123_456_789}
 		buffer := make([]byte, 0, 32)
 		b.ReportAllocs()
-		for i := 0; i < b.N; i++ {
+		for b.Loop() {
 			benchBytesSink = codec.AppendTo(buffer[:0], value)
 		}
 	})
 	b.Run("append_uint64_internal/cex_scale6_one_limb", func(b *testing.B) {
 		buffer := make([]byte, 0, 32)
 		b.ReportAllocs()
-		for i := 0; i < b.N; i++ {
+		for b.Loop() {
 			benchBytesSink = appendUint64Decimal(buffer[:0], 123_456_789, 6)
 		}
 	})
 	b.Run("fill_uint64_internal/cex_scale6_one_limb", func(b *testing.B) {
 		var buffer [9]byte
 		b.ReportAllocs()
-		for i := 0; i < b.N; i++ {
+		for b.Loop() {
 			fillUnsigned64(buffer[:], 123_456_789)
 			benchBytesSink = buffer[:]
 		}
@@ -279,7 +279,7 @@ func BenchmarkUint256MarketHotPaths(b *testing.B) {
 		value := codec.FromUnits(uint256.Int{123_456_789_012_345_678})
 		buffer := make([]byte, 0, 32)
 		b.ReportAllocs()
-		for i := 0; i < b.N; i++ {
+		for b.Loop() {
 			benchBytesSink = codec.AppendTo(buffer[:0], value)
 		}
 	})
@@ -288,7 +288,7 @@ func BenchmarkUint256MarketHotPaths(b *testing.B) {
 		value := codec.FromUnits(uint256.Int{1, 1})
 		buffer := make([]byte, 0, 64)
 		b.ReportAllocs()
-		for i := 0; i < b.N; i++ {
+		for b.Loop() {
 			benchBytesSink = codec.AppendTo(buffer[:0], value)
 		}
 	})
@@ -297,7 +297,7 @@ func BenchmarkUint256MarketHotPaths(b *testing.B) {
 		value := codec.FromUnits(uint256.Int{1, 2, 3, 4})
 		buffer := make([]byte, 0, 96)
 		b.ReportAllocs()
-		for i := 0; i < b.N; i++ {
+		for b.Loop() {
 			benchBytesSink = codec.AppendTo(buffer[:0], value)
 		}
 	})
@@ -306,7 +306,7 @@ func BenchmarkUint256MarketHotPaths(b *testing.B) {
 		value := uint256.Int{1, 2, 3, 4}
 		buffer := make([]byte, 0, 96)
 		b.ReportAllocs()
-		for i := 0; i < b.N; i++ {
+		for b.Loop() {
 			benchBytesSink = codec.AppendTo(buffer[:0], value)
 		}
 	})
@@ -320,8 +320,7 @@ func BenchmarkUint256MarketHotPaths(b *testing.B) {
 		}
 		buffer := make([]byte, 0, 96)
 		b.ReportAllocs()
-		b.ResetTimer()
-		for i := 0; i < b.N; i++ {
+		for b.Loop() {
 			benchBytesSink = codec.AppendTo(buffer[:0], value)
 		}
 	})
@@ -331,14 +330,14 @@ func BenchmarkString(b *testing.B) {
 	b.Run("uint64/retained", func(b *testing.B) {
 		value, _ := New[PriceScale5]("123.31232")
 		b.ReportAllocs()
-		for i := 0; i < b.N; i++ {
+		for b.Loop() {
 			benchStringSink = value.String()
 		}
 	})
 	b.Run("uint64/formatted", func(b *testing.B) {
 		value := MustCodec[PriceScale5]().FromUnits(12_331_232)
 		b.ReportAllocs()
-		for i := 0; i < b.N; i++ {
+		for b.Loop() {
 			benchStringSink = value.String()
 		}
 	})
@@ -350,7 +349,7 @@ func BenchmarkCompare(b *testing.B) {
 		a := codec.FromUnits(12_331_232)
 		c := codec.FromUnits(12_331_233)
 		b.ReportAllocs()
-		for i := 0; i < b.N; i++ {
+		for b.Loop() {
 			benchIntSink = a.Compare(c)
 		}
 	})
@@ -359,7 +358,7 @@ func BenchmarkCompare(b *testing.B) {
 		a := codec.FromUnits(uint256.Int{1, 2, 3, 4})
 		c := codec.FromUnits(uint256.Int{2, 2, 3, 4})
 		b.ReportAllocs()
-		for i := 0; i < b.N; i++ {
+		for b.Loop() {
 			benchIntSink = a.Compare(c)
 		}
 	})
@@ -367,7 +366,7 @@ func BenchmarkCompare(b *testing.B) {
 		a := MustCodec[PriceScale5]().FromUnits(12_331_232)
 		c := MustCodec[uint256Scale18]().FromUnits(uint256.Int{12_331_232_000_000_000_000})
 		b.ReportAllocs()
-		for i := 0; i < b.N; i++ {
+		for b.Loop() {
 			benchIntSink = Compare(a, c)
 		}
 	})
@@ -379,7 +378,7 @@ func BenchmarkAddAssign(b *testing.B) {
 		base := codec.FromUnits(12_300_000)
 		delta := codec.FromUnits(1)
 		b.ReportAllocs()
-		for i := 0; i < b.N; i++ {
+		for b.Loop() {
 			value := base
 			benchBoolSink = value.AddAssign(delta)
 			benchPriceSink = value
@@ -390,7 +389,7 @@ func BenchmarkAddAssign(b *testing.B) {
 		base := codec.FromUnits(uint256.Int{1, 2, 3, 4})
 		delta := codec.FromUnits(uint256.Int{1})
 		b.ReportAllocs()
-		for i := 0; i < b.N; i++ {
+		for b.Loop() {
 			value := base
 			benchBoolSink = value.AddAssign(delta)
 			benchWideSink = value
