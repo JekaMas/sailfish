@@ -69,6 +69,13 @@ func parseUint256[S decimalInput](s S, scale int) (uint256.Int, bool, Error) {
 
 	dot := len(s) - scale - 1
 	if dot >= 1 && s[dot] == '.' {
+		if len(s)-1 <= 19 {
+			value, err := parseUint64WithDot(s, dot)
+			if err != "" {
+				return uint256.Int{}, false, err
+			}
+			return uint256.Int{value}, dot == 1 || s[0] != '0', ""
+		}
 		value, err := parseUint256WithDot(s, dot)
 		if err != "" {
 			return uint256.Int{}, false, err

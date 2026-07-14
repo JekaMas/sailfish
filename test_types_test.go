@@ -18,6 +18,10 @@ type uint256Scale0 struct{ Uint256Units }
 
 func (uint256Scale0) NotionScale() Notion { return 0 }
 
+type uint256Scale6 struct{ Uint256Units }
+
+func (uint256Scale6) NotionScale() Notion { return 6 }
+
 type uint256Scale18 struct{ Uint256Units }
 
 func (uint256Scale18) NotionScale() Notion { return 18 }

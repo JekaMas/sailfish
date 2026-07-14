@@ -92,18 +92,54 @@ func parseUint64Digits[S decimalInput](s S, begin, end int) (uint64, Error) {
 
 func parseUint64WithDot[S decimalInput](s S, dot int) (uint64, Error) {
 	// Below 20 total numeric digits, both pieces and recombination fit uint64.
-	if len(s)-1 < 20 {
-		integer, err := parseUint64Chunk(s, 0, dot)
-		if err != "" {
-			return 0, err
-		}
-		fraction, err := parseUint64Chunk(s, dot+1, len(s))
-		if err != "" {
-			return 0, err
-		}
-		return integer*powersOf10Uint64[len(s)-dot-1] + fraction, ""
+	if len(s)-1 >= 20 {
+		return parseUint64WithDotOverflow(s, dot)
 	}
 
+	// Keep both pairwise segment parsers in this function. The generic chunk
+	// helper is not inlined by current Go compilers; avoiding its two calls is
+	// material for short CEX prices and amounts.
+	var value uint64
+	begin := 0
+	if dot&1 != 0 {
+		digit := s[0] - '0'
+		if digit > 9 {
+			return 0, ErrSyntax
+		}
+		value = uint64(digit)
+		begin = 1
+	}
+	for ; begin < dot; begin += 2 {
+		a := s[begin] - '0'
+		b := s[begin+1] - '0'
+		if a > 9 || b > 9 {
+			return 0, ErrSyntax
+		}
+		value = value*100 + uint64(a)*10 + uint64(b)
+	}
+
+	fractionBegin := dot + 1
+	fractionDigits := len(s) - fractionBegin
+	if fractionDigits&1 != 0 {
+		digit := s[fractionBegin] - '0'
+		if digit > 9 {
+			return 0, ErrSyntax
+		}
+		value = value*10 + uint64(digit)
+		fractionBegin++
+	}
+	for ; fractionBegin < len(s); fractionBegin += 2 {
+		a := s[fractionBegin] - '0'
+		b := s[fractionBegin+1] - '0'
+		if a > 9 || b > 9 {
+			return 0, ErrSyntax
+		}
+		value = value*100 + uint64(a)*10 + uint64(b)
+	}
+	return value, ""
+}
+
+func parseUint64WithDotOverflow[S decimalInput](s S, dot int) (uint64, Error) {
 	var value uint64
 	for i := 0; i < len(s); i++ {
 		if i == dot {

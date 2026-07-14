@@ -32,6 +32,15 @@ func TestPublicAPITypeInference(t *testing.T) {
 	if amount.Units() != (uint256.Int{1_000_000_000_000_000_001}) {
 		t.Fatal(amount.Units())
 	}
+
+	runtimeCodec := sailfish.MustUint256Codec(6)
+	var runtimeUnits uint256.Int
+	if parseErr := runtimeCodec.ParseInto("123.456789", &runtimeUnits); parseErr != "" {
+		t.Fatal(parseErr)
+	}
+	if runtimeUnits != (uint256.Int{123_456_789}) {
+		t.Fatal(runtimeUnits)
+	}
 }
 
 func acceptPriceScale5(sailfish.Decimal[sailfish.PriceScale5, uint64]) {}

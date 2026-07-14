@@ -4,6 +4,7 @@ import (
 	"fmt"
 
 	"github.com/JekaMas/sailfish"
+	"github.com/holiman/uint256"
 )
 
 func Example() {
@@ -17,4 +18,16 @@ func Example() {
 	dst = codec.AppendTo(dst, price)
 	fmt.Println(string(dst))
 	// Output: 123.31233
+}
+
+func ExampleUint256Codec() {
+	codec := sailfish.MustUint256Codec(6)
+	var units uint256.Int
+	if err := codec.ParseInto("123.456789", &units); err != "" {
+		panic(err)
+	}
+
+	dst := codec.AppendTo(make([]byte, 0, 32), units)
+	fmt.Println(string(dst))
+	// Output: 123.456789
 }

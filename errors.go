@@ -16,6 +16,7 @@ const (
 	ErrOverflow           Error = "sailfish: addition overflow"
 	ErrUnderflow          Error = "sailfish: subtraction underflow"
 	ErrUninitializedCodec Error = "sailfish: uninitialized codec"
+	ErrNilDestination     Error = "sailfish: nil destination"
 )
 
 // Pre-box the fixed errors once. Returning an Error directly as an error
@@ -29,6 +30,7 @@ var (
 	boxedErrOverflow           error = ErrOverflow
 	boxedErrUnderflow          error = ErrUnderflow
 	boxedErrUninitializedCodec error = ErrUninitializedCodec
+	boxedErrNilDestination     error = ErrNilDestination
 )
 
 func boxedError(err Error) error {
@@ -49,6 +51,8 @@ func boxedError(err Error) error {
 		return boxedErrUnderflow
 	case ErrUninitializedCodec:
 		return boxedErrUninitializedCodec
+	case ErrNilDestination:
+		return boxedErrNilDestination
 	default:
 		// Internal callers only produce the constants above. Preserve correct
 		// behavior for a future Error value even if it takes the cold allocation.

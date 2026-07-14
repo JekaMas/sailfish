@@ -16,6 +16,7 @@ var (
 	benchIntSink    int
 	benchBoolSink   bool
 	benchUint64Sink uint64
+	benchU256Sink   uint256.Int
 )
 
 func BenchmarkCodecParsePriceScales(b *testing.B) {
@@ -130,6 +131,196 @@ func BenchmarkAppendTo(b *testing.B) {
 		value := codec.FromUnits(uint256.Int{1, 2, 3, 4})
 		buffer := make([]byte, 0, 96)
 		b.ReportAllocs()
+		for i := 0; i < b.N; i++ {
+			benchBytesSink = codec.AppendTo(buffer[:0], value)
+		}
+	})
+}
+
+// BenchmarkUint256MarketHotPaths separates ordinary venue-sized values from
+// full-width uint256 values. Most CEX prices and amounts occupy one limb even
+// when the durable representation uses uint256.Int; the wide cases protect the
+// worst-case contract without letting them obscure the dominant workload.
+func BenchmarkUint256MarketHotPaths(b *testing.B) {
+	b.Run("parse_string/cex_scale6_one_limb", func(b *testing.B) {
+		codec := MustCodec[uint256Scale6]()
+		b.ReportAllocs()
+		for i := 0; i < b.N; i++ {
+			value, _ := codec.ParseCompact("123.456789")
+			benchU256Sink = value.Units()
+		}
+	})
+	b.Run("parse_internal/cex_scale6_one_limb", func(b *testing.B) {
+		b.ReportAllocs()
+		for i := 0; i < b.N; i++ {
+			value, _, _ := parseUint256("123.456789", 6)
+			benchU256Sink = value
+		}
+	})
+	b.Run("parse_runtime_codec/cex_scale6_one_limb", func(b *testing.B) {
+		codec := MustUint256Codec(6)
+		b.ReportAllocs()
+		for i := 0; i < b.N; i++ {
+			benchU256Sink, _ = codec.Parse("123.456789")
+		}
+	})
+	b.Run("parse_into_runtime_codec/cex_scale6_one_limb", func(b *testing.B) {
+		codec := MustUint256Codec(6)
+		var value uint256.Int
+		b.ReportAllocs()
+		for i := 0; i < b.N; i++ {
+			_ = codec.ParseInto("123.456789", &value)
+		}
+		benchU256Sink = value
+	})
+	b.Run("parse_uint64_internal/cex_scale6_one_limb", func(b *testing.B) {
+		b.ReportAllocs()
+		for i := 0; i < b.N; i++ {
+			value, _, _ := parseUint64("123.456789", 6)
+			benchUint64Sink = value
+		}
+	})
+	b.Run("parse_uint64_with_dot_internal/cex_scale6_one_limb", func(b *testing.B) {
+		b.ReportAllocs()
+		for i := 0; i < b.N; i++ {
+			value, _ := parseUint64WithDot("123.456789", 3)
+			benchUint64Sink = value
+		}
+	})
+	b.Run("parse_bytes/cex_scale6_one_limb", func(b *testing.B) {
+		codec := MustCodec[uint256Scale6]()
+		input := []byte("123.456789")
+		b.ReportAllocs()
+		for i := 0; i < b.N; i++ {
+			value, _ := codec.ParseBytes(input)
+			benchU256Sink = value.Units()
+		}
+	})
+	b.Run("parse_string/scale18_one_limb", func(b *testing.B) {
+		codec := MustCodec[uint256Scale18]()
+		b.ReportAllocs()
+		for i := 0; i < b.N; i++ {
+			value, _ := codec.ParseCompact("0.123456789012345678")
+			benchU256Sink = value.Units()
+		}
+	})
+	b.Run("parse_string/scale18_two_limb", func(b *testing.B) {
+		codec := MustCodec[uint256Scale18]()
+		b.ReportAllocs()
+		for i := 0; i < b.N; i++ {
+			value, _ := codec.ParseCompact("12345678901234567890.123456789012345678")
+			benchU256Sink = value.Units()
+		}
+	})
+	b.Run("parse_string/scale0_four_limb", func(b *testing.B) {
+		codec := MustCodec[uint256Scale0]()
+		b.ReportAllocs()
+		for i := 0; i < b.N; i++ {
+			value, _ := codec.ParseCompact(maxUint256Decimal)
+			benchU256Sink = value.Units()
+		}
+	})
+
+	b.Run("append/cex_scale6_one_limb", func(b *testing.B) {
+		codec := MustCodec[uint256Scale6]()
+		value := codec.FromUnits(uint256.Int{123_456_789})
+		buffer := make([]byte, 0, 32)
+		b.ReportAllocs()
+		for i := 0; i < b.N; i++ {
+			benchBytesSink = codec.AppendTo(buffer[:0], value)
+		}
+	})
+	b.Run("append_retained/cex_scale6_one_limb", func(b *testing.B) {
+		codec := MustCodec[uint256Scale6]()
+		value, err := codec.Parse("123.456789")
+		if err != nil {
+			b.Fatal(err)
+		}
+		buffer := make([]byte, 0, 32)
+		b.ReportAllocs()
+		for i := 0; i < b.N; i++ {
+			benchBytesSink = codec.AppendTo(buffer[:0], value)
+		}
+	})
+	b.Run("append_internal/cex_scale6_one_limb", func(b *testing.B) {
+		value := uint256.Int{123_456_789}
+		buffer := make([]byte, 0, 32)
+		b.ReportAllocs()
+		for i := 0; i < b.N; i++ {
+			benchBytesSink = appendUint256Decimal(buffer[:0], value, 6)
+		}
+	})
+	b.Run("append_runtime_codec/cex_scale6_one_limb", func(b *testing.B) {
+		codec := MustUint256Codec(6)
+		value := uint256.Int{123_456_789}
+		buffer := make([]byte, 0, 32)
+		b.ReportAllocs()
+		for i := 0; i < b.N; i++ {
+			benchBytesSink = codec.AppendTo(buffer[:0], value)
+		}
+	})
+	b.Run("append_uint64_internal/cex_scale6_one_limb", func(b *testing.B) {
+		buffer := make([]byte, 0, 32)
+		b.ReportAllocs()
+		for i := 0; i < b.N; i++ {
+			benchBytesSink = appendUint64Decimal(buffer[:0], 123_456_789, 6)
+		}
+	})
+	b.Run("fill_uint64_internal/cex_scale6_one_limb", func(b *testing.B) {
+		var buffer [9]byte
+		b.ReportAllocs()
+		for i := 0; i < b.N; i++ {
+			fillUnsigned64(buffer[:], 123_456_789)
+			benchBytesSink = buffer[:]
+		}
+	})
+	b.Run("append/scale18_one_limb", func(b *testing.B) {
+		codec := MustCodec[uint256Scale18]()
+		value := codec.FromUnits(uint256.Int{123_456_789_012_345_678})
+		buffer := make([]byte, 0, 32)
+		b.ReportAllocs()
+		for i := 0; i < b.N; i++ {
+			benchBytesSink = codec.AppendTo(buffer[:0], value)
+		}
+	})
+	b.Run("append/scale18_two_limb", func(b *testing.B) {
+		codec := MustCodec[uint256Scale18]()
+		value := codec.FromUnits(uint256.Int{1, 1})
+		buffer := make([]byte, 0, 64)
+		b.ReportAllocs()
+		for i := 0; i < b.N; i++ {
+			benchBytesSink = codec.AppendTo(buffer[:0], value)
+		}
+	})
+	b.Run("append/scale18_four_limb", func(b *testing.B) {
+		codec := MustCodec[uint256Scale18]()
+		value := codec.FromUnits(uint256.Int{1, 2, 3, 4})
+		buffer := make([]byte, 0, 96)
+		b.ReportAllocs()
+		for i := 0; i < b.N; i++ {
+			benchBytesSink = codec.AppendTo(buffer[:0], value)
+		}
+	})
+	b.Run("append_runtime_codec/scale18_four_limb", func(b *testing.B) {
+		codec := MustUint256Codec(18)
+		value := uint256.Int{1, 2, 3, 4}
+		buffer := make([]byte, 0, 96)
+		b.ReportAllocs()
+		for i := 0; i < b.N; i++ {
+			benchBytesSink = codec.AppendTo(buffer[:0], value)
+		}
+	})
+	b.Run("append_retained/scale18_four_limb", func(b *testing.B) {
+		codec := MustCodec[uint256Scale18]()
+		units := uint256.Int{1, 2, 3, 4}
+		text := string(appendUint256Decimal(nil, units, 18))
+		value, err := codec.Parse(text)
+		if err != nil {
+			b.Fatal(err)
+		}
+		buffer := make([]byte, 0, 96)
+		b.ReportAllocs()
+		b.ResetTimer()
 		for i := 0; i < b.N; i++ {
 			benchBytesSink = codec.AppendTo(buffer[:0], value)
 		}

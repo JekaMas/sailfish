@@ -59,6 +59,24 @@ var amountCodec = sailfish.MustCodec[AmountScale18]()
 The venue selects both scale and unit backend. The sealed unit-provider
 interface prevents accidentally pairing a venue with the wrong unit type.
 
+When trusted venue metadata resolves a scale at runtime, use the concrete
+`Uint256Codec` to avoid generic venue dispatch:
+
+```go
+codec := sailfish.MustUint256Codec(6)
+
+var units uint256.Int
+if err := codec.ParseInto("123.456789", &units); err != "" {
+	return err
+}
+
+dst := codec.AppendTo(make([]byte, 0, 32), units)
+```
+
+`Uint256Codec` stores the validated scale once. It does not attach a dynamic
+scale to each value; callers remain responsible for selecting the codec from
+canonical venue metadata.
+
 ## Parsing and ownership
 
 Parsing is strict. Constructors do not trim input and do not accept signs,
@@ -113,6 +131,7 @@ There is no mutable lazy cache, so concurrent reads do not race.
 | Parse retained canonical text | `New`, `Codec.Parse` |
 | Parse without retaining input | `NewCompact`, `NewBytes`, codec equivalents |
 | Construct/read scaled units | `NewFromUnits`, `Codec.FromUnits`, `Units` |
+| Runtime-scale uint256 boundary | `Uint256Codec.Parse`, `ParseInto`, `AppendTo` |
 | Caller-buffer serialization | `AppendTo`, `AppendJSON`, `AppendText` |
 | Owned serialization | `String`, `MarshalText`, `MarshalJSON` |
 | Same-venue ordering | `Compare`, `Cmp`, `Equal`, `Less` methods |
@@ -175,17 +194,25 @@ Representative local results on Go 1.26.2, darwin/arm64, Apple M1 Max:
 
 | Operation | Approximate time | B/op | allocs/op |
 |---|---:|---:|---:|
-| Parse canonical scale-5 `uint64` | 11.7 ns | 0 | 0 |
-| Parse canonical scale-18 `uint256.Int` | 52.6 ns | 0 | 0 |
+| Parse canonical scale-5 `uint64` | 9.9-10.1 ns | 0 | 0 |
+| Parse runtime scale-6 `uint256.Int` into caller storage | 9.4 ns | 0 | 0 |
+| Parse canonical 38-digit `uint256.Int` | 52-56 ns | 0 | 0 |
 | Append retained `uint64` | 2.9 ns | 0 | 0 |
+| Append retained four-limb `uint256.Int` | 4.4 ns | 0 | 0 |
 | Append formatted `uint64` | 13.5 ns | 0 | 0 |
-| Append formatted wide `uint256.Int` | 148 ns | 0 | 0 |
+| Append formatted one-limb `uint256.Int` | 14.2 ns | 0 | 0 |
+| Append formatted four-limb `uint256.Int` | 146-152 ns | 0 | 0 |
 | Same-scale `uint64` compare | 2.1 ns | 0 | 0 |
 | Cross-scale/backend compare | 52 ns | 0 | 0 |
 | Formatted owned `String` | 30.1 ns | 16 | 1 |
 
 The one `String` allocation is the returned string's ownership contract.
 Detailed commands and profile interpretation are in [BENCHMARKS.md](BENCHMARKS.md).
+
+For values parsed from canonical venue text, retain the representation with
+`Codec.Parse`; subsequent appends are below 5 ns even for a four-limb value.
+Use raw-unit formatting for constructed or mutated values, and call
+`Canonical` once when the same formatted value will be emitted repeatedly.
 
 No `unsafe` or assembly is used in production code. Profiles show the pure-Go
 implementation is already allocation-free on hot paths; adding
