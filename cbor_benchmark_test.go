@@ -8,8 +8,8 @@ import (
 )
 
 func BenchmarkCBOR(b *testing.B) {
-	nativeCodec := MustCodec[PriceUint64[Fraction5]]()
-	wideCodec := MustCodec[AmountUint256[Fraction18]]()
+	nativeCodec := testCodec[PriceUint64[Fraction5]]()
+	wideCodec := testCodec[AmountUint256[Fraction18]]()
 	native := nativeCodec.FromUnits(^uint64(0))
 	wide := wideCodec.FromUnits(uint256.Int{1, 2, 3, 4})
 	nativeWire := native.AppendCBOR(make([]byte, 0, MaxCBORSize))
@@ -59,8 +59,8 @@ func BenchmarkCBOR(b *testing.B) {
 }
 
 func BenchmarkCBORToArrayIntegration(b *testing.B) {
-	price := MustCodec[PriceUint64[Fraction5]]().FromUnits(12_331_232)
-	amount := MustCodec[AmountUint256[Fraction18]]().FromUnits(uint256.Int{0, 1})
+	price := testCodec[PriceUint64[Fraction5]]().FromUnits(12_331_232)
+	amount := testCodec[AmountUint256[Fraction18]]().FromUnits(uint256.Int{0, 1})
 	value := cborQuote{Price: price, Amount: amount}
 	wire, err := cbor.Marshal(value)
 	if err != nil {
@@ -85,7 +85,7 @@ func BenchmarkCBORToArrayIntegration(b *testing.B) {
 }
 
 func BenchmarkCBORDispatchLayers(b *testing.B) {
-	nativeCodec := MustCodec[PriceUint64[Fraction5]]()
+	nativeCodec := testCodec[PriceUint64[Fraction5]]()
 	native := nativeCodec.FromUnits(^uint64(0))
 	nativeWire := native.AppendCBOR(make([]byte, 0, MaxCBORSize))
 	buffer := make([]byte, 0, MaxCBORSize)
@@ -146,8 +146,8 @@ func BenchmarkCBORDispatchLayers(b *testing.B) {
 }
 
 func BenchmarkCBORUint256Widths(b *testing.B) {
-	codec := MustCodec[AmountUint256[Fraction18]]()
-	runtimeCodec := MustUint256Codec(18)
+	codec := testCodec[AmountUint256[Fraction18]]()
+	runtimeCodec := testUint256Codec(18)
 	buffer := make([]byte, 0, MaxCBORSize)
 	values := []struct {
 		name  string

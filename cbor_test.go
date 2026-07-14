@@ -38,7 +38,7 @@ func TestCBORNativePreferredSerialization(t *testing.T) {
 		{name: "uint64 max", value: math.MaxUint64, wire: "1bffffffffffffffff"},
 	}
 
-	codec := MustCodec[PriceUint64[Fraction5]]()
+	codec := testCodec[PriceUint64[Fraction5]]()
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			value := codec.FromUnits(tt.value)
@@ -127,7 +127,7 @@ func TestCBORUint256PreferredSerialization(t *testing.T) {
 		},
 	}
 
-	codec := MustCodec[AmountUint256[Fraction18]]()
+	codec := testCodec[AmountUint256[Fraction18]]()
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			value := codec.FromUnits(tt.units)
@@ -149,7 +149,7 @@ func TestCBORUint256PreferredSerialization(t *testing.T) {
 func TestCBORRoundTripsEveryUint256MagnitudeWidth(t *testing.T) {
 	t.Parallel()
 
-	codec := MustCodec[AmountUint256[Fraction18]]()
+	codec := testCodec[AmountUint256[Fraction18]]()
 	for byteLen := 9; byteLen <= 32; byteLen++ {
 		var magnitude [32]byte
 		magnitude[len(magnitude)-byteLen] = 1
@@ -172,14 +172,14 @@ func TestCBORRoundTripsNativeWidthCrossProducts(t *testing.T) {
 	t.Parallel()
 
 	for units := 0; units <= math.MaxUint8; units++ {
-		assertCBORRoundTrip(t, MustCodec[PriceUint8[Fraction2]](), uint8(units))
+		assertCBORRoundTrip(t, testCodec[PriceUint8[Fraction2]](), uint8(units))
 	}
 
 	rng := rand.New(rand.NewSource(0xcb0_2026))
 	for range 10_000 {
-		assertCBORRoundTrip(t, MustCodec[PriceUint16[Fraction4]](), uint16(rng.Uint32()))
-		assertCBORRoundTrip(t, MustCodec[PriceUint32[Fraction9]](), rng.Uint32())
-		assertCBORRoundTrip(t, MustCodec[PriceUint64[Fraction19]](), rng.Uint64())
+		assertCBORRoundTrip(t, testCodec[PriceUint16[Fraction4]](), uint16(rng.Uint32()))
+		assertCBORRoundTrip(t, testCodec[PriceUint32[Fraction9]](), rng.Uint32())
+		assertCBORRoundTrip(t, testCodec[PriceUint64[Fraction19]](), rng.Uint64())
 	}
 }
 
@@ -231,7 +231,7 @@ func TestCBORRejectsNonDeterministicOrMalformedInput(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			value := MustCodec[AmountUint256[Fraction18]]().FromUnits(uint256.Int{42})
+			value := testCodec[AmountUint256[Fraction18]]().FromUnits(uint256.Int{42})
 			before := value
 			if err := value.UnmarshalCBOR(tt.wire); !errors.Is(err, tt.err) {
 				t.Fatalf("UnmarshalCBOR error = %v, want %v", err, tt.err)
@@ -258,8 +258,8 @@ func TestCBORRejectsUnsupportedFormatScale(t *testing.T) {
 func TestCBORToArrayInteroperabilityIsCompact(t *testing.T) {
 	t.Parallel()
 
-	price := MustCodec[PriceUint64[Fraction5]]().FromUnits(12_331_232)
-	amount := MustCodec[AmountUint256[Fraction18]]().FromUnits(uint256.Int{0, 1})
+	price := testCodec[PriceUint64[Fraction5]]().FromUnits(12_331_232)
+	amount := testCodec[AmountUint256[Fraction18]]().FromUnits(uint256.Int{0, 1})
 	original := cborQuote{Price: price, Amount: amount}
 
 	wire, err := cbor.Marshal(original)
@@ -286,7 +286,7 @@ func TestCBORToArrayInteroperabilityIsCompact(t *testing.T) {
 func TestCBORMarshalInterfacesUseCompactScalar(t *testing.T) {
 	t.Parallel()
 
-	value := MustCodec[PriceUint16[Fraction2]]().FromUnits(65_535)
+	value := testCodec[PriceUint16[Fraction2]]().FromUnits(65_535)
 	wire, err := value.MarshalCBOR()
 	if err != nil {
 		t.Fatal(err)
@@ -307,8 +307,8 @@ func TestCBORMarshalInterfacesUseCompactScalar(t *testing.T) {
 func TestCBORCarriesUnitsWhileTypeCarriesScale(t *testing.T) {
 	t.Parallel()
 
-	one := MustCodec[PriceUint64[Fraction1]]().FromUnits(123)
-	nine := MustCodec[PriceUint64[Fraction9]]().FromUnits(123)
+	one := testCodec[PriceUint64[Fraction1]]().FromUnits(123)
+	nine := testCodec[PriceUint64[Fraction9]]().FromUnits(123)
 	if got, want := hex.EncodeToString(one.AppendCBOR(nil)), hex.EncodeToString(nine.AppendCBOR(nil)); got != want {
 		t.Fatalf("equal units encoded differently: %s != %s", got, want)
 	}
@@ -320,7 +320,7 @@ func TestCBORCarriesUnitsWhileTypeCarriesScale(t *testing.T) {
 func TestUint256RuntimeCodecCBORRoundTrip(t *testing.T) {
 	t.Parallel()
 
-	codec := MustUint256Codec(18)
+	codec := testUint256Codec(18)
 	units := uint256.Int{1, 2, 3, 4}
 	var buffer [MaxCBORSize]byte
 	wire := codec.AppendCBOR(buffer[:0], units)

@@ -15,7 +15,7 @@ func FuzzPriceUint64Fraction9ParseRoundTrip(f *testing.F) {
 		f.Add(seed)
 	}
 
-	codec := MustCodec[PriceUint64[Fraction9]]()
+	codec := testCodec[PriceUint64[Fraction9]]()
 	f.Fuzz(func(t *testing.T, input string) {
 		value, err := codec.ParseCompact(input)
 		if err != nil {
@@ -34,7 +34,7 @@ func FuzzUint64UnitsRoundTrip(f *testing.F) {
 		f.Add(seed)
 	}
 
-	codec := MustCodec[PriceUint64[Fraction9]]()
+	codec := testCodec[PriceUint64[Fraction9]]()
 	f.Fuzz(func(t *testing.T, units uint64) {
 		value := codec.FromUnits(units)
 		round, err := codec.ParseCompact(value.String())
@@ -58,13 +58,13 @@ func FuzzNativeUnitWidthsRoundTrip(f *testing.F) {
 	f.Fuzz(func(t *testing.T, units uint64, width uint8) {
 		switch width % 4 {
 		case 0:
-			fuzzNativeUnitRoundTrip(t, MustCodec[PriceUint8[Fraction2]](), uint8(units))
+			fuzzNativeUnitRoundTrip(t, testCodec[PriceUint8[Fraction2]](), uint8(units))
 		case 1:
-			fuzzNativeUnitRoundTrip(t, MustCodec[PriceUint16[Fraction4]](), uint16(units))
+			fuzzNativeUnitRoundTrip(t, testCodec[PriceUint16[Fraction4]](), uint16(units))
 		case 2:
-			fuzzNativeUnitRoundTrip(t, MustCodec[PriceUint32[Fraction9]](), uint32(units))
+			fuzzNativeUnitRoundTrip(t, testCodec[PriceUint32[Fraction9]](), uint32(units))
 		case 3:
-			fuzzNativeUnitRoundTrip(t, MustCodec[PriceUint64[Fraction19]](), units)
+			fuzzNativeUnitRoundTrip(t, testCodec[PriceUint64[Fraction19]](), units)
 		}
 	})
 }
@@ -91,7 +91,7 @@ func FuzzUint256UnitsRoundTrip(f *testing.F) {
 		f.Add(seed[0], seed[1], seed[2], seed[3])
 	}
 
-	codec := MustCodec[uint256Scale18]()
+	codec := testCodec[uint256Scale18]()
 	f.Fuzz(func(t *testing.T, limb0, limb1, limb2, limb3 uint64) {
 		units := uint256.Int{limb0, limb1, limb2, limb3}
 		value := codec.FromUnits(units)
@@ -132,7 +132,7 @@ func FuzzCBORUint64RoundTrip(f *testing.F) {
 		f.Add(seed)
 	}
 
-	codec := MustCodec[PriceUint64[Fraction9]]()
+	codec := testCodec[PriceUint64[Fraction9]]()
 	f.Fuzz(func(t *testing.T, units uint64) {
 		value := codec.FromUnits(units)
 		var buffer [MaxCBORSize]byte
@@ -150,7 +150,7 @@ func FuzzCBORUint256RoundTrip(f *testing.F) {
 		f.Add(seed[0], seed[1], seed[2], seed[3])
 	}
 
-	codec := MustCodec[AmountUint256[Fraction18]]()
+	codec := testCodec[AmountUint256[Fraction18]]()
 	f.Fuzz(func(t *testing.T, limb0, limb1, limb2, limb3 uint64) {
 		units := uint256.Int{limb0, limb1, limb2, limb3}
 		value := codec.FromUnits(units)
@@ -177,7 +177,7 @@ func FuzzCBORDecoderAcceptsOnlyPreferredRoundTrips(f *testing.F) {
 		f.Add(seed)
 	}
 
-	codec := MustCodec[AmountUint256[Fraction18]]()
+	codec := testCodec[AmountUint256[Fraction18]]()
 	f.Fuzz(func(t *testing.T, raw []byte) {
 		value, err := codec.ParseCBOR(raw)
 		if err != nil {
@@ -205,7 +205,7 @@ func FuzzCBORFirstConsumesExactlyOnePreferredValue(f *testing.F) {
 		f.Add(seed)
 	}
 
-	codec := MustCodec[AmountUint256[Fraction18]]()
+	codec := testCodec[AmountUint256[Fraction18]]()
 	f.Fuzz(func(t *testing.T, raw []byte) {
 		value, rest, err := codec.ParseCBORFirst(raw)
 		if err != nil {

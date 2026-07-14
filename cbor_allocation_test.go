@@ -12,8 +12,8 @@ var (
 )
 
 func TestCBORHotPathAllocations(t *testing.T) {
-	nativeCodec := MustCodec[PriceUint64[Fraction5]]()
-	wideCodec := MustCodec[AmountUint256[Fraction18]]()
+	nativeCodec := testCodec[PriceUint64[Fraction5]]()
+	wideCodec := testCodec[AmountUint256[Fraction18]]()
 	native := nativeCodec.FromUnits(^uint64(0))
 	wide := wideCodec.FromUnits(uint256.Int{1, 2, 3, 4})
 	nativeWire := native.AppendCBOR(make([]byte, 0, MaxCBORSize))
@@ -41,7 +41,7 @@ func TestCBORHotPathAllocations(t *testing.T) {
 	assertAllocs(t, "codec parse CBOR uint256", 0, func() {
 		cborWideSink, allocationErrorSink = wideCodec.ParseCBOR(wideWire)
 	})
-	runtimeCodec := MustUint256Codec(18)
+	runtimeCodec := testUint256Codec(18)
 	assertAllocs(t, "runtime codec append CBOR uint256", 0, func() {
 		allocationBytesSink = runtimeCodec.AppendCBOR(buffer[:0], wide.Units())
 	})

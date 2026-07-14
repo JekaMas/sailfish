@@ -10,7 +10,7 @@ import (
 func TestCodecAPIAndSizes(t *testing.T) {
 	t.Parallel()
 
-	codec := MustCodec[PriceUint64[Fraction5]]()
+	codec := testCodec[PriceUint64[Fraction5]]()
 	value, err := codec.Parse("123.31232")
 	if err != nil || codec.Scale() != 5 || value.Units() != 12_331_232 {
 		t.Fatalf("codec = %v %d %d", err, codec.Scale(), value.Units())
@@ -41,14 +41,12 @@ func TestInvalidScaleCodec(t *testing.T) {
 	}
 }
 
-func TestUninitializedCodecPanics(t *testing.T) {
+func TestZeroCodecUsesCompileTimeScale(t *testing.T) {
 	t.Parallel()
 
-	defer func() {
-		if got := recover(); got != ErrUninitializedCodec {
-			t.Fatalf("panic = %#v, want %#v", got, ErrUninitializedCodec)
-		}
-	}()
 	var codec Codec[PriceUint64[Fraction5], uint64]
-	_, _ = codec.Parse("1.00000")
+	value, err := codec.Parse("1.00000")
+	if err != nil || codec.Scale() != 5 || value.Units() != 100_000 {
+		t.Fatalf("zero codec = %v, scale %d, units %d", err, codec.Scale(), value.Units())
+	}
 }

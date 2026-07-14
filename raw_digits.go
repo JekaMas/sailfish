@@ -29,6 +29,6 @@ func fillUnitDigits[U Unit](dst *[maxUnitDigits]byte, units U) int {
 		fillUnsigned256(dst[:digits], chunks, count, digits)
 		return digits
 	default:
-		panic("sailfish: unreachable unit type")
+		return 0
 	}
 }

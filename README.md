@@ -21,7 +21,10 @@ Sailfish requires Go 1.26.5 or newer.
 Select semantic kind, unit capacity, and fractional scale explicitly:
 
 ```go
-codec := sailfish.MustCodec[sailfish.PriceUint64[sailfish.Fraction5]]()
+codec, err := sailfish.NewCodec[sailfish.PriceUint64[sailfish.Fraction5]]()
+if err != nil {
+	return err
+}
 
 price, err := codec.Parse("123.31232")
 if err != nil {
@@ -55,7 +58,10 @@ Choose an explicit backend when a narrower range is part of the contract:
 type SmallPriceFormat = sailfish.PriceUint16[sailfish.Fraction2]
 type SmallPrice = sailfish.Decimal[SmallPriceFormat, uint16]
 
-codec := sailfish.MustCodec[SmallPriceFormat]()
+codec, err := sailfish.NewCodec[SmallPriceFormat]()
+if err != nil {
+	return err
+}
 price, err := codec.Parse("655.35")
 // codec.MaxIntegerDigits() == 3
 ```
@@ -96,7 +102,10 @@ The common 18-decimal on-chain amount is explicit:
 type AmountFormat = sailfish.AmountUint256[sailfish.Fraction18]
 type Amount = sailfish.Decimal[AmountFormat, uint256.Int]
 
-var amountCodec = sailfish.MustCodec[AmountFormat]()
+amountCodec, err := sailfish.NewCodec[AmountFormat]()
+if err != nil {
+	return err
+}
 ```
 
 The format selects semantic kind, fractional scale, and unit backend. The
@@ -107,7 +116,10 @@ When trusted venue metadata resolves a scale at runtime, use the concrete
 `Uint256Codec` to avoid generic venue dispatch:
 
 ```go
-codec := sailfish.MustUint256Codec(6)
+codec, err := sailfish.NewUint256Codec(6)
+if err != nil {
+	return err
+}
 
 var units uint256.Int
 if err := codec.ParseInto("123.456789", &units); err != "" {
@@ -280,6 +292,9 @@ const ErrSyntax Error = "sailfish: invalid syntax"
 ```
 
 They are comparable, allocation-free to return, and work with `errors.Is`.
+Sailfish does not expose panic-on-error constructors. Invalid scale and input
+configuration are returned as errors. A zero `Codec[V, U]` derives the valid
+compile-time venue scale; a zero `Uint256Codec` is the useful scale-0 codec.
 
 ## Range model
 

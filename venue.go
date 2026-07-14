@@ -74,7 +74,7 @@ func maxScale[U Unit]() int {
 	case uint256.Int:
 		return maxUint256Scale
 	default:
-		panic("sailfish: unreachable unit type")
+		return -1
 	}
 }
 
@@ -92,14 +92,11 @@ func unitDecimalDigits[U Unit]() int {
 	case uint256.Int:
 		return 78
 	default:
-		panic("sailfish: unreachable unit type")
+		return 0
 	}
 }
 
-func mustScale[V Venue[U], U Unit]() int {
-	scale, err := checkedScale[V, U]()
-	if err != "" {
-		panic(err)
-	}
+func scaleOf[V Venue[U], U Unit]() int {
+	scale, _ := checkedScale[V, U]()
 	return scale
 }

@@ -31,8 +31,8 @@ type cborBarOracle struct {
 }
 
 var (
-	cborBarPriceCodec  = MustCodec[PriceUint64[Fraction5]]()
-	cborBarAmountCodec = MustCodec[AmountUint256[Fraction18]]()
+	cborBarPriceCodec  = testCodec[PriceUint64[Fraction5]]()
+	cborBarAmountCodec = testCodec[AmountUint256[Fraction18]]()
 )
 
 func TestCBORFirstDecodesManualPositionalFields(t *testing.T) {
@@ -93,7 +93,7 @@ func TestCBORManualBarMatchesFxamackerToArray(t *testing.T) {
 func TestCBORFirstRejectsMalformedAndOverflowWithoutConsuming(t *testing.T) {
 	t.Parallel()
 
-	nativeCodec := MustCodec[PriceUint8[Fraction1]]()
+	nativeCodec := testCodec[PriceUint8[Fraction1]]()
 	for _, tt := range []struct {
 		name string
 		wire []byte
@@ -119,7 +119,7 @@ func TestCBORFirstRejectsMalformedAndOverflowWithoutConsuming(t *testing.T) {
 func TestUint256CodecCBORFirstAndInto(t *testing.T) {
 	t.Parallel()
 
-	codec := MustUint256Codec(18)
+	codec := testUint256Codec(18)
 	want := uint256.Int{1, 2, 3, 4}
 	var buffer [MaxCBORSize + 1]byte
 	wire := codec.AppendCBOR(buffer[:0], want)

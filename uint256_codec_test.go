@@ -36,7 +36,7 @@ func TestUint256CodecRuntimeScaleAPI(t *testing.T) {
 func TestUint256CodecParseIntoPreservesDestinationOnError(t *testing.T) {
 	t.Parallel()
 
-	codec := MustUint256Codec(6)
+	codec := testUint256Codec(6)
 	destination := uint256.Int{9, 8, 7, 6}
 	want := destination
 	if err := codec.ParseInto("bad", &destination); err != ErrSyntax {
@@ -66,13 +66,14 @@ func TestUint256CodecScaleValidation(t *testing.T) {
 		t.Fatalf("scale 78 error = %v", err)
 	}
 
-	defer func() {
-		if recovered := recover(); recovered != ErrUninitializedCodec {
-			t.Fatalf("zero codec panic = %v", recovered)
-		}
-	}()
 	var zero Uint256Codec
-	_ = zero.Scale()
+	if zero.Scale() != 0 {
+		t.Fatalf("zero codec scale = %d", zero.Scale())
+	}
+	value, parseErr := zero.Parse("123")
+	if parseErr != "" || value != (uint256.Int{123}) {
+		t.Fatalf("zero codec parse = %#v, %v", value, parseErr)
+	}
 }
 
 func TestUint256CodecRoundTripAllScalesAndLimbs(t *testing.T) {
@@ -80,7 +81,7 @@ func TestUint256CodecRoundTripAllScalesAndLimbs(t *testing.T) {
 
 	random := rand.New(rand.NewPCG(0x51a1f15, 0xc0dec))
 	for scale := 0; scale <= maxUint256Scale; scale++ {
-		codec := MustUint256Codec(Notion(scale))
+		codec := testUint256Codec(Notion(scale))
 		for range 256 {
 			want := uint256.Int{
 				random.Uint64(), random.Uint64(), random.Uint64(), random.Uint64(),
@@ -95,7 +96,7 @@ func TestUint256CodecRoundTripAllScalesAndLimbs(t *testing.T) {
 }
 
 func TestUint256CodecAllocations(t *testing.T) {
-	codec := MustUint256Codec(6)
+	codec := testUint256Codec(6)
 	buffer := make([]byte, 0, 32)
 	var value uint256.Int
 

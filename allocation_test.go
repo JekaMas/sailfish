@@ -20,18 +20,18 @@ var (
 )
 
 func TestHotPathAllocations(t *testing.T) {
-	priceCodec := MustCodec[PriceUint64[Fraction5]]()
-	wideCodec := MustCodec[uint256Scale18]()
+	priceCodec := testCodec[PriceUint64[Fraction5]]()
+	wideCodec := testCodec[uint256Scale18]()
 	priceBytes := []byte("123.31232")
 	appendBuffer := make([]byte, 0, 96)
 	priceRetained, _ := priceCodec.Parse("123.31232")
 	priceFromUnits := priceCodec.FromUnits(12_331_232)
 	priceDelta := priceCodec.FromUnits(1)
 	wideFromUnits := wideCodec.FromUnits(uint256.Int{1, 2, 3, 4})
-	otherScale := MustCodec[uint256Scale37]().FromUnits(uint256.Int{5, 6, 7, 8})
-	uint8Codec := MustCodec[PriceUint8[Fraction1]]()
-	uint16Codec := MustCodec[PriceUint16[Fraction2]]()
-	uint32Codec := MustCodec[PriceUint32[Fraction5]]()
+	otherScale := testCodec[uint256Scale37]().FromUnits(uint256.Int{5, 6, 7, 8})
+	uint8Codec := testCodec[PriceUint8[Fraction1]]()
+	uint16Codec := testCodec[PriceUint16[Fraction2]]()
+	uint32Codec := testCodec[PriceUint32[Fraction5]]()
 
 	assertAllocs(t, "parse canonical uint64", 0, func() {
 		allocationPriceSink, _ = priceCodec.Parse("123.31232")

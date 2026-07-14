@@ -15,7 +15,6 @@ const (
 	ErrScale                Error = "sailfish: scale is unsupported by unit type"
 	ErrOverflow             Error = "sailfish: addition overflow"
 	ErrUnderflow            Error = "sailfish: subtraction underflow"
-	ErrUninitializedCodec   Error = "sailfish: uninitialized codec"
 	ErrNilDestination       Error = "sailfish: nil destination"
 	ErrCBORSyntax           Error = "sailfish: invalid CBOR"
 	ErrCBORNonDeterministic Error = "sailfish: non-deterministic CBOR"
@@ -31,7 +30,6 @@ var (
 	boxedErrScale                error = ErrScale
 	boxedErrOverflow             error = ErrOverflow
 	boxedErrUnderflow            error = ErrUnderflow
-	boxedErrUninitializedCodec   error = ErrUninitializedCodec
 	boxedErrNilDestination       error = ErrNilDestination
 	boxedErrCBORSyntax           error = ErrCBORSyntax
 	boxedErrCBORNonDeterministic error = ErrCBORNonDeterministic
@@ -53,8 +51,6 @@ func boxedError(err Error) error {
 		return boxedErrOverflow
 	case ErrUnderflow:
 		return boxedErrUnderflow
-	case ErrUninitializedCodec:
-		return boxedErrUninitializedCodec
 	case ErrNilDestination:
 		return boxedErrNilDestination
 	case ErrCBORSyntax:

@@ -43,3 +43,13 @@ type wide18 = Decimal[uint256Scale18, uint256.Int]
 
 const maxUint256Decimal = "115792089237316195423570985008687907853269984665640564039457584007913129639935"
 const maxUint256PlusOne = "115792089237316195423570985008687907853269984665640564039457584007913129639936"
+
+func testCodec[V Venue[U], U Unit]() Codec[V, U] {
+	codec, _ := NewCodec[V]()
+	return codec
+}
+
+func testUint256Codec(scale Notion) Uint256Codec {
+	codec, _ := NewUint256Codec(scale)
+	return codec
+}

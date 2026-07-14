@@ -61,7 +61,7 @@ func TestJSONRejectsNonStringAndInvalidDecimal(t *testing.T) {
 func TestAppendTextAndJSON(t *testing.T) {
 	t.Parallel()
 
-	value := MustCodec[PriceUint64[Fraction5]]().FromUnits(1_230_000)
+	value := testCodec[PriceUint64[Fraction5]]().FromUnits(1_230_000)
 	text, err := value.AppendText(make([]byte, 0, 16))
 	if err != nil || string(text) != "12.30000" {
 		t.Fatalf("AppendText = %q, %v", text, err)

@@ -41,16 +41,16 @@ func TestDecimalStructLayoutIsPaddingMinimal(t *testing.T) {
 func TestCodecAndFormatLayoutsRemainMinimal(t *testing.T) {
 	t.Parallel()
 
-	if size := unsafe.Sizeof(MustCodec[PriceUint64[Fraction5]]()); size != 1 {
+	if size := unsafe.Sizeof(testCodec[PriceUint64[Fraction5]]()); size != 1 {
 		t.Fatalf("Codec size = %d, want 1", size)
 	}
-	if align := unsafe.Alignof(MustCodec[PriceUint64[Fraction5]]()); align != 1 {
+	if align := unsafe.Alignof(testCodec[PriceUint64[Fraction5]]()); align != 1 {
 		t.Fatalf("Codec alignment = %d, want 1", align)
 	}
 	if size := unsafe.Sizeof(PriceUint64[Fraction5]{}); size != 0 {
 		t.Fatalf("format size = %d, want 0", size)
 	}
-	if size := unsafe.Sizeof(MustUint256Codec(18)); size != 1 {
+	if size := unsafe.Sizeof(testUint256Codec(18)); size != 1 {
 		t.Fatalf("Uint256Codec size = %d, want 1", size)
 	}
 }

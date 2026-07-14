@@ -37,7 +37,8 @@ func addUnits[U Unit](a, b U) (U, bool) {
 		result[3], carry = bits.Add64(left[3], right[3], carry)
 		return any(result).(U), carry != 0
 	default:
-		panic("sailfish: unreachable unit type")
+		var zero U
+		return zero, true
 	}
 }
 
@@ -66,6 +67,7 @@ func subUnits[U Unit](a, b U) (U, bool) {
 		result[3], borrow = bits.Sub64(left[3], right[3], borrow)
 		return any(result).(U), borrow != 0
 	default:
-		panic("sailfish: unreachable unit type")
+		var zero U
+		return zero, true
 	}
 }

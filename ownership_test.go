@@ -75,7 +75,7 @@ func TestNoOpMutationPreservesRepresentation(t *testing.T) {
 func TestCanonicalReturnsIndependentCopy(t *testing.T) {
 	t.Parallel()
 
-	codec := MustCodec[PriceUint64[Fraction5]]()
+	codec := testCodec[PriceUint64[Fraction5]]()
 	original := codec.FromUnits(12_000_000)
 	canonical := original.Canonical()
 	if original.HasRepresentation() || !canonical.HasRepresentation() {

@@ -91,7 +91,7 @@ func TestNarrowUnitEncodingRoundTrips(t *testing.T) {
 	type payload struct {
 		Price Decimal[PriceUint16[Fraction2], uint16] `json:"price"`
 	}
-	original := payload{Price: MustCodec[PriceUint16[Fraction2]]().FromUnits(65_535)}
+	original := payload{Price: testCodec[PriceUint16[Fraction2]]().FromUnits(65_535)}
 	wire, err := json.Marshal(original)
 	if err != nil {
 		t.Fatal(err)
@@ -116,11 +116,11 @@ func TestCodecReportsBackendIntegerCapacity(t *testing.T) {
 		got  int
 		want int
 	}{
-		{name: "uint8 scale1", got: MustCodec[PriceUint8[Fraction1]]().MaxIntegerDigits(), want: 2},
-		{name: "uint16 scale2", got: MustCodec[PriceUint16[Fraction2]]().MaxIntegerDigits(), want: 3},
-		{name: "uint32 scale5", got: MustCodec[PriceUint32[Fraction5]]().MaxIntegerDigits(), want: 5},
-		{name: "uint64 scale9", got: MustCodec[PriceUint64[Fraction9]]().MaxIntegerDigits(), want: 11},
-		{name: "uint256 scale18", got: MustCodec[AmountUint256[Fraction18]]().MaxIntegerDigits(), want: 60},
+		{name: "uint8 scale1", got: testCodec[PriceUint8[Fraction1]]().MaxIntegerDigits(), want: 2},
+		{name: "uint16 scale2", got: testCodec[PriceUint16[Fraction2]]().MaxIntegerDigits(), want: 3},
+		{name: "uint32 scale5", got: testCodec[PriceUint32[Fraction5]]().MaxIntegerDigits(), want: 5},
+		{name: "uint64 scale9", got: testCodec[PriceUint64[Fraction9]]().MaxIntegerDigits(), want: 11},
+		{name: "uint256 scale18", got: testCodec[AmountUint256[Fraction18]]().MaxIntegerDigits(), want: 60},
 	}
 	for _, tt := range tests {
 		if tt.got != tt.want {
@@ -132,9 +132,9 @@ func TestCodecReportsBackendIntegerCapacity(t *testing.T) {
 func TestNarrowUnitArithmeticOverflow(t *testing.T) {
 	t.Parallel()
 
-	assertNarrowArithmetic(t, MustCodec[PriceUint8[Fraction1]](), uint8(255))
-	assertNarrowArithmetic(t, MustCodec[PriceUint16[Fraction2]](), uint16(65_535))
-	assertNarrowArithmetic(t, MustCodec[PriceUint32[Fraction5]](), ^uint32(0))
+	assertNarrowArithmetic(t, testCodec[PriceUint8[Fraction1]](), uint8(255))
+	assertNarrowArithmetic(t, testCodec[PriceUint16[Fraction2]](), uint16(65_535))
+	assertNarrowArithmetic(t, testCodec[PriceUint32[Fraction5]](), ^uint32(0))
 }
 
 func assertNarrowArithmetic[V Venue[U], U NativeUnit](t *testing.T, codec Codec[V, U], maxUnits U) {
@@ -155,15 +155,15 @@ func TestNarrowUnitRoundTrips(t *testing.T) {
 	t.Parallel()
 
 	for value := 0; value <= 255; value++ {
-		assertUnitRoundTrip(t, MustCodec[PriceUint8[Fraction0]](), uint8(value))
-		assertUnitRoundTrip(t, MustCodec[PriceUint8[Fraction1]](), uint8(value))
-		assertUnitRoundTrip(t, MustCodec[PriceUint8[Fraction2]](), uint8(value))
+		assertUnitRoundTrip(t, testCodec[PriceUint8[Fraction0]](), uint8(value))
+		assertUnitRoundTrip(t, testCodec[PriceUint8[Fraction1]](), uint8(value))
+		assertUnitRoundTrip(t, testCodec[PriceUint8[Fraction2]](), uint8(value))
 	}
 
 	rng := rand.New(rand.NewSource(0x51a1f15))
 	for range 10_000 {
-		assertUnitRoundTrip(t, MustCodec[PriceUint16[Fraction4]](), uint16(rng.Uint32()))
-		assertUnitRoundTrip(t, MustCodec[PriceUint32[Fraction9]](), rng.Uint32())
+		assertUnitRoundTrip(t, testCodec[PriceUint16[Fraction4]](), uint16(rng.Uint32()))
+		assertUnitRoundTrip(t, testCodec[PriceUint32[Fraction9]](), rng.Uint32())
 	}
 }
 
@@ -214,7 +214,7 @@ func TestNarrowUnitsDoNotShrinkDecimalWithRetainedString(t *testing.T) {
 	if formatSize := unsafe.Sizeof(PriceUint16[Fraction2]{}); formatSize != 0 {
 		t.Fatalf("generic format size = %d, want 0", formatSize)
 	}
-	if codecSize := unsafe.Sizeof(MustCodec[PriceUint16[Fraction2]]()); codecSize != 1 {
+	if codecSize := unsafe.Sizeof(testCodec[PriceUint16[Fraction2]]()); codecSize != 1 {
 		t.Fatalf("generic codec size = %d, want 1", codecSize)
 	}
 }

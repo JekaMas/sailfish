@@ -21,7 +21,7 @@ func TestPublicAPITypeInference(t *testing.T) {
 		t.Fatal(price.Units())
 	}
 
-	smallCodec := sailfish.MustCodec[sailfish.PriceUint16[sailfish.Fraction2]]()
+	smallCodec := requireCodec[sailfish.PriceUint16[sailfish.Fraction2]](t)
 	small, err := smallCodec.Parse("655.35")
 	if err != nil {
 		t.Fatal(err)
@@ -31,7 +31,7 @@ func TestPublicAPITypeInference(t *testing.T) {
 		t.Fatal(small.Units(), smallCodec.MaxIntegerDigits())
 	}
 
-	codec := sailfish.MustCodec[sailfish.AmountUint256[sailfish.Fraction18]]()
+	codec := requireCodec[sailfish.AmountUint256[sailfish.Fraction18]](t)
 	amount, err := codec.Parse("1.000000000000000001")
 	if err != nil {
 		t.Fatal(err)
@@ -41,7 +41,7 @@ func TestPublicAPITypeInference(t *testing.T) {
 		t.Fatal(amount.Units())
 	}
 
-	runtimeCodec := sailfish.MustUint256Codec(6)
+	runtimeCodec := requireUint256Codec(t, 6)
 	var runtimeUnits uint256.Int
 	if parseErr := runtimeCodec.ParseInto("123.456789", &runtimeUnits); parseErr != "" {
 		t.Fatal(parseErr)
@@ -60,7 +60,7 @@ func TestPublicCBORToArrayAPI(t *testing.T) {
 		Price sailfish.Decimal[sailfish.PriceUint64[sailfish.Fraction5], uint64]
 	}
 
-	codec := sailfish.MustCodec[sailfish.PriceUint64[sailfish.Fraction5]]()
+	codec := requireCodec[sailfish.PriceUint64[sailfish.Fraction5]](t)
 	original := quote{Price: codec.FromUnits(12_331_232)}
 	wire, err := cbor.Marshal(original)
 	if err != nil {
@@ -93,4 +93,22 @@ func acceptSmallPrice(sailfish.Decimal[sailfish.PriceUint16[sailfish.Fraction2],
 func acceptAmountUint256Fraction18(
 	sailfish.Decimal[sailfish.AmountUint256[sailfish.Fraction18], uint256.Int],
 ) {
+}
+
+func requireCodec[V sailfish.Venue[U], U sailfish.Unit](t *testing.T) sailfish.Codec[V, U] {
+	t.Helper()
+	codec, err := sailfish.NewCodec[V]()
+	if err != nil {
+		t.Fatal(err)
+	}
+	return codec
+}
+
+func requireUint256Codec(t *testing.T, scale sailfish.Notion) sailfish.Uint256Codec {
+	t.Helper()
+	codec, err := sailfish.NewUint256Codec(scale)
+	if err != nil {
+		t.Fatal(err)
+	}
+	return codec
 }

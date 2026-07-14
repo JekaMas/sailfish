@@ -24,7 +24,7 @@ func TestUint64Arithmetic(t *testing.T) {
 	}
 
 	max, _ := NewFromUnits[PriceUint64[Fraction5]](uint64(math.MaxUint64))
-	one := MustCodec[PriceUint64[Fraction5]]().FromUnits(1)
+	one := testCodec[PriceUint64[Fraction5]]().FromUnits(1)
 	wrapped, overflow := max.AddOverflow(one)
 	if !overflow || !wrapped.IsZero() {
 		t.Fatalf("wrapped=%d overflow=%v", wrapped.Units(), overflow)
@@ -34,7 +34,7 @@ func TestUint64Arithmetic(t *testing.T) {
 		t.Fatal("overflowing AddAssign changed receiver")
 	}
 
-	zero := MustCodec[PriceUint64[Fraction5]]().FromUnits(0)
+	zero := testCodec[PriceUint64[Fraction5]]().FromUnits(0)
 	if _, err := zero.Sub(one); !errors.Is(err, ErrUnderflow) {
 		t.Fatalf("underflow error = %v", err)
 	}
@@ -43,7 +43,7 @@ func TestUint64Arithmetic(t *testing.T) {
 func TestUint256Arithmetic(t *testing.T) {
 	t.Parallel()
 
-	codec := MustCodec[uint256Scale0]()
+	codec := testCodec[uint256Scale0]()
 	max := codec.FromUnits(uint256.Int{math.MaxUint64, math.MaxUint64, math.MaxUint64, math.MaxUint64})
 	one := codec.FromUnits(uint256.Int{1})
 	wrapped, overflow := max.AddOverflow(one)

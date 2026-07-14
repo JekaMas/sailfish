@@ -10,7 +10,8 @@ import "github.com/holiman/uint256"
 // dispatch and return Error directly so successful and rejected parses remain
 // allocation-free.
 //
-// The one-byte scalePlusOne encoding reserves zero for an uninitialized codec.
+// The zero value is a valid scale-0 codec. The one-byte scalePlusOne encoding
+// stores nonzero configured scales without widening the type.
 type Uint256Codec struct {
 	scalePlusOne uint8
 }
@@ -23,18 +24,9 @@ func NewUint256Codec(scale Notion) (Uint256Codec, error) {
 	return Uint256Codec{scalePlusOne: uint8(scale + 1)}, nil
 }
 
-// MustUint256Codec is NewUint256Codec with panic-on-invalid configuration.
-func MustUint256Codec(scale Notion) Uint256Codec {
-	codec, err := NewUint256Codec(scale)
-	if err != nil {
-		panic(err)
-	}
-	return codec
-}
-
 func (c Uint256Codec) scale() int {
 	if c.scalePlusOne == 0 {
-		panic(boxedErrUninitializedCodec)
+		return 0
 	}
 	return int(c.scalePlusOne - 1)
 }

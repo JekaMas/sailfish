@@ -25,7 +25,6 @@ const (
 // encoded as its scaled unsigned integer. Scale and retained source text are
 // type/cache metadata and are intentionally absent from the wire format.
 func (d Decimal[V, U]) CBORLen() int {
-	_ = mustScale[V, U]()
 	var venue V
 	return venue.unitCBORLen(d.units)
 }
@@ -35,7 +34,6 @@ func (d Decimal[V, U]) CBORLen() int {
 // cbor:",toarray" struct, the result is a scalar array element rather than a
 // redundant nested one-element array.
 func (d Decimal[V, U]) AppendCBOR(dst []byte) []byte {
-	_ = mustScale[V, U]()
 	var venue V
 	return venue.unitAppendCBOR(dst, d.units)
 }

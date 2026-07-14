@@ -197,7 +197,7 @@ func TestPriceUint64Fractions(t *testing.T) {
 
 func mustText[V Venue[U], U Unit](d Decimal[V, U], err error) string {
 	if err != nil {
-		panic(err)
+		return err.Error()
 	}
 	return d.String()
 }

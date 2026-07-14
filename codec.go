@@ -1,9 +1,11 @@
 package sailfish
 
 // Codec validates a venue once and carries its scale through repeated
-// parse/format operations. It is the preferred hot-loop API.
+// parse/format operations. It is the preferred hot-loop API. Its zero value is
+// usable and derives scale from the compile-time venue; NewCodec validates and
+// caches that scale for the hot path.
 //
-// The one-byte scalePlusOne encoding reserves zero for an uninitialized codec.
+// The one-byte scalePlusOne encoding reserves zero for zero-value derivation.
 type Codec[V Venue[U], U Unit] struct {
 	scalePlusOne uint8
 }
@@ -16,17 +18,10 @@ func NewCodec[V Venue[U], U Unit]() (Codec[V, U], error) {
 	return Codec[V, U]{scalePlusOne: uint8(scale + 1)}, nil
 }
 
-func MustCodec[V Venue[U], U Unit]() Codec[V, U] {
-	codec, err := NewCodec[V]()
-	if err != nil {
-		panic(err)
-	}
-	return codec
-}
-
 func (c Codec[V, U]) scale() int {
 	if c.scalePlusOne == 0 {
-		panic(boxedErrUninitializedCodec)
+		scale, _ := checkedScale[V, U]()
+		return scale
 	}
 	return int(c.scalePlusOne - 1)
 }

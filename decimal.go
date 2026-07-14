@@ -113,7 +113,7 @@ func (d Decimal[V, U]) Len() int {
 		return len(d.representation)
 	}
 	var venue V
-	return venue.unitLen(d.units, mustScale[V, U]())
+	return venue.unitLen(d.units, scaleOf[V, U]())
 }
 
 // AppendTo appends canonical fixed-scale text. It allocates only when dst has
@@ -123,7 +123,7 @@ func (d Decimal[V, U]) AppendTo(dst []byte) []byte {
 		return append(dst, d.representation...)
 	}
 	var venue V
-	return venue.unitAppend(dst, d.units, mustScale[V, U]())
+	return venue.unitAppend(dst, d.units, scaleOf[V, U]())
 }
 
 // AppendJSON appends a quoted JSON decimal string. Decimal text contains only
@@ -141,7 +141,7 @@ func (d Decimal[V, U]) String() string {
 		return d.representation
 	}
 	var venue V
-	return venue.unitString(d.units, mustScale[V, U]())
+	return venue.unitString(d.units, scaleOf[V, U]())
 }
 
 // Canonical returns a copy retaining canonical text. It never mutates shared
@@ -246,8 +246,8 @@ func Compare[VA Venue[UA], UA Unit, VB Venue[UB], UB Unit](
 		}
 	}
 
-	as := mustScale[VA, UA]()
-	bs := mustScale[VB, UB]()
+	as := scaleOf[VA, UA]()
+	bs := scaleOf[VB, UB]()
 
 	var abuf [maxUnitDigits]byte
 	var bbuf [maxUnitDigits]byte

@@ -8,7 +8,10 @@ import (
 )
 
 func Example() {
-	codec := sailfish.MustCodec[sailfish.PriceUint64[sailfish.Fraction5]]()
+	codec, err := sailfish.NewCodec[sailfish.PriceUint64[sailfish.Fraction5]]()
+	if err != nil {
+		return
+	}
 	price, _ := codec.Parse("123.31232")
 	delta, _ := codec.Parse("0.00001")
 
@@ -21,10 +24,13 @@ func Example() {
 }
 
 func ExampleUint256Codec() {
-	codec := sailfish.MustUint256Codec(6)
+	codec, err := sailfish.NewUint256Codec(6)
+	if err != nil {
+		return
+	}
 	var units uint256.Int
-	if err := codec.ParseInto("123.456789", &units); err != "" {
-		panic(err)
+	if parseErr := codec.ParseInto("123.456789", &units); parseErr != "" {
+		return
 	}
 
 	dst := codec.AppendTo(make([]byte, 0, 32), units)
