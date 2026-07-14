@@ -31,6 +31,161 @@ func BenchmarkCodecParsePriceScales(b *testing.B) {
 	benchmarkParsePrice[PriceScale9](b, "scale_9", "1234567890.123456789")
 }
 
+// BenchmarkGenericFormatMetadata measures generic kind/scale composition
+// against the concrete built-in format. Codec caches scale metadata, while
+// one-shot constructors and direct Decimal methods resolve it on every call.
+func BenchmarkGenericFormatMetadata(b *testing.B) {
+	b.Run("new/generic_format", func(b *testing.B) {
+		b.ReportAllocs()
+		for b.Loop() {
+			value, _ := New[PriceUint64[Fraction5]]("123.31232")
+			_ = value
+		}
+	})
+	b.Run("new/builtin_concrete", func(b *testing.B) {
+		b.ReportAllocs()
+		for b.Loop() {
+			value, _ := New[PriceScale5]("123.31232")
+			_ = value
+		}
+	})
+
+	genericCodec := MustCodec[PriceUint64[Fraction5]]()
+	builtinCodec := MustCodec[PriceScale5]()
+	b.Run("codec_parse/generic_format", func(b *testing.B) {
+		b.ReportAllocs()
+		for b.Loop() {
+			value, _ := genericCodec.Parse("123.31232")
+			_ = value
+		}
+	})
+	b.Run("codec_parse/builtin_concrete", func(b *testing.B) {
+		b.ReportAllocs()
+		for b.Loop() {
+			value, _ := builtinCodec.Parse("123.31232")
+			_ = value
+		}
+	})
+
+	genericValue := genericCodec.FromUnits(12_331_232)
+	builtinValue := builtinCodec.FromUnits(12_331_232)
+	buffer := make([]byte, 0, 32)
+	b.Run("decimal_append/generic_format", func(b *testing.B) {
+		b.ReportAllocs()
+		for b.Loop() {
+			out := genericValue.AppendTo(buffer[:0])
+			_ = out
+		}
+	})
+	b.Run("decimal_append/builtin_concrete", func(b *testing.B) {
+		b.ReportAllocs()
+		for b.Loop() {
+			out := builtinValue.AppendTo(buffer[:0])
+			_ = out
+		}
+	})
+}
+
+// BenchmarkGenericBackendDispatch preserves the rejected design comparison.
+// Selecting parse operations through a generic backend type switch is
+// measurably slower than embedding a concrete zero-sized provider in a format.
+func BenchmarkGenericBackendDispatch(b *testing.B) {
+	b.Run("uint64/concrete_provider", func(b *testing.B) {
+		provider := Uint64Units{}
+		b.ReportAllocs()
+		for b.Loop() {
+			benchUint64Sink, _, _ = provider.unitParseString("123.31232", 5)
+		}
+	})
+	b.Run("uint64/generic_function", func(b *testing.B) {
+		b.ReportAllocs()
+		for b.Loop() {
+			benchUint64Sink, _, _ = benchmarkGenericBackendParse[uint64]("123.31232", 5)
+		}
+	})
+	b.Run("uint64/generic_method", func(b *testing.B) {
+		provider := benchmarkGenericBackend[uint64]{}
+		b.ReportAllocs()
+		for b.Loop() {
+			benchUint64Sink, _, _ = provider.parse("123.31232", 5)
+		}
+	})
+
+	b.Run("uint256/concrete_provider", func(b *testing.B) {
+		provider := Uint256Units{}
+		b.ReportAllocs()
+		for b.Loop() {
+			benchU256Sink, _, _ = provider.unitParseString("123.456789", 6)
+		}
+	})
+	b.Run("uint256/generic_function", func(b *testing.B) {
+		b.ReportAllocs()
+		for b.Loop() {
+			benchU256Sink, _, _ = benchmarkGenericBackendParse[uint256.Int]("123.456789", 6)
+		}
+	})
+	b.Run("uint256/generic_method", func(b *testing.B) {
+		provider := benchmarkGenericBackend[uint256.Int]{}
+		b.ReportAllocs()
+		for b.Loop() {
+			benchU256Sink, _, _ = provider.parse("123.456789", 6)
+		}
+	})
+}
+
+type benchmarkGenericBackend[U Unit] struct{}
+
+func (benchmarkGenericBackend[U]) parse(input string, scale int) (U, bool, Error) {
+	return benchmarkGenericBackendParse[U](input, scale)
+}
+
+func benchmarkGenericBackendParse[U Unit](input string, scale int) (U, bool, Error) {
+	var zero U
+	switch any(zero).(type) {
+	case uint64:
+		value, canonical, err := parseUint64(input, scale)
+		return any(value).(U), canonical, err
+	case uint256.Int:
+		value, canonical, err := parseUint256(input, scale)
+		return any(value).(U), canonical, err
+	default:
+		panic("unsupported benchmark backend")
+	}
+}
+
+func BenchmarkExplicitUnitWidths(b *testing.B) {
+	benchmarkUnitWidth(b, "uint8", MustCodec[PriceUint8[Fraction1]](), uint8(255), "25.5")
+	benchmarkUnitWidth(b, "uint16", MustCodec[PriceUint16[Fraction1]](), uint16(255), "25.5")
+	benchmarkUnitWidth(b, "uint32", MustCodec[PriceUint32[Fraction1]](), uint32(255), "25.5")
+	benchmarkUnitWidth(b, "uint64", MustCodec[PriceUint64[Fraction1]](), uint64(255), "25.5")
+}
+
+func benchmarkUnitWidth[V Venue[U], U Unit](
+	b *testing.B,
+	name string,
+	codec Codec[V, U],
+	units U,
+	input string,
+) {
+	b.Helper()
+	b.Run("parse/"+name, func(b *testing.B) {
+		b.ReportAllocs()
+		for b.Loop() {
+			value, _ := codec.ParseCompact(input)
+			_ = value
+		}
+	})
+	value := codec.FromUnits(units)
+	buffer := make([]byte, 0, 32)
+	b.Run("append/"+name, func(b *testing.B) {
+		b.ReportAllocs()
+		for b.Loop() {
+			out := codec.AppendTo(buffer[:0], value)
+			_ = out
+		}
+	})
+}
+
 func benchmarkParsePrice[V Venue[uint64]](b *testing.B, name, input string) {
 	b.Helper()
 	codec := MustCodec[V]()

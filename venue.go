@@ -9,7 +9,13 @@ type Notion uint8
 // Decimal.
 type Unit interface {
 	comparable
-	uint64 | uint256.Int
+	uint8 | uint16 | uint32 | uint64 | uint256.Int
+}
+
+// NativeUnit is the subset backed by Go's native unsigned integer types.
+type NativeUnit interface {
+	comparable
+	uint8 | uint16 | uint32 | uint64
 }
 
 // VenueScale supplies a fixed decimal scale. Implement it on a zero-sized
@@ -19,7 +25,7 @@ type VenueScale interface {
 }
 
 // unitSystem is intentionally sealed. A venue selects its unit backend by
-// embedding either Uint64Units or Uint256Units.
+// embedding one of the concrete Uint*Units providers.
 type unitSystem[U Unit] interface {
 	unitParseString(string, int) (U, bool, Error)
 	unitParseBytes([]byte, int) (U, bool, Error)
@@ -31,7 +37,8 @@ type unitSystem[U Unit] interface {
 
 // Venue binds a fixed scale to one unit backend.
 //
-// A custom uint64 venue is normally a zero-sized type:
+// A custom venue is normally a zero-sized type. Prefer the built-in
+// PriceUint* and AmountUint* formats when their semantic distinction applies:
 //
 //	type PriceScale5 struct{ sailfish.Uint64Units }
 //	func (PriceScale5) NotionScale() sailfish.Notion { return 5 }
@@ -52,10 +59,34 @@ func checkedScale[V Venue[U], U Unit]() (int, Error) {
 func maxScale[U Unit]() int {
 	var unit U
 	switch any(unit).(type) {
+	case uint8:
+		return maxUint8Scale
+	case uint16:
+		return maxUint16Scale
+	case uint32:
+		return maxUint32Scale
 	case uint64:
 		return maxUint64Scale
 	case uint256.Int:
 		return maxUint256Scale
+	default:
+		panic("sailfish: unreachable unit type")
+	}
+}
+
+func unitDecimalDigits[U Unit]() int {
+	var unit U
+	switch any(unit).(type) {
+	case uint8:
+		return 3
+	case uint16:
+		return 5
+	case uint32:
+		return 10
+	case uint64:
+		return 20
+	case uint256.Int:
+		return 78
 	default:
 		panic("sailfish: unreachable unit type")
 	}

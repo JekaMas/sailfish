@@ -7,10 +7,6 @@ import (
 	"github.com/holiman/uint256"
 )
 
-type amountScale18 struct{ sailfish.Uint256Units }
-
-func (amountScale18) NotionScale() sailfish.Notion { return 18 }
-
 func TestPublicAPITypeInference(t *testing.T) {
 	t.Parallel()
 
@@ -23,7 +19,17 @@ func TestPublicAPITypeInference(t *testing.T) {
 		t.Fatal(price.Units())
 	}
 
-	codec := sailfish.MustCodec[amountScale18]()
+	smallCodec := sailfish.MustCodec[sailfish.PriceUint16[sailfish.Fraction2]]()
+	small, err := smallCodec.Parse("655.35")
+	if err != nil {
+		t.Fatal(err)
+	}
+	acceptSmallPrice(small)
+	if small.Units() != 65_535 || smallCodec.MaxIntegerDigits() != 3 {
+		t.Fatal(small.Units(), smallCodec.MaxIntegerDigits())
+	}
+
+	codec := sailfish.MustCodec[sailfish.AmountScale18]()
 	amount, err := codec.Parse("1.000000000000000001")
 	if err != nil {
 		t.Fatal(err)
@@ -45,4 +51,6 @@ func TestPublicAPITypeInference(t *testing.T) {
 
 func acceptPriceScale5(sailfish.Decimal[sailfish.PriceScale5, uint64]) {}
 
-func acceptAmountScale18(sailfish.Decimal[amountScale18, uint256.Int]) {}
+func acceptSmallPrice(sailfish.Decimal[sailfish.PriceUint16[sailfish.Fraction2], uint16]) {}
+
+func acceptAmountScale18(sailfish.Decimal[sailfish.AmountScale18, uint256.Int]) {}

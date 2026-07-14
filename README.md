@@ -10,8 +10,9 @@ The numeric state is one scaled integer:
 value = units / 10^venue scale
 ```
 
-Supported unit backends are `uint64` and `uint256.Int`. The common parse,
-append, compare, and arithmetic paths perform no heap allocations.
+Supported unit backends are `uint8`, `uint16`, `uint32`, `uint64`, and
+`uint256.Int`. The common parse, append, compare, and arithmetic paths perform
+no heap allocations.
 
 Sailfish requires Go 1.26.5 or newer.
 
@@ -41,25 +42,67 @@ request = codec.AppendTo(request, price)
 // request == "123.31233"
 ```
 
-`PriceScale1` through `PriceScale9` use `uint64`. At scale 9, the maximum
-representable value is `18446744073.709551615`.
+`PriceScale1` through `PriceScale9` describe only the number of fractional
+digits. Their ready-to-use defaults retain the broad `uint64` range. At scale
+9, the maximum representable value is `18446744073.709551615`.
+
+## Scale and storage range
+
+Fractional scale and integer capacity are independent. A scale-1 price can be
+`25.5` or `1844674407370955161.5`; scale alone cannot select a safe backend.
+Choose an explicit backend when a narrower range is part of the contract:
+
+```go
+type SmallPriceFormat = sailfish.PriceUint16[sailfish.Fraction2]
+type SmallPrice = sailfish.Decimal[SmallPriceFormat, uint16]
+
+codec := sailfish.MustCodec[SmallPriceFormat]()
+price, err := codec.Parse("655.35")
+// codec.MaxIntegerDigits() == 3
+```
+
+The generic format families are:
+
+```text
+PriceUint8/16/32/64/256[FractionN]
+AmountUint8/16/32/64/256[FractionN]
+```
+
+Price and amount formats remain different types even when backend and scale
+match. `Fraction0` through `Fraction20` are provided; custom zero-sized scale
+types can represent other supported scales.
+
+| Backend | Maximum units | Maximum scale | Maximum decimal digits |
+|---|---:|---:|---:|
+| `uint8` | `255` | 2 | 3 |
+| `uint16` | `65535` | 4 | 5 |
+| `uint32` | `4294967295` | 9 | 10 |
+| `uint64` | `18446744073709551615` | 19 | 20 |
+| `uint256.Int` | `2^256 - 1` | 77 | 78 |
+
+`Codec.MaxIntegerDigits` reports the maximum integer-part digit count for a
+format. It is a capacity description, not a promise that every number with
+that many digits fits the binary backend.
+
+The built-in `PriceScale1` through `PriceScale9` remain concrete `uint64`
+formats. Benchmarks found generic scale metadata equivalent for cached
+`Codec.Parse`, but about 1 ns slower for one-shot `New` and direct
+`Decimal.AppendTo`. Explicit `PriceUint*` and `AmountUint*` formats provide
+generic composition without adding a generic backend dispatch.
 
 ## Wide values
 
-Define a zero-sized venue that embeds `Uint256Units`:
+The common 18-decimal on-chain amount is built in:
 
 ```go
-type AmountScale18 struct{ sailfish.Uint256Units }
+type Amount = sailfish.Decimal[sailfish.AmountScale18, uint256.Int]
 
-func (AmountScale18) NotionScale() sailfish.Notion { return 18 }
-
-type Amount = sailfish.Decimal[AmountScale18, uint256.Int]
-
-var amountCodec = sailfish.MustCodec[AmountScale18]()
+var amountCodec = sailfish.MustCodec[sailfish.AmountScale18]()
 ```
 
-The venue selects both scale and unit backend. The sealed unit-provider
-interface prevents accidentally pairing a venue with the wrong unit type.
+Other amount scales and ranges use the generic `AmountUint*` formats. The
+format selects semantic kind, fractional scale, and unit backend. The sealed
+unit-provider interface prevents pairing a format with the wrong unit type.
 
 When trusted venue metadata resolves a scale at runtime, use the concrete
 `Uint256Codec` to avoid generic venue dispatch:
@@ -133,6 +176,7 @@ There is no mutable lazy cache, so concurrent reads do not race.
 | Parse retained canonical text | `New`, `Codec.Parse` |
 | Parse without retaining input | `NewCompact`, `NewBytes`, codec equivalents |
 | Construct/read scaled units | `NewFromUnits`, `Codec.FromUnits`, `Units` |
+| Inspect backend integer capacity | `Codec.MaxIntegerDigits` |
 | Runtime-scale uint256 boundary | `Uint256Codec.Parse`, `ParseInto`, `AppendTo` |
 | Caller-buffer serialization | `AppendTo`, `AppendJSON`, `AppendText` |
 | Owned serialization | `String`, `MarshalText`, `MarshalJSON` |
@@ -163,18 +207,28 @@ They are comparable, allocation-free to return, and work with `errors.Is`.
 The complete digit sequence is one scaled integer, so scale consumes integer
 range.
 
-| Backend | Maximum scale | Storage |
+| Backend | Maximum scale | Raw units |
 |---|---:|---:|
+| `uint8` | 2 | 1 byte |
+| `uint16` | 4 | 2 bytes |
+| `uint32` | 9 | 4 bytes |
 | `uint64` | 19 | 8 bytes |
 | `uint256.Int` | 77 | 32 bytes |
 
 On 64-bit systems:
 
 ```text
+Decimal[..., uint8]        24 bytes
+Decimal[..., uint16]       24 bytes
+Decimal[..., uint32]       24 bytes
 Decimal[..., uint64]       24 bytes
 Decimal[..., uint256.Int]  48 bytes
 Codec                       1 byte
 ```
+
+Narrow native units enforce smaller ranges and reduce standalone/raw unit
+arrays. They do not reduce the current `Decimal` struct below 24 bytes because
+its retained immutable string header and alignment dominate the layout.
 
 ## Deliberate boundaries
 

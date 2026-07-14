@@ -5,7 +5,8 @@
 //
 //	value = units / 10^scale
 //
-// The package supports uint64 and uint256.Int units. Its hot parse, append,
-// compare, and arithmetic paths are allocation-free when caller-owned output
-// buffers have enough capacity.
+// The package supports uint8, uint16, uint32, uint64, and uint256.Int units.
+// Fractional scale and backend capacity are selected independently. Its hot
+// parse, append, compare, and arithmetic paths are allocation-free when
+// caller-owned output buffers have enough capacity.
 package sailfish

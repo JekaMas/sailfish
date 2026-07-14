@@ -8,6 +8,18 @@ const maxUnitDigits = 78
 // comparison uses it to avoid potentially overflowing rescaling multiplication.
 func fillUnitDigits[U Unit](dst *[maxUnitDigits]byte, units U) int {
 	switch value := any(units).(type) {
+	case uint8:
+		digits := decimalDigits64(uint64(value))
+		fillUnsigned64(dst[:digits], uint64(value))
+		return digits
+	case uint16:
+		digits := decimalDigits64(uint64(value))
+		fillUnsigned64(dst[:digits], uint64(value))
+		return digits
+	case uint32:
+		digits := decimalDigits64(uint64(value))
+		fillUnsigned64(dst[:digits], uint64(value))
+		return digits
 	case uint64:
 		digits := decimalDigits64(value)
 		fillUnsigned64(dst[:digits], value)

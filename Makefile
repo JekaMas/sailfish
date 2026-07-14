@@ -15,5 +15,6 @@ bench:
 fuzz:
 	GOWORK=off go test -run '^$$' -fuzz '^FuzzPriceScale9ParseRoundTrip$$' -fuzztime=5s
 	GOWORK=off go test -run '^$$' -fuzz '^FuzzUint64UnitsRoundTrip$$' -fuzztime=5s
+	GOWORK=off go test -run '^$$' -fuzz '^FuzzNativeUnitWidthsRoundTrip$$' -fuzztime=5s
 	GOWORK=off go test -run '^$$' -fuzz '^FuzzUint256UnitsRoundTrip$$' -fuzztime=5s
 	GOWORK=off go test -run '^$$' -fuzz '^FuzzJSONRoundTrip$$' -fuzztime=5s

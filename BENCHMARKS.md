@@ -34,6 +34,10 @@ GOWORK=off go test -run '^$' -gcflags='all=-m=2' 2> escape.txt
 GOMAXPROCS=1 GOWORK=off go test -run '^$' \
   -bench '^BenchmarkUint256MarketHotPaths$' \
   -benchmem -benchtime=1s -count=10
+
+GOMAXPROCS=1 GOWORK=off go test -run '^$' \
+  -bench 'Benchmark(GenericFormatMetadata|GenericBackendDispatch|ExplicitUnitWidths)$' \
+  -benchmem -benchtime=500ms -count=10
 ```
 
 ## Snapshot
@@ -61,6 +65,38 @@ GOMAXPROCS=1 GOWORK=off go test -run '^$' \
 | `AddAssign/uint64` | 4.48 ns/op | 0 | 0 |
 | `AddAssign/uint256` | 13.8 ns/op | 0 | 0 |
 | `ReferenceStrconvSplitUint64` | 19.3 ns/op | 0 | 0 |
+
+## Scale and backend composition
+
+Fractional scale does not imply storage width. Explicit `uint8`, `uint16`,
+`uint32`, and `uint64` formats all remain allocation-free:
+
+| Benchmark | Typical result | B/op | allocs/op |
+|---|---:|---:|---:|
+| `ExplicitUnitWidths/parse/uint8` | 8.86 ns/op | 0 | 0 |
+| `ExplicitUnitWidths/parse/uint16` | 8.64 ns/op | 0 | 0 |
+| `ExplicitUnitWidths/parse/uint32` | 8.65 ns/op | 0 | 0 |
+| `ExplicitUnitWidths/parse/uint64` | 7.66 ns/op | 0 | 0 |
+| `ExplicitUnitWidths/append/uint8` | 10.7 ns/op | 0 | 0 |
+| `ExplicitUnitWidths/append/uint16` | 10.7 ns/op | 0 | 0 |
+| `ExplicitUnitWidths/append/uint32` | 10.6 ns/op | 0 | 0 |
+| `ExplicitUnitWidths/append/uint64` | 10.8 ns/op | 0 | 0 |
+
+Generic semantic-kind/scale composition has no heap cost. Cached codecs also
+erase the measured scale-method difference, while direct methods retain a
+small generic metadata cost:
+
+| Operation | Generic format | Concrete built-in | B/op | allocs/op |
+|---|---:|---:|---:|---:|
+| `New` | 12.0 ns/op | 11.4 ns/op | 0 | 0 |
+| cached `Codec.Parse` | 9.70 ns/op | 9.77 ns/op | 0 | 0 |
+| direct `Decimal.AppendTo` | 16.8 ns/op | 16.0 ns/op | 0 | 0 |
+
+The public generic formats embed concrete backend providers. A measured
+alternative that selected backend operations through a generic type switch
+cost roughly 21-29% on parse/format microbenchmarks, so it was not adopted.
+The ready-to-use `PriceScale1` through `PriceScale9` and `AmountScale18` stay
+concrete to preserve the faster direct-call path.
 
 ## Go 1.26 review
 

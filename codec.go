@@ -33,6 +33,14 @@ func (c Codec[V, U]) scale() int {
 
 func (c Codec[V, U]) Scale() Notion { return Notion(c.scale()) }
 
+// MaxIntegerDigits reports how many decimal digits can occur before the point
+// in this backend's maximum value at the configured scale. It describes
+// capacity independently from fractional scale; it does not imply that every
+// value with that many digits fits the binary backend.
+func (c Codec[V, U]) MaxIntegerDigits() int {
+	return unitDecimalDigits[U]() - c.scale()
+}
+
 // Parse retains s only when it is already canonical fixed-scale text.
 func (c Codec[V, U]) Parse(s string) (Decimal[V, U], error) {
 	var venue V

@@ -42,6 +42,11 @@ func (c Uint256Codec) scale() int {
 // Scale returns the configured number of fractional decimal digits.
 func (c Uint256Codec) Scale() Notion { return Notion(c.scale()) }
 
+// MaxIntegerDigits reports the maximum integer-part digit count at this scale.
+func (c Uint256Codec) MaxIntegerDigits() int {
+	return unitDecimalDigits[uint256.Int]() - c.scale()
+}
+
 // Parse parses a strict non-negative decimal string into scaled units.
 func (c Uint256Codec) Parse(input string) (uint256.Int, Error) {
 	value, _, err := parseUint256(input, c.scale())

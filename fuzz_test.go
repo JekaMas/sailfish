@@ -44,6 +44,41 @@ func FuzzUint64UnitsRoundTrip(f *testing.F) {
 	})
 }
 
+func FuzzNativeUnitWidthsRoundTrip(f *testing.F) {
+	for _, seed := range []struct {
+		units uint64
+		width uint8
+	}{
+		{0, 0}, {255, 0}, {256, 1}, {65_535, 1},
+		{65_536, 2}, {4_294_967_295, 2}, {^uint64(0), 3},
+	} {
+		f.Add(seed.units, seed.width)
+	}
+
+	f.Fuzz(func(t *testing.T, units uint64, width uint8) {
+		switch width % 4 {
+		case 0:
+			fuzzNativeUnitRoundTrip(t, MustCodec[PriceUint8[Fraction2]](), uint8(units))
+		case 1:
+			fuzzNativeUnitRoundTrip(t, MustCodec[PriceUint16[Fraction4]](), uint16(units))
+		case 2:
+			fuzzNativeUnitRoundTrip(t, MustCodec[PriceUint32[Fraction9]](), uint32(units))
+		case 3:
+			fuzzNativeUnitRoundTrip(t, MustCodec[PriceUint64[Fraction19]](), units)
+		}
+	})
+}
+
+func fuzzNativeUnitRoundTrip[V Venue[U], U NativeUnit](t *testing.T, codec Codec[V, U], units U) {
+	t.Helper()
+
+	value := codec.FromUnits(units)
+	round, err := codec.ParseCompact(value.String())
+	if err != nil || round.Units() != units {
+		t.Fatalf("%v -> %q -> %v, %v", units, value.String(), round.Units(), err)
+	}
+}
+
 func FuzzUint256UnitsRoundTrip(f *testing.F) {
 	seeds := []uint256.Int{
 		{},

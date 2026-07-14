@@ -8,6 +8,9 @@ import (
 
 var (
 	allocationPriceSink  price5
+	allocationUint8Sink  Decimal[PriceUint8[Fraction1], uint8]
+	allocationUint16Sink Decimal[PriceUint16[Fraction2], uint16]
+	allocationUint32Sink Decimal[PriceUint32[Fraction5], uint32]
 	allocationWideSink   wide18
 	allocationBytesSink  []byte
 	allocationStringSink string
@@ -26,6 +29,9 @@ func TestHotPathAllocations(t *testing.T) {
 	priceDelta := priceCodec.FromUnits(1)
 	wideFromUnits := wideCodec.FromUnits(uint256.Int{1, 2, 3, 4})
 	otherScale := MustCodec[uint256Scale37]().FromUnits(uint256.Int{5, 6, 7, 8})
+	uint8Codec := MustCodec[PriceUint8[Fraction1]]()
+	uint16Codec := MustCodec[PriceUint16[Fraction2]]()
+	uint32Codec := MustCodec[PriceUint32[Fraction5]]()
 
 	assertAllocs(t, "parse canonical uint64", 0, func() {
 		allocationPriceSink, _ = priceCodec.Parse("123.31232")
@@ -35,6 +41,15 @@ func TestHotPathAllocations(t *testing.T) {
 	})
 	assertAllocs(t, "parse bytes uint64", 0, func() {
 		allocationPriceSink, _ = priceCodec.ParseBytes(priceBytes)
+	})
+	assertAllocs(t, "parse compact uint8", 0, func() {
+		allocationUint8Sink, _ = uint8Codec.ParseCompact("25.5")
+	})
+	assertAllocs(t, "parse compact uint16", 0, func() {
+		allocationUint16Sink, _ = uint16Codec.ParseCompact("655.35")
+	})
+	assertAllocs(t, "parse compact uint32", 0, func() {
+		allocationUint32Sink, _ = uint32Codec.ParseCompact("42949.67295")
 	})
 	assertAllocs(t, "reject invalid uint64", 0, func() {
 		allocationPriceSink, allocationErrorSink = priceCodec.ParseCompact("123x31232")
@@ -50,6 +65,18 @@ func TestHotPathAllocations(t *testing.T) {
 	})
 	assertAllocs(t, "append uint64", 0, func() {
 		allocationBytesSink = priceCodec.AppendTo(appendBuffer[:0], priceFromUnits)
+	})
+	uint8Value := uint8Codec.FromUnits(255)
+	uint16Value := uint16Codec.FromUnits(65_535)
+	uint32Value := uint32Codec.FromUnits(4_294_967_295)
+	assertAllocs(t, "append uint8", 0, func() {
+		allocationBytesSink = uint8Codec.AppendTo(appendBuffer[:0], uint8Value)
+	})
+	assertAllocs(t, "append uint16", 0, func() {
+		allocationBytesSink = uint16Codec.AppendTo(appendBuffer[:0], uint16Value)
+	})
+	assertAllocs(t, "append uint32", 0, func() {
+		allocationBytesSink = uint32Codec.AppendTo(appendBuffer[:0], uint32Value)
 	})
 	assertAllocs(t, "retained string", 0, func() {
 		allocationStringSink = priceRetained.String()

@@ -11,6 +11,18 @@ import (
 // compilers.
 func addUnits[U Unit](a, b U) (U, bool) {
 	switch left := any(a).(type) {
+	case uint8:
+		right := any(b).(uint8)
+		result := left + right
+		return any(result).(U), result < left
+	case uint16:
+		right := any(b).(uint16)
+		result := left + right
+		return any(result).(U), result < left
+	case uint32:
+		right := any(b).(uint32)
+		result := left + right
+		return any(result).(U), result < left
 	case uint64:
 		right := any(b).(uint64)
 		result, carry := bits.Add64(left, right, 0)
@@ -31,6 +43,15 @@ func addUnits[U Unit](a, b U) (U, bool) {
 
 func subUnits[U Unit](a, b U) (U, bool) {
 	switch left := any(a).(type) {
+	case uint8:
+		right := any(b).(uint8)
+		return any(left - right).(U), left < right
+	case uint16:
+		right := any(b).(uint16)
+		return any(left - right).(U), left < right
+	case uint32:
+		right := any(b).(uint32)
+		return any(left - right).(U), left < right
 	case uint64:
 		right := any(b).(uint64)
 		result, borrow := bits.Sub64(left, right, 0)
