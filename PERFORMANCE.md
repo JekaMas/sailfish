@@ -90,3 +90,92 @@ Two alternatives were rejected and removed:
 - Direct decimal-point placement across `uint256` chunks regressed multi-limb
   formatting by about 2-5%. The bounded prefix copy remains the sole wide
   formatting implementation.
+
+## 2026-07-15: Wide Formatting Keeps Base 1e19
+
+**Decision:** retain `1e19` as the sole decimal chunk base for `uint256`
+formatting. The benchmark-only `1e9` candidate was removed.
+
+Instrumented split tests counted the actual `bits.Div64` operations:
+
+| Value width | Base `1e19` | Base `1e9` |
+|---|---:|---:|
+| 65 bits | 3 | 4 |
+| 128 bits | 5 | 8 |
+| 192 bits | 9 | 15 |
+| 256 bits | 14 | 24 |
+
+Across scale 0, 5, and 18 full append workloads, `1e9` was 14-56% slower on
+the stable comparisons; split-only cost increased by 49-63% at 65-128 bits
+and remained substantially worse at larger widths. Both variants were
+allocation-free, so there was no ownership tradeoff to justify the extra
+division work.
+
+Artifacts:
+
+- `.codex_tmp/cpu_algorithm_round/c3_same_binary.txt`
+- `.codex_tmp/cpu_algorithm_round/c3_1e19.txt`
+- `.codex_tmp/cpu_algorithm_round/c3_1e9.txt`
+
+## 2026-07-15: No Small-Value Formatting Fast Path
+
+**Decision:** do not add a separate 0-99 formatting branch or cache. The
+existing digit-pair table remains the sole small-number mechanism.
+
+The candidate accelerated scale-zero hits by 52.8%, but added 10.6% to
+scale-zero misses and 5.5% to representative scale-5 formatting. A synthetic
+50% hit workload improved 12.1%, but no production profile established that
+hit rate. The miss regressions violate the round's gate, and retaining another
+dispatch path would make general formatting workload-dependent.
+
+Artifact: `.codex_tmp/cpu_algorithm_round/c5_same_binary.txt`.
+
+## 2026-07-15: No General Canonical SWAR Dispatch
+
+**Decision:** keep the scalar pairwise parser for ordinary fixed-scale
+`uint64` values. The dense SWAR kernel remains restricted to wide chunks where
+it has no short-path dispatch cost.
+
+Splitting canonical integer and fraction segments into SWAR candidates
+improved scale-9 and scale-18 long values by 6-10%, but regressed short and
+scale-5 values by 3.6-8.1%. Representative mixed batches changed by only
+0-1.6%, below the keep threshold. No branch-minimized alternate parser remains.
+
+Artifacts:
+
+- `.codex_tmp/cpu_algorithm_round/c6_canonical_batch_cpu.pprof`
+- `.codex_tmp/cpu_algorithm_round/c6_canonical_same_binary.txt`
+- `.codex_tmp/cpu_algorithm_round/c6_batch_same_binary.txt`
+
+The measured mixed batch is about 9 ns/value on the scalar implementation.
+That does not justify architecture-specific assembly, feature dispatch, or a
+second implementation in this round.
+
+## Round Result
+
+The round retained two production changes:
+
+1. Dense `uint256` chunks use eight-digit SWAR parsing.
+2. Native fixed-scale formatting writes integer and fraction fields directly.
+
+The final ten-run matrix kept every measured parse and pre-sized append path at
+`0 B/op, 0 allocs/op`. Against the initial build, stable wide parse workloads
+improved by about 17-25%, and native fixed-scale formatting improved by about
+10-22% on the representative scale-5/9/18 cases. Same-binary comparisons are
+the acceptance authority; the cross-build baseline contains documented host
+noise on unchanged subbenchmarks.
+
+Final artifacts:
+
+- `.codex_tmp/cpu_algorithm_round/final_bench.txt`
+- `.codex_tmp/cpu_algorithm_round/final_benchstat.txt`
+- `.codex_tmp/cpu_algorithm_round/final_cpu.pprof`
+- `.codex_tmp/cpu_algorithm_round/final_cpu_top.txt`
+- `.codex_tmp/cpu_algorithm_round/final_mem.pprof`
+- `.codex_tmp/cpu_algorithm_round/final_mem_top.txt`
+- `.codex_tmp/cpu_algorithm_round/final_escape_bce.txt`
+
+No unsafe code, assembly, architecture dispatch, compatibility path, legacy
+implementation, normalization fallback, or alternate runtime algorithm was
+added. `main` contains one selected implementation for each length/width
+specialization.
