@@ -1,0 +1,6 @@
+.DS_Store
+.codex_tmp/
+*.out
+*.pprof
+*.test
+coverage.txt
