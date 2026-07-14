@@ -58,8 +58,8 @@ func boxedError(err Error) error {
 	case ErrCBORNonDeterministic:
 		return boxedErrCBORNonDeterministic
 	default:
-		// Internal callers only produce the constants above. Preserve correct
-		// behavior for a future Error value even if it takes the cold allocation.
+		// Internal callers currently produce only the constants above. Error is
+		// public, so retain its exact value rather than substituting another error.
 		return err
 	}
 }

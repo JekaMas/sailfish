@@ -16,6 +16,19 @@ no heap allocations.
 
 Sailfish requires Go 1.26.5 or newer.
 
+## Single-format policy
+
+`main` contains one current implementation and one canonical wire format. It
+does not retain compatibility codecs, legacy decoders, alternate encodings, or
+runtime fallback implementations. Decimal CBOR is always the preferred
+shortest unsigned integer representation, using tag 2 only when a
+`uint256.Int` does not fit in `uint64`. Input in any other representation is
+rejected instead of being normalized or decoded by an older path.
+
+Optimizations replace the previous implementation after benchmarks and the
+complete correctness suite pass. They do not add parallel numbered codec
+versions.
+
 ## Quick start
 
 Select semantic kind, unit capacity, and fractional scale explicitly:

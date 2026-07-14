@@ -194,8 +194,9 @@ Escape analysis identifies only these relevant classes:
 - `make([]byte, n)` in `growBy`: only when caller capacity is insufficient;
 - `MarshalText` and `MarshalJSON` result slices: required owned encoding
   results;
-- unknown future `Error` values may box on the cold fallback path. All exported
-  fixed errors are pre-boxed once and return with zero per-call allocations.
+- an unrecognized `Error` value uses direct interface conversion. Every error
+  produced by the package is a pre-boxed fixed constant and returns with zero
+  per-call allocations.
 
 ## CPU ownership
 
@@ -212,6 +213,6 @@ division and takes roughly 146-152 ns; retaining canonical input or calling
 `Canonical` once reduces repeated appends of that same value to about 4.4 ns.
 
 These are the expected arithmetic owners. The current pure-Go path has no heap
-traffic. `unsafe` or assembly should require a concrete production target and a
-repeatable profile showing that these operations materially constrain the
-system, followed by per-architecture correctness and fallback coverage.
+traffic. Replacing it with `unsafe`, assembly, or architecture-specific code
+requires a concrete production target and repeatable evidence that one new
+implementation is faster across the supported workload.

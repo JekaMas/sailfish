@@ -14,7 +14,7 @@ import (
 type cborBarOracle struct {
 	_ struct{} `cbor:",toarray"`
 
-	Version           uint8
+	RecordKind        uint8
 	Symbol            string
 	Open              Decimal[PriceUint64[Fraction5], uint64]
 	High              Decimal[PriceUint64[Fraction5], uint64]
@@ -148,7 +148,7 @@ func TestUint256CodecCBORFirstAndInto(t *testing.T) {
 
 func cborBarFixture() cborBarOracle {
 	return cborBarOracle{
-		Version:           1,
+		RecordKind:        1,
 		Symbol:            "SPXUSDC",
 		Open:              cborBarPriceCodec.FromUnits(4_321_012_345),
 		High:              cborBarPriceCodec.FromUnits(4_331_012_345),
@@ -167,7 +167,7 @@ func cborBarFixture() cborBarOracle {
 
 func appendManualCBORBarOracle(dst []byte, value cborBarOracle) []byte {
 	dst = append(dst, 0x8e)
-	dst = appendCBORUint64(dst, uint64(value.Version))
+	dst = appendCBORUint64(dst, uint64(value.RecordKind))
 	dst = appendCBORTextOracle(dst, value.Symbol)
 	dst = cborBarPriceCodec.AppendCBOR(dst, value.Open)
 	dst = cborBarPriceCodec.AppendCBOR(dst, value.High)
@@ -197,7 +197,7 @@ func decodeManualCBORBarOracle(raw []byte) (cborBarOracle, error) {
 		return cborBarOracle{}, boxedErrCBORSyntax
 	}
 	cursor := cborBarOracleCursor{raw: raw[1:]}
-	version, err := cursor.readUint(math.MaxUint8)
+	recordKind, err := cursor.readUint(math.MaxUint8)
 	if err != "" {
 		return cborBarOracle{}, boxedError(err)
 	}
@@ -265,7 +265,7 @@ func decodeManualCBORBarOracle(raw []byte) (cborBarOracle, error) {
 	}
 
 	return cborBarOracle{
-		Version:           uint8(version),
+		RecordKind:        uint8(recordKind),
 		Symbol:            symbol,
 		Open:              open,
 		High:              high,
