@@ -3,11 +3,68 @@ package sailfish
 import (
 	"errors"
 	"math"
+	"strconv"
 	"strings"
 	"testing"
 
 	"github.com/holiman/uint256"
 )
+
+func TestParseUint64ChunkDenseRuns(t *testing.T) {
+	t.Parallel()
+
+	const digits = "1234567890123456789"
+	for length := 1; length <= len(digits); length++ {
+		input := digits[:length]
+		want, err := strconv.ParseUint(input, 10, 64)
+		if err != nil {
+			t.Fatal(err)
+		}
+		got, parseErr := parseUint64Chunk(input, 0, len(input))
+		if parseErr != "" || got != want {
+			t.Fatalf("string length %d = %d, %v; want %d", length, got, parseErr, want)
+		}
+		got, parseErr = parseUint64Chunk([]byte(input), 0, len(input))
+		if parseErr != "" || got != want {
+			t.Fatalf("bytes length %d = %d, %v; want %d", length, got, parseErr, want)
+		}
+		if length >= 8 {
+			got, parseErr = parseUint64DenseChunk(input, 0, len(input))
+			if parseErr != "" || got != want {
+				t.Fatalf("dense string length %d = %d, %v; want %d", length, got, parseErr, want)
+			}
+			got, parseErr = parseUint64DenseChunk([]byte(input), 0, len(input))
+			if parseErr != "" || got != want {
+				t.Fatalf("dense bytes length %d = %d, %v; want %d", length, got, parseErr, want)
+			}
+		}
+	}
+}
+
+func TestParseUint64ChunkRejectsEveryInvalidPosition(t *testing.T) {
+	t.Parallel()
+
+	for length := 1; length <= 19; length++ {
+		for invalidAt := range length {
+			raw := []byte("1234567890123456789"[:length])
+			raw[invalidAt] = 'x'
+			if _, err := parseUint64Chunk(raw, 0, len(raw)); err != ErrSyntax {
+				t.Fatalf("length %d invalid position %d error = %v", length, invalidAt, err)
+			}
+			if _, err := parseUint64Chunk(string(raw), 0, len(raw)); err != ErrSyntax {
+				t.Fatalf("string length %d invalid position %d error = %v", length, invalidAt, err)
+			}
+			if length >= 8 {
+				if _, err := parseUint64DenseChunk(raw, 0, len(raw)); err != ErrSyntax {
+					t.Fatalf("dense length %d invalid position %d error = %v", length, invalidAt, err)
+				}
+				if _, err := parseUint64DenseChunk(string(raw), 0, len(raw)); err != ErrSyntax {
+					t.Fatalf("dense string length %d invalid position %d error = %v", length, invalidAt, err)
+				}
+			}
+		}
+	}
+}
 
 func TestErrorsAreTypedConstants(t *testing.T) {
 	t.Parallel()

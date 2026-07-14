@@ -92,7 +92,13 @@ func parseUint256Digits[S decimalInput](s S, begin, end int) (uint256.Int, Error
 		firstDigits = 19
 	}
 
-	chunk, err := parseUint64Chunk(s, begin, begin+firstDigits)
+	var chunk uint64
+	var err Error
+	if firstDigits >= 8 {
+		chunk, err = parseUint64DenseChunk(s, begin, begin+firstDigits)
+	} else {
+		chunk, err = parseUint64Chunk(s, begin, begin+firstDigits)
+	}
 	if err != "" {
 		return uint256.Int{}, err
 	}
@@ -100,7 +106,7 @@ func parseUint256Digits[S decimalInput](s S, begin, end int) (uint256.Int, Error
 	begin += firstDigits
 
 	for begin < end {
-		chunk, err = parseUint64Chunk(s, begin, begin+19)
+		chunk, err = parseUint64DenseChunk(s, begin, begin+19)
 		if err != "" {
 			return uint256.Int{}, err
 		}
@@ -155,7 +161,13 @@ func parseUint64ChunkWithDot[S decimalInput](
 	}
 
 	if position > dot || position+digits <= dot {
-		value, err := parseUint64Chunk(s, position, position+digits)
+		var value uint64
+		var err Error
+		if digits >= 8 {
+			value, err = parseUint64DenseChunk(s, position, position+digits)
+		} else {
+			value, err = parseUint64Chunk(s, position, position+digits)
+		}
 		return value, position + digits, err
 	}
 
@@ -180,7 +192,13 @@ func appendUint256Digits[S decimalInput](
 ) (uint256.Int, Error) {
 	for begin < end {
 		digits := min(end-begin, 19)
-		chunk, err := parseUint64Chunk(s, begin, begin+digits)
+		var chunk uint64
+		var err Error
+		if digits >= 8 {
+			chunk, err = parseUint64DenseChunk(s, begin, begin+digits)
+		} else {
+			chunk, err = parseUint64Chunk(s, begin, begin+digits)
+		}
 		if err != "" {
 			return uint256.Int{}, err
 		}
@@ -190,28 +208,6 @@ func appendUint256Digits[S decimalInput](
 			return uint256.Int{}, ErrRange
 		}
 		begin += digits
-	}
-	return value, ""
-}
-
-func parseUint64Chunk[S decimalInput](s S, begin, end int) (uint64, Error) {
-	var value uint64
-	if (end-begin)&1 != 0 {
-		digit := s[begin] - '0'
-		if digit > 9 {
-			return 0, ErrSyntax
-		}
-		value = uint64(digit)
-		begin++
-	}
-
-	for ; begin < end; begin += 2 {
-		a := s[begin] - '0'
-		b := s[begin+1] - '0'
-		if a > 9 || b > 9 {
-			return 0, ErrSyntax
-		}
-		value = value*100 + uint64(a)*10 + uint64(b)
 	}
 	return value, ""
 }
