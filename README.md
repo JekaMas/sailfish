@@ -61,6 +61,80 @@ request = codec.AppendTo(request, price)
 For `PriceUint64[Fraction9]`, the maximum representable value is
 `18446744073.709551615`.
 
+## Choosing a type
+
+Choose semantic kind, fractional scale, and integer capacity independently.
+The format type carries all three choices, so a price cannot be passed where
+an amount is required even when both use the same scale and backend.
+
+| Typical value | Suggested format | Why |
+|---|---|---|
+| Small bounded ratio or rate | `PriceUint16[Fraction4]` | Compact units with four exact fractional digits |
+| CEX price or quantity | `PriceUint64[Fraction5]`, `AmountUint64[Fraction8]` | Native arithmetic with explicit venue precision |
+| Token amount | `AmountUint256[Fraction18]` | Full EVM-width scaled units |
+| Runtime venue metadata | `Uint256Codec` | Scale is validated once without storing it per value |
+
+Use the narrowest backend whose complete scaled-integer range covers the
+protocol contract. Fractional scale alone does not determine the backend.
+
+## Construction patterns
+
+Parse canonical venue text with a cached codec on repeated paths:
+
+```go
+type PriceFormat = sailfish.PriceUint64[sailfish.Fraction5]
+type Price = sailfish.Decimal[PriceFormat, uint64]
+
+priceCodec, err := sailfish.NewCodec[PriceFormat]()
+if err != nil {
+	return err
+}
+price, err := priceCodec.Parse("123.31232")
+if err != nil {
+	return err
+}
+```
+
+Construct directly from already-scaled protocol units without a text
+round-trip:
+
+```go
+type AmountFormat = sailfish.AmountUint32[sailfish.Fraction6]
+
+amount, err := sailfish.NewFromUnits[AmountFormat](uint32(1_234_567))
+if err != nil {
+	return err
+}
+// amount.String() == "1.234567"
+```
+
+Use distinct formats for domain boundaries:
+
+```go
+type CEXPrice = sailfish.Decimal[
+	sailfish.PriceUint64[sailfish.Fraction5],
+	uint64,
+]
+type TokenAmount = sailfish.Decimal[
+	sailfish.AmountUint256[sailfish.Fraction18],
+	uint256.Int,
+]
+```
+
+For a scale supplied by trusted venue metadata, validate it once and parse
+into caller-owned storage:
+
+```go
+codec, err := sailfish.NewUint256Codec(18)
+if err != nil {
+	return err
+}
+var units uint256.Int
+if err := codec.ParseInto("1.250000000000000000", &units); err != "" {
+	return err
+}
+```
+
 ## Scale and storage range
 
 Fractional scale and integer capacity are independent. A scale-1 price can be
@@ -212,12 +286,46 @@ There is no mutable lazy cache, so concurrent reads do not race.
 | Checked arithmetic | `Add`, `Sub`, `AddAssign`, `SubAssign` |
 | Overflow-style arithmetic | `AddOverflow`, `SubUnderflow` |
 
-JSON values are quoted decimal strings. Bare JSON numbers are rejected.
-JSON integration and escaped-string decoding use
-[`github.com/goccy/go-json`](https://github.com/goccy/go-json); Sailfish's
-ordinary unescaped decimal-string decode path remains allocation-free.
+## Serialization and deserialization
 
-## Compact deterministic CBOR
+Sailfish exposes owned standard interfaces and caller-buffer APIs. Use the
+owned forms at ordinary application boundaries and append/prefix-decode forms
+for MDBX records, network frames, and other hot aggregate codecs.
+
+| Format | Encode | Decode | Wire contract |
+|---|---|---|---|
+| Canonical text | `AppendText`, `MarshalText` | `UnmarshalText` | Exact fixed-scale ASCII decimal |
+| JSON | `AppendJSON`, `MarshalJSON` | `UnmarshalJSON` | Quoted decimal string; bare numbers rejected |
+| CBOR scalar | `AppendCBOR`, `MarshalCBOR` | `ParseCBOR`, `UnmarshalCBOR` | Preferred unsigned integer or tag-2 bignum |
+| Positional CBOR | repeated `AppendCBOR` | repeated `ParseCBORFirst` | Decimal scalars inside a parent `toarray` record |
+
+### Text and JSON
+
+JSON values are quoted decimal strings. Bare JSON numbers are rejected. JSON
+integration and escaped-string decoding use
+[`github.com/goccy/go-json`](https://github.com/goccy/go-json); ordinary
+unescaped decimal strings decode directly from the JSON input.
+
+```go
+text, err := price.MarshalText() // []byte("123.31232")
+if err != nil {
+	return err
+}
+jsonValue, err := price.MarshalJSON() // []byte("\"123.31232\"")
+if err != nil {
+	return err
+}
+
+var decoded Price
+if err := decoded.UnmarshalJSON(jsonValue); err != nil {
+	return err
+}
+```
+
+`AppendText` and `AppendJSON` reuse caller capacity. `MarshalText` and
+`MarshalJSON` return owned slices and therefore allocate their result.
+
+### Compact deterministic CBOR
 
 CBOR stores only the scaled unsigned integer. The decimal scale and semantic
 kind are compile-time format identity, while retained source text is cache
@@ -251,6 +359,28 @@ This encodes as `[priceUnits, amountUnits]`, not nested one-element arrays.
 Wire sizes are 1-9 bytes for native units and 1-35 bytes for `uint256` units,
 before the enclosing array header.
 
+Cache fxamacker modes for reflective or cold-path aggregate encoding:
+
+```go
+enc, err := cbor.CanonicalEncOptions().EncMode()
+if err != nil {
+	return err
+}
+dec, err := cbor.DecOptions{}.DecMode()
+if err != nil {
+	return err
+}
+
+raw, err := enc.Marshal(quote)
+if err != nil {
+	return err
+}
+var decoded Quote
+if err := dec.Unmarshal(raw, &decoded); err != nil {
+	return err
+}
+```
+
 Use `AppendCBOR` or the cached codec equivalent when building a hot MDBX value:
 
 ```go
@@ -278,6 +408,11 @@ if err != nil {
 and returns the unconsumed suffix. `ParseCBOR` remains the whole-item API and
 rejects trailing data. On failure, prefix decoders return no suffix and
 `ParseCBORFirstInto` leaves its destination unchanged.
+
+The hot positional path must validate the parent array header and field count
+at the enclosing-record layer. Sailfish then validates each scalar's preferred
+encoding, backend range, and complete consumption. There is one current CBOR
+format: no compatibility decoder, alternate integer form, or legacy fallback.
 
 These append APIs and all direct decode APIs are `0 B/op, 0 allocs/op` with a
 sized caller buffer. `MarshalCBOR` necessarily allocates one owned result
@@ -356,24 +491,62 @@ zero-sized `VenueScale` types cover compile-time scales beyond `Fraction20`.
 
 ## Performance
 
-Representative local results on Go 1.26.5, darwin/arm64, Apple M1 Max:
+These are five-run summaries from a complete `make bench` execution on Go
+1.26.5, darwin/arm64, Apple M1 Max. Microbenchmark numbers are local, not
+portable guarantees; compare changes on the same host and toolchain.
 
-| Operation | Approximate time | B/op | allocs/op |
+### Parsing and formatting
+
+| Operation | Time | B/op | allocs/op |
 |---|---:|---:|---:|
-| Parse canonical scale-5 `uint64` | 9.79 ns | 0 | 0 |
-| Parse runtime scale-6 `uint256.Int` into caller storage | 10.2 ns | 0 | 0 |
-| Parse canonical 38-digit `uint256.Int` | 51.7 ns | 0 | 0 |
-| Append retained `uint64` | 2.73 ns | 0 | 0 |
-| Append retained four-limb `uint256.Int` | 4.22 ns | 0 | 0 |
-| Append formatted `uint64` | 13.7 ns | 0 | 0 |
-| Append formatted one-limb `uint256.Int` | 13.1 ns | 0 | 0 |
-| Append formatted four-limb `uint256.Int` | 138-152 ns | 0 | 0 |
-| Same-scale `uint64` compare | 2.14 ns | 0 | 0 |
-| Cross-scale/backend compare | 52.7 ns | 0 | 0 |
-| Formatted owned `String` | 32.8 ns | 16 | 1 |
+| Parse canonical `uint64` through `Codec` | 10.2 ns | 0 | 0 |
+| Parse canonical `uint256.Int` | 49.8 ns | 0 | 0 |
+| Parse maximum 78-digit `uint256.Int` | 69.7 ns | 0 | 0 |
+| Append retained `uint64` | 2.87 ns | 0 | 0 |
+| Append formatted `uint64` | 13.0 ns | 0 | 0 |
+| Append formatted four-limb `uint256.Int` | 141 ns | 0 | 0 |
+| Return retained `String` | 2.11 ns | 0 | 0 |
+| Return newly formatted `String` | 27.1 ns | 16 | 1 |
 
-The one `String` allocation is the returned string's ownership contract.
-Detailed commands and profile interpretation are in [BENCHMARKS.md](BENCHMARKS.md).
+### Width scaling
+
+| Dense parse kernel | 19 digits | 38 digits | 57 digits | 77 digits |
+|---|---:|---:|---:|---:|
+| `string` input | 11.3 ns | 22.0 ns | 32.2 ns | 47.6 ns |
+| `[]byte` input | 11.4 ns | 21.9 ns | 32.5 ns | 47.9 ns |
+
+| Formatted width | One limb | Two limbs | Three limbs | Four limbs | Maximum |
+|---|---:|---:|---:|---:|---:|
+| Wide formatting kernel | 17.9 ns | 47.6 ns | 81.6 ns | 135 ns | 167 ns |
+
+Every width-scaling parse and append row above is `0 B/op`, `0 allocs/op`.
+
+### Comparison and arithmetic
+
+| Operation | Time | B/op | allocs/op |
+|---|---:|---:|---:|
+| Same-scale `uint64` compare | 2.10 ns | 0 | 0 |
+| Same-scale `uint256.Int` compare | 6.44 ns | 0 | 0 |
+| Cross-scale/backend compare | 53.2 ns | 0 | 0 |
+| Checked `uint64` add-assign | 4.45 ns | 0 | 0 |
+| Checked `uint256.Int` add-assign | 13.3 ns | 0 | 0 |
+
+### Serialization
+
+| Operation | Time | B/op | allocs/op |
+|---|---:|---:|---:|
+| Append native CBOR scalar | 3.55 ns | 0 | 0 |
+| Decode native CBOR scalar | 8.15 ns | 0 | 0 |
+| Runtime-codec `uint256` append, one limb / maximum | 4.13 / 6.89 ns | 0 | 0 |
+| Runtime-codec `uint256` decode, one limb / maximum | 6.73 / 9.31 ns | 0 | 0 |
+| Owned native / `uint256` `MarshalCBOR` | 20.1 / 27.8 ns | 16 / 32 | 1 |
+| fxamacker two-field `toarray` marshal / unmarshal | 176 / 149 ns | 120 / 0 | 4 / 0 |
+| Manual 14-field positional CBOR encode / decode | 51.2 / 93.6 ns | 0 / 8 | 0 / 1 |
+
+The manual record decoder's one allocation owns its parent string field;
+Sailfish numeric field decoding is allocation-free. Owned `String` and marshal
+results allocate by contract. Detailed commands, profiles, and allocation
+ownership are in [BENCHMARKS.md](BENCHMARKS.md).
 
 For values parsed from canonical venue text, retain the representation with
 `Codec.Parse`; subsequent appends are below 5 ns even for a four-limb value.
@@ -384,6 +557,28 @@ No `unsafe` or assembly is used in production code. Profiles show the pure-Go
 implementation is already allocation-free on hot paths; adding
 architecture-specific code at this point would add maintenance and audit risk
 without a demonstrated target.
+
+## Algorithms and measured choices
+
+| Area | Current algorithm | Reason |
+|---|---|---|
+| Numeric model | One unsigned scaled integer | Exact comparison/arithmetic with no floating-point state |
+| Native parsing | Strict pairwise decimal accumulation | Best mixed short and common scale-5 workload |
+| Wide parsing | Eight-digit SWAR validation/conversion in dense chunks | Reduced 19-77 digit parse time by roughly 17-25% |
+| Native formatting | Pairwise digits plus direct integer/fraction placement | Avoids a temporary decimal-point prefix copy |
+| Wide formatting | Four-limb division into base-`1e19` chunks | Fewer `bits.Div64` calls than measured `1e9` chunks |
+| Repeated output | Retain immutable canonical input or call `Canonical` once | Repeated append becomes a short string copy |
+| CBOR | Preferred unsigned integer; tag 2 only above `uint64` | Small deterministic wire with strict decoding |
+| Hot aggregate CBOR | Caller-buffer scalar append and positional prefix decode | Avoids reflection and owned per-field slices |
+| Type dispatch | Concrete backend embedded in each format; cached scale in `Codec` | Avoids generic backend type switches and repeated metadata work |
+| Errors | Pre-boxed typed string constants | Comparable errors with zero per-call failure allocation |
+
+Measured alternatives are not retained in production: base-`1e9` wide
+formatting was 14-56% slower, direct decimal placement across wide chunks was
+2-5% slower, a general SWAR canonical parser regressed short/scale-5 values,
+and a `0-99` cache penalized representative misses. See
+[PERFORMANCE.md](PERFORMANCE.md) for the benchmark artifacts and acceptance
+decisions.
 
 ## Validation
 
