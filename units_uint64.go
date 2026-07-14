@@ -217,11 +217,13 @@ func appendUint64Decimal(dst []byte, units uint64, scale int) []byte {
 	case scale == 0:
 		fillUnsigned64(out, units)
 	case digits > scale:
-		// Fill into out[1:], shift only the integer prefix left, then place '.'.
-		fillUnsigned64(out[1:], units)
+		power := powersOf10Uint64[scale]
+		integer := units / power
+		fraction := units - integer*power
 		integerDigits := digits - scale
-		copy(out[:integerDigits], out[1:integerDigits+1])
+		fillUnsigned64(out[:integerDigits], integer)
 		out[integerDigits] = '.'
+		fillFixed64(out[integerDigits+1:], fraction)
 	default:
 		out[0] = '0'
 		out[1] = '.'

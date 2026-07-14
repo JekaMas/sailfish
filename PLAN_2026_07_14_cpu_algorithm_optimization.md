@@ -79,9 +79,9 @@ edit is accepted.
 | ID | Candidate | Target workloads | Required comparison | Decision |
 |---|---|---|---|---|
 | C1 | Eight-digit SWAR validation/parsing with scalar tail | canonical `uint256` strings/bytes at 19, 20, 38, 57, and 77 digits | current pair parser vs length-specialized SWAR; valid, syntax error, string, bytes, and native non-regression inputs | Accepted for dense wide chunks; native parser remains pairwise |
-| C2 | `uint64` formatter variants: current divide-by-100, `1e9` outer chunks, and direct fixed-scale placement | 1-20 digits; scales 0, 2, 5, 9, 18; units below/equal/above scale | length-distributed append benchmarks and CPU profiles | Pending |
+| C2 | `uint64` formatter variants: current divide-by-100, `1e9` outer chunks, and direct fixed-scale placement | 1-20 digits; scales 0, 2, 5, 9, 18; units below/equal/above scale | length-distributed append benchmarks and CPU profiles | Rejected: `1e9` regressed common paths by 6-11% |
 | C3 | `uint256` decimal chunk base `1e9` vs current `1e19` | 65-, 128-, 192-, and 256-bit values; scales 0, 5, 18 | split-only and full append benchmarks; division count and CPU profiles | Pending |
-| C4 | Remove decimal-point prefix copy by formatting integer/fraction regions directly | common prices and wide amounts where digits exceed scale | current copy path vs direct placement across scale/digit relationships | Pending |
+| C4 | Remove decimal-point prefix copy by formatting integer/fraction regions directly | common prices and wide amounts where digits exceed scale | current copy path vs direct placement across scale/digit relationships | Accepted for native values; rejected for wide values |
 | C5 | Small-value formatting cache | repeated 0-99/0-999 units and representative market values | hit/miss distribution benchmarks and retained-size review | Pending only if profiles show relevant formatting cost |
 | C6 | Optional branch-minimized/SWAR validation refinements | batch parsing of realistic market-data decimal distributions | scalar vs candidate batch throughput and code-size review | Pending only after C1-C4 |
 

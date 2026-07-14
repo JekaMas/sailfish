@@ -120,7 +120,7 @@ func fillUnsigned64(dst []byte, value uint64) {
 	}
 }
 
-func fillFixed19(dst []byte, value uint64) {
+func fillFixed64(dst []byte, value uint64) {
 	i := len(dst)
 	for i >= 2 {
 		q := value / 100

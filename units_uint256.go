@@ -390,7 +390,7 @@ func fillUnsigned256(
 	fillUnsigned64(dst[:topDigits], chunks[chunkCount-1])
 	pos := topDigits
 	for i := chunkCount - 2; i >= 0; i-- {
-		fillFixed19(dst[pos:pos+19], chunks[i])
+		fillFixed64(dst[pos:pos+19], chunks[i])
 		pos += 19
 	}
 }
