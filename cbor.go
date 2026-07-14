@@ -94,6 +94,20 @@ func (c Codec[V, U]) ParseCBOR(raw []byte) (Decimal[V, U], error) {
 	return Decimal[V, U]{units: units}, nil
 }
 
+// ParseCBORFirst decodes one preferred deterministic CBOR decimal from the
+// start of raw and returns the unconsumed suffix. It is the typed hot-path
+// decoder for decimal fields inside manually encoded positional arrays.
+// ParseCBOR remains the strict whole-item API.
+func (c Codec[V, U]) ParseCBORFirst(raw []byte) (Decimal[V, U], []byte, error) {
+	_ = c.scale()
+	var venue V
+	units, consumed, err := venue.unitParseCBORFirst(raw)
+	if err != "" {
+		return Decimal[V, U]{}, nil, boxedError(err)
+	}
+	return Decimal[V, U]{units: units}, raw[consumed:], nil
+}
+
 func (Uint8Units) unitCBORLen(units uint8) int {
 	return cborUint64Len(uint64(units))
 }
@@ -105,6 +119,11 @@ func (Uint8Units) unitAppendCBOR(dst []byte, units uint8) []byte {
 func (Uint8Units) unitParseCBOR(raw []byte) (uint8, Error) {
 	value, err := parseCBORUint64(raw, math.MaxUint8)
 	return uint8(value), err
+}
+
+func (Uint8Units) unitParseCBORFirst(raw []byte) (uint8, int, Error) {
+	value, consumed, err := parseCBORUint64First(raw, math.MaxUint8)
+	return uint8(value), consumed, err
 }
 
 func (Uint16Units) unitCBORLen(units uint16) int {
@@ -120,6 +139,11 @@ func (Uint16Units) unitParseCBOR(raw []byte) (uint16, Error) {
 	return uint16(value), err
 }
 
+func (Uint16Units) unitParseCBORFirst(raw []byte) (uint16, int, Error) {
+	value, consumed, err := parseCBORUint64First(raw, math.MaxUint16)
+	return uint16(value), consumed, err
+}
+
 func (Uint32Units) unitCBORLen(units uint32) int {
 	return cborUint64Len(uint64(units))
 }
@@ -133,6 +157,11 @@ func (Uint32Units) unitParseCBOR(raw []byte) (uint32, Error) {
 	return uint32(value), err
 }
 
+func (Uint32Units) unitParseCBORFirst(raw []byte) (uint32, int, Error) {
+	value, consumed, err := parseCBORUint64First(raw, math.MaxUint32)
+	return uint32(value), consumed, err
+}
+
 func (Uint64Units) unitCBORLen(units uint64) int {
 	return cborUint64Len(units)
 }
@@ -143,6 +172,10 @@ func (Uint64Units) unitAppendCBOR(dst []byte, units uint64) []byte {
 
 func (Uint64Units) unitParseCBOR(raw []byte) (uint64, Error) {
 	return parseCBORUint64(raw, math.MaxUint64)
+}
+
+func (Uint64Units) unitParseCBORFirst(raw []byte) (uint64, int, Error) {
+	return parseCBORUint64First(raw, math.MaxUint64)
 }
 
 func (Uint256Units) unitCBORLen(units uint256.Int) int {
@@ -207,6 +240,42 @@ func (Uint256Units) unitParseCBOR(raw []byte) (uint256.Int, Error) {
 	var value uint256.Int
 	value.SetBytes(raw[begin:])
 	return value, ""
+}
+
+func (Uint256Units) unitParseCBORFirst(raw []byte) (uint256.Int, int, Error) {
+	if len(raw) == 0 {
+		return uint256.Int{}, 0, ErrCBORSyntax
+	}
+	if raw[0] != cborPositiveBignumTag {
+		value, consumed, err := parseCBORUint64First(raw, math.MaxUint64)
+		return uint256.Int{value}, consumed, err
+	}
+	if len(raw) < 2 {
+		return uint256.Int{}, 0, ErrCBORSyntax
+	}
+
+	byteLen, headerLen, err := parsePreferredCBORByteStringHeader(raw[1:])
+	if err != "" {
+		return uint256.Int{}, 0, err
+	}
+	if byteLen <= 8 {
+		return uint256.Int{}, 0, ErrCBORNonDeterministic
+	}
+	if byteLen > 32 {
+		return uint256.Int{}, 0, ErrRange
+	}
+	begin := 1 + headerLen
+	consumed := begin + byteLen
+	if len(raw) < consumed {
+		return uint256.Int{}, 0, ErrCBORSyntax
+	}
+	if raw[begin] == 0 {
+		return uint256.Int{}, 0, ErrCBORNonDeterministic
+	}
+
+	var value uint256.Int
+	value.SetBytes(raw[begin:consumed])
+	return value, consumed, ""
 }
 
 func cborUint64Len(value uint64) int {
@@ -304,6 +373,64 @@ func parseCBORUint64(raw []byte, maxValue uint64) (uint64, Error) {
 		return 0, ErrRange
 	}
 	return value, ""
+}
+
+func parseCBORUint64First(raw []byte, maxValue uint64) (uint64, int, Error) {
+	if len(raw) == 0 || raw[0]>>5 != 0 {
+		return 0, 0, ErrCBORSyntax
+	}
+
+	additional := raw[0] & 0x1f
+	var value uint64
+	var expectedLen int
+	switch {
+	case additional <= 23:
+		value = uint64(additional)
+		expectedLen = 1
+	case additional == cborUnsignedAdditionalUint8:
+		expectedLen = 2
+		if len(raw) < expectedLen {
+			return 0, 0, ErrCBORSyntax
+		}
+		value = uint64(raw[1])
+		if value <= 23 {
+			return 0, 0, ErrCBORNonDeterministic
+		}
+	case additional == cborUnsignedAdditionalUint16:
+		expectedLen = 3
+		if len(raw) < expectedLen {
+			return 0, 0, ErrCBORSyntax
+		}
+		value = uint64(binary.BigEndian.Uint16(raw[1:]))
+		if value <= math.MaxUint8 {
+			return 0, 0, ErrCBORNonDeterministic
+		}
+	case additional == cborUnsignedAdditionalUint32:
+		expectedLen = 5
+		if len(raw) < expectedLen {
+			return 0, 0, ErrCBORSyntax
+		}
+		value = uint64(binary.BigEndian.Uint32(raw[1:]))
+		if value <= math.MaxUint16 {
+			return 0, 0, ErrCBORNonDeterministic
+		}
+	case additional == cborUnsignedAdditionalUint64:
+		expectedLen = 9
+		if len(raw) < expectedLen {
+			return 0, 0, ErrCBORSyntax
+		}
+		value = binary.BigEndian.Uint64(raw[1:])
+		if value <= math.MaxUint32 {
+			return 0, 0, ErrCBORNonDeterministic
+		}
+	default:
+		return 0, 0, ErrCBORSyntax
+	}
+
+	if value > maxValue {
+		return 0, 0, ErrRange
+	}
+	return value, expectedLen, ""
 }
 
 func uint256ByteLen(value uint256.Int) int {

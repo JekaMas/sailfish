@@ -21,3 +21,4 @@ fuzz:
 	GOWORK=off go test -run '^$$' -fuzz '^FuzzCBORUint64RoundTrip$$' -fuzztime=5s
 	GOWORK=off go test -run '^$$' -fuzz '^FuzzCBORUint256RoundTrip$$' -fuzztime=5s
 	GOWORK=off go test -run '^$$' -fuzz '^FuzzCBORDecoderAcceptsOnlyPreferredRoundTrips$$' -fuzztime=5s
+	GOWORK=off go test -run '^$$' -fuzz '^FuzzCBORFirstConsumesExactlyOnePreferredValue$$' -fuzztime=5s

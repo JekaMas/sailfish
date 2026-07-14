@@ -199,5 +199,41 @@ func BenchmarkCBORUint256Widths(b *testing.B) {
 				benchU256Sink, _ = runtimeCodec.ParseCBOR(wire)
 			}
 		})
+		b.Run("runtime_codec_decode_first/"+tt.name, func(b *testing.B) {
+			b.ReportAllocs()
+			for b.Loop() {
+				benchU256Sink, benchBytesSink, _ = runtimeCodec.ParseCBORFirst(wire)
+			}
+		})
+		b.Run("runtime_codec_decode_first_into/"+tt.name, func(b *testing.B) {
+			b.ReportAllocs()
+			for b.Loop() {
+				benchBytesSink, _ = runtimeCodec.ParseCBORFirstInto(wire, &benchU256Sink)
+			}
+		})
 	}
 }
+
+func BenchmarkCBORManualPositionalBar(b *testing.B) {
+	value := cborBarFixture()
+	buffer := make([]byte, 0, 93)
+	wire := appendManualCBORBarOracle(buffer[:0], value)
+	b.ReportMetric(float64(len(wire)), "B/wire")
+
+	b.Run("encode", func(b *testing.B) {
+		b.ReportAllocs()
+		b.ReportMetric(float64(len(wire)), "B/wire")
+		for b.Loop() {
+			benchBytesSink = appendManualCBORBarOracle(buffer[:0], value)
+		}
+	})
+	b.Run("decode", func(b *testing.B) {
+		b.ReportAllocs()
+		b.ReportMetric(float64(len(wire)), "B/wire")
+		for b.Loop() {
+			cborBarOracleSink, _ = decodeManualCBORBarOracle(wire)
+		}
+	})
+}
+
+var cborBarOracleSink cborBarOracle

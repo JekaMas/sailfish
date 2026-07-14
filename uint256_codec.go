@@ -118,6 +118,18 @@ func (c Uint256Codec) ParseCBOR(raw []byte) (uint256.Int, Error) {
 	return Uint256Units{}.unitParseCBOR(raw)
 }
 
+// ParseCBORFirst decodes one preferred deterministic CBOR uint256 from the
+// start of raw and returns the unconsumed suffix. It is intended for manual
+// positional-array decoders that keep aggregate decoding allocation-free.
+func (c Uint256Codec) ParseCBORFirst(raw []byte) (uint256.Int, []byte, Error) {
+	_ = c.scale()
+	value, consumed, err := Uint256Units{}.unitParseCBORFirst(raw)
+	if err != "" {
+		return uint256.Int{}, nil, err
+	}
+	return value, raw[consumed:], ""
+}
+
 // ParseCBORInto decodes preferred deterministic CBOR into dst. It leaves dst
 // unchanged on failure.
 func (c Uint256Codec) ParseCBORInto(raw []byte, dst *uint256.Int) Error {
@@ -131,4 +143,19 @@ func (c Uint256Codec) ParseCBORInto(raw []byte, dst *uint256.Int) Error {
 	}
 	*dst = value
 	return ""
+}
+
+// ParseCBORFirstInto decodes one preferred deterministic CBOR uint256 into
+// dst and returns the unconsumed suffix. It leaves dst unchanged on failure.
+func (c Uint256Codec) ParseCBORFirstInto(raw []byte, dst *uint256.Int) ([]byte, Error) {
+	_ = c.scale()
+	if dst == nil {
+		return nil, ErrNilDestination
+	}
+	value, consumed, err := Uint256Units{}.unitParseCBORFirst(raw)
+	if err != "" {
+		return nil, err
+	}
+	*dst = value
+	return raw[consumed:], ""
 }

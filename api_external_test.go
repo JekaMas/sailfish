@@ -76,6 +76,14 @@ func TestPublicCBORToArrayAPI(t *testing.T) {
 	if !decoded.Price.Equal(original.Price) {
 		t.Fatal(decoded.Price.Units())
 	}
+
+	first, rest, err := codec.ParseCBORFirst(wire[1:])
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(rest) != 0 || !first.Equal(original.Price) {
+		t.Fatalf("manual decode = %d, rest %x", first.Units(), rest)
+	}
 }
 
 func acceptPriceUint64Fraction5(sailfish.Decimal[sailfish.PriceUint64[sailfish.Fraction5], uint64]) {}

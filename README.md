@@ -180,6 +180,7 @@ There is no mutable lazy cache, so concurrent reads do not race.
 | Caller-buffer serialization | `AppendTo`, `AppendJSON`, `AppendText` |
 | Caller-buffer CBOR | `AppendCBOR`, `Codec.AppendCBOR`, `Uint256Codec.AppendCBOR` |
 | Strict CBOR decode | `UnmarshalCBOR`, `Codec.ParseCBOR`, `Uint256Codec.ParseCBOR` |
+| Positional-array CBOR decode | `Codec.ParseCBORFirst`, `Uint256Codec.ParseCBORFirst`, `ParseCBORFirstInto` |
 | Owned serialization | `String`, `MarshalText`, `MarshalJSON` |
 | Same-venue ordering | `Compare`, `Cmp`, `Equal`, `Less` methods |
 | Cross-scale/backend ordering | package-level `Compare` |
@@ -234,12 +235,39 @@ dst = priceCodec.AppendCBOR(dst, price)
 dst = amountCodec.AppendCBOR(dst, amount)
 ```
 
+Decode decimal fields from a manual positional array without first finding or
+copying each scalar item:
+
+```go
+price, raw, err := priceCodec.ParseCBORFirst(raw)
+if err != nil {
+	return err
+}
+amount, raw, err := amountCodec.ParseCBORFirst(raw)
+if err != nil {
+	return err
+}
+```
+
+`ParseCBORFirst` consumes exactly one preferred deterministic unsigned value
+and returns the unconsumed suffix. `ParseCBOR` remains the whole-item API and
+rejects trailing data. On failure, prefix decoders return no suffix and
+`ParseCBORFirstInto` leaves its destination unchanged.
+
 These append APIs and all direct decode APIs are `0 B/op, 0 allocs/op` with a
 sized caller buffer. `MarshalCBOR` necessarily allocates one owned result
 slice. The reflective `fxamacker` parent marshal also invokes that owned-slice
 interface for each decimal; use the append path when aggregate encoding must
-remain allocation-free. Reflective `toarray` decode remains allocation-free
-for the tested fixed quote shape.
+remain allocation-free. Cache fxamacker `EncMode` and `DecMode` for generic or
+cold paths; they are configured codec instances, not interfaces implemented by
+application values. Reflective `toarray` decode remains allocation-free for the
+tested fixed quote shape.
+
+A permanent fourteen-field oracle test builds a 93-byte positional record with
+cached Sailfish codecs and verifies byte-for-byte equality with deterministic
+fxamacker `cbor:",toarray"`. Its direct encode path is allocation-free; decode
+allocates only the owned string field in the parent record. Sailfish numeric
+field decode remains allocation-free.
 
 ## Errors
 

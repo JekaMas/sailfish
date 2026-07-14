@@ -190,3 +190,38 @@ func FuzzCBORDecoderAcceptsOnlyPreferredRoundTrips(f *testing.F) {
 		}
 	})
 }
+
+func FuzzCBORFirstConsumesExactlyOnePreferredValue(f *testing.F) {
+	for _, seed := range [][]byte{
+		{0x00},
+		{0x17, 0xff},
+		{0x18, 0x18, 0x01},
+		{0x1b, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0x00},
+		{0xc2, 0x49, 0x01, 0, 0, 0, 0, 0, 0, 0, 0, 0x01},
+		{},
+		{0x18, 0x00, 0x01},
+		{0xc2},
+	} {
+		f.Add(seed)
+	}
+
+	codec := MustCodec[AmountUint256[Fraction18]]()
+	f.Fuzz(func(t *testing.T, raw []byte) {
+		value, rest, err := codec.ParseCBORFirst(raw)
+		if err != nil {
+			if rest != nil {
+				t.Fatalf("failed decode returned rest %x", rest)
+			}
+			return
+		}
+		consumed := len(raw) - len(rest)
+		if consumed <= 0 {
+			t.Fatalf("decoded without consuming input %x", raw)
+		}
+		var buffer [MaxCBORSize]byte
+		canonical := value.AppendCBOR(buffer[:0])
+		if string(canonical) != string(raw[:consumed]) {
+			t.Fatalf("decoder consumed non-preferred %x; preferred is %x", raw[:consumed], canonical)
+		}
+	})
+}

@@ -84,13 +84,19 @@ scalar representation used when the decimal is embedded in a parent
 | `CBORUint256Widths/runtime_codec_decode/maximum` | 9.29 ns/op | 0 | 0 |
 | `CBORToArrayIntegration/marshal` | 206 ns/op | 120 | 4 |
 | `CBORToArrayIntegration/unmarshal` | 154 ns/op | 0 | 0 |
+| `CBORManualPositionalBar/encode` | 55.5 ns/op | 0 | 0 |
+| `CBORManualPositionalBar/decode` | 112.7 ns/op | 8 | 1 |
 
 The direct caller-buffer path is the MDBX hot path. `MarshalCBOR` must return
 an owned slice and therefore has one required result allocation. Reflective
 `fxamacker` aggregate marshal additionally invokes that interface for each
 decimal; its allocations are library/interface ownership, not decimal parsing
 or unit conversion. Aggregate decode and direct strict decode are allocation-
-free in the measured fixed-array cases.
+free in the measured fixed-array cases. The fourteen-field manual positional
+benchmark uses the same 93-byte wire as deterministic fxamacker `toarray`.
+Its one decode allocation owns the parent record's symbol string; all four
+price fields and the wide amount decode without allocation through
+`ParseCBORFirst`.
 
 CPU profiles place direct CBOR work in shortest-form integer validation,
 `uint256` byte-width selection, big-endian limb transfer, and scale validation.

@@ -48,10 +48,32 @@ func TestCBORHotPathAllocations(t *testing.T) {
 	assertAllocs(t, "runtime codec parse CBOR uint256", 0, func() {
 		benchU256Sink, _ = runtimeCodec.ParseCBOR(wideWire)
 	})
+	assertAllocs(t, "codec parse first CBOR uint64", 0, func() {
+		cborNativeSink, allocationBytesSink, allocationErrorSink = nativeCodec.ParseCBORFirst(nativeWire)
+	})
+	assertAllocs(t, "codec parse first CBOR uint256", 0, func() {
+		cborWideSink, allocationBytesSink, allocationErrorSink = wideCodec.ParseCBORFirst(wideWire)
+	})
+	assertAllocs(t, "runtime codec parse first CBOR uint256", 0, func() {
+		benchU256Sink, allocationBytesSink, allocationErrorSink = runtimeCodec.ParseCBORFirst(wideWire)
+	})
+	assertAllocs(t, "runtime codec parse first into CBOR uint256", 0, func() {
+		allocationBytesSink, allocationErrorSink = runtimeCodec.ParseCBORFirstInto(wideWire, &benchU256Sink)
+	})
 	assertAllocs(t, "marshal CBOR owned uint64", 1, func() {
 		allocationBytesSink, allocationErrorSink = native.MarshalCBOR()
 	})
 	assertAllocs(t, "marshal CBOR owned uint256", 1, func() {
 		allocationBytesSink, allocationErrorSink = wide.MarshalCBOR()
+	})
+
+	bar := cborBarFixture()
+	barBuffer := make([]byte, 0, 93)
+	barWire := appendManualCBORBarOracle(barBuffer[:0], bar)
+	assertAllocs(t, "manual positional bar encode", 0, func() {
+		allocationBytesSink = appendManualCBORBarOracle(barBuffer[:0], bar)
+	})
+	assertAllocs(t, "manual positional bar decode", 1, func() {
+		cborBarOracleSink, allocationErrorSink = decodeManualCBORBarOracle(barWire)
 	})
 }
