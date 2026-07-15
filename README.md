@@ -16,7 +16,7 @@ no heap allocations.
 
 Sailfish requires Go 1.26.5 or newer.
 
-The current release is `v1.0.1`. On the documented Apple M1 Max / Go
+The current release is `v1.0.2`. On the documented Apple M1 Max / Go
 1.26.5 benchmark host, runtime-scale uint256 parsing is 8.69 ns and direct
 uint256 CBOR decode is 4.20 ns; both track their measured
 same-binary implementation kernels and perform no heap allocations. See
@@ -582,7 +582,7 @@ portable guarantees; compare changes on the same host and toolchain.
 | Parse canonical `uint256.Int` | 49.2 ns | 0 | 0 |
 | Parse maximum 78-digit `uint256.Int` | 64.6 ns | 0 | 0 |
 | Append retained `uint64` | 2.90 ns | 0 | 0 |
-| Append formatted `uint64` | 12.8 ns | 0 | 0 |
+| Append formatted `uint64` | 12.6 ns | 0 | 0 |
 | Append formatted four-limb `uint256.Int` | 112 ns | 0 | 0 |
 | Return retained `String` | 2.12 ns | 0 | 0 |
 | Return newly formatted `String` | 27.0 ns | 16 | 1 |
@@ -653,7 +653,7 @@ short-token latency does not justify their call and maintenance cost.
 | Native parsing | Pairwise accumulation plus known-point SWAR for exact 8/16-digit shapes | Keeps irregular inputs simple while bringing the common `123.31232` parse to 7.75 ns |
 | Wide parsing | One or two independent eight-digit SWAR blocks plus a scalar tail | Reduced 19-78 digit parse time by roughly 9-19% in the latest round |
 | SWAR loads | One read-only unaligned native load on amd64/arm64; byte shifts elsewhere | Removes load assembly on release architectures without retaining or mutating input memory |
-| Native formatting | Pairwise digits plus direct integer/fraction placement | Avoids a temporary decimal-point prefix copy |
+| Native formatting | Pairwise digits, direct placement, and branchless bit-length digit count | Avoids a temporary decimal-point prefix copy and a data-dependent decimal-width comparison tree |
 | Wide formatting | Base-`1e19` chunks using precomputed-reciprocal 2-by-1 division | Avoids serial hardware division and reduced two-to-four-limb formatting by roughly 9-24% |
 | Repeated output | Retain immutable canonical input or call `Canonical` once | Repeated append becomes a short string copy |
 | JSON | Direct quoted append and parse-first unescaped decode | Keeps canonical JSON encode/decode allocation-free; escaped input uses the standards-compliant slow path |
@@ -702,6 +702,31 @@ is deliberately not part of the package. See [PERFORMANCE.md](PERFORMANCE.md)
 for the matrix and compiler diagnostics. Consumers should gate PGO on their
 whole-application CPU/latency, protected minority paths, binary size, build
 time, and normal correctness suites.
+
+### Branch prediction and assembly
+
+Sailfish uses branchless arithmetic selectively, after distribution-level and
+public-operation measurements. Native decimal width is derived from
+`bits.Len64`, a fixed-point binary-to-decimal estimate, and one borrow-bit
+threshold correction. On arm64, the compiler emits `CLZ`, `MUL`, `LSR`, and
+`SUBS`/`NGC` instead of the former data-dependent comparison tree.
+
+The isolated digit-width kernel improved by 7-29% across mixed-width,
+fixed-width, and market-shaped inputs. Thirty paired, order-alternated runs of
+the public formatted-`uint64` append path improved from 12.9 ns to 12.6 ns
+(-1.98%, p=0.000), with 0 B/op and 0 allocs/op. The complete native-format
+width matrix remained neutral outside that aggregate public-path gain.
+
+Two broader branchless changes were rejected. A four-threshold arithmetic
+CBOR-length calculation was 13-15% slower than the predictable switch, and
+`segmentio/asm/ascii.ValidString` validates ASCII rather than Sailfish decimal
+grammar, adds a second pass, and uses its generic Go path on darwin/arm64.
+Existing inlined SWAR digit validation remains the better short-token kernel.
+
+Hardware branch-miss rates are not claimed: this host has no Linux `perf`, and
+the available Docker VM exposes no CPU PMU. The assembly and timing evidence,
+rejected candidates, and a PMU-enabled Linux follow-up command are recorded in
+[PERFORMANCE.md](PERFORMANCE.md).
 
 ## Validation
 

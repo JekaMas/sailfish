@@ -1,5 +1,7 @@
 package sailfish
 
+import "math/bits"
+
 const digitPairs = "0001020304050607080910111213141516171819" +
 	"2021222324252627282930313233343536373839" +
 	"4041424344454647484950515253545556575859" +
@@ -40,64 +42,16 @@ func growBy(dst []byte, n int) ([]byte, []byte) {
 }
 
 func decimalDigits64(v uint64) int {
-	if v < 1e10 {
-		if v < 1e5 {
-			if v < 1e2 {
-				if v < 10 {
-					return 1
-				}
-				return 2
-			}
-			if v < 1e3 {
-				return 3
-			}
-			if v < 1e4 {
-				return 4
-			}
-			return 5
-		}
-		if v < 1e7 {
-			if v < 1e6 {
-				return 6
-			}
-			return 7
-		}
-		if v < 1e8 {
-			return 8
-		}
-		if v < 1e9 {
-			return 9
-		}
-		return 10
-	}
-	if v < 1e15 {
-		if v < 1e12 {
-			if v < 1e11 {
-				return 11
-			}
-			return 12
-		}
-		if v < 1e13 {
-			return 13
-		}
-		if v < 1e14 {
-			return 14
-		}
-		return 15
-	}
-	if v < 1e17 {
-		if v < 1e16 {
-			return 16
-		}
-		return 17
-	}
-	if v < 1e18 {
-		return 18
-	}
-	if v < 1e19 {
-		return 19
-	}
-	return 20
+	// bits.Len64 gives the binary magnitude. Multiplication by 1233/4096
+	// estimates the corresponding decimal power with at most one threshold
+	// correction. bits.Sub64 exposes that correction as a borrow bit, so the
+	// generated arm64 path uses CLZ and SUBS/NGC instead of a data-dependent
+	// comparison tree. OR 1 maps zero to the one-digit magnitude without a
+	// separate zero branch.
+	nonzero := v | 1
+	estimate := bits.Len64(nonzero) * 1233 >> 12
+	_, borrow := bits.Sub64(nonzero, powersOf10Uint64[estimate], 0)
+	return estimate + 1 - int(borrow)
 }
 
 func fillUnsigned64(dst []byte, value uint64) {

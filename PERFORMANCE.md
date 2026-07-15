@@ -494,3 +494,78 @@ Artifacts:
 - `.codex_tmp/pgo/pgo_compiler.log`
 - `.codex_tmp/pgo/build_off.log`
 - `.codex_tmp/pgo/build_pgo.log`
+
+## 2026-07-15: Branchless Decimal Width, Not Branchless Everywhere
+
+**Decision:** replace the `decimalDigits64` comparison tree with a binary
+magnitude estimate and one branchless decimal-threshold correction. Keep the
+existing CBOR-length switch and short-token SWAR kernels. Do not add
+`segmentio/asm`.
+
+The accepted kernel computes an initial power with
+`bits.Len64(v|1) * 1233 >> 12`, then uses the borrow bit from `bits.Sub64` to
+correct that estimate around powers of ten. The `v|1` maps zero to one digit
+without a separate branch. Boundary tests cover zero, `MaxUint64`, and the
+values immediately below, at, and above every representable power of ten;
+100,000 random values compare the result with `strconv.FormatUint`.
+
+Ten same-binary runs measured the removed comparison tree against the accepted
+kernel:
+
+| Input distribution | Comparison tree | Bit-length correction | Delta | Heap |
+|---|---:|---:|---:|---:|
+| Predictable eight digits | 3.29 ns | 2.33 ns | -29.2% | 0 B / 0 allocs |
+| Mixed decimal widths | 2.80 ns | 2.60 ns | -7.1% | 0 B / 0 allocs |
+| Market-shaped widths | 3.11 ns | 2.34 ns | -24.8% | 0 B / 0 allocs |
+
+The isolated result survives the public boundary. Thirty paired,
+order-alternated runs of `AppendTo/uint64/formatted` improved from 12.9 ns to
+12.6 ns (-1.98%, p=0.000), with 0 B/op and 0 allocs/op. The full native-width
+formatting matrix was statistically neutral, and four-limb wide formatting
+remained approximately 114 ns.
+
+Generated darwin/arm64 assembly contains `CLZ`, `MUL`, `LSR`, the power-of-ten
+table load, `SUBS`, and `NGC`; the decimal-width calculation has no
+data-dependent branch. This is machine-code evidence for the transformation,
+not a claim about hardware branch-miss counts.
+
+Rejected alternatives:
+
+- A branchless CBOR unsigned-integer length candidate performed four threshold
+  operations unconditionally. It measured 2.49-2.50 ns across predictable and
+  mixed inputs, versus 2.18-2.21 ns for the existing switch. The predictable
+  branches and lower instruction count win.
+- `segmentio/asm/ascii.ValidString` measured approximately 2.60 ns for 8 bytes,
+  3.58 ns for 16 bytes, and 4.18 ns for 32 bytes, all allocation-free. It is
+  still unsuitable here: ASCII validity is weaker than decimal grammar and
+  range validation, using it would add a second pass, and its ASCII assembly
+  implementation is amd64-only while darwin/arm64 selects generic Go. The
+  existing Sailfish SWAR loader validates digits while accumulating their
+  numeric value.
+
+Hardware counters remain unavailable in this environment. Darwin does not
+provide Linux `perf`, and the privileged Docker VM exposes only software,
+tracepoint, and probe event sources, not a CPU PMU. A bare-metal or PMU-enabled
+Linux follow-up should run the same benchmark binary under:
+
+```sh
+taskset -c 2 perf stat -x, -r 10 \
+  -e task-clock,cycles,instructions,branches,branch-misses,cache-references,cache-misses \
+  ./sailfish.test -test.run '^$' \
+  -test.bench '^BenchmarkDecimalDigitsDistributions$' \
+  -test.benchtime=3s -test.count=1 -test.cpu=1
+```
+
+Artifacts:
+
+- `.codex_tmp/branch_analysis/digits_candidates.txt`
+- `.codex_tmp/branch_analysis/digits_summary.txt`
+- `.codex_tmp/branch_analysis/bit_length_asm.txt`
+- `.codex_tmp/branch_analysis/decimal_digits_asm.txt`
+- `.codex_tmp/branch_analysis/interleaved_before.txt`
+- `.codex_tmp/branch_analysis/interleaved_after.txt`
+- `.codex_tmp/branch_analysis/interleaved_benchstat.txt`
+- `.codex_tmp/branch_analysis/format_native_benchstat.txt`
+- `.codex_tmp/branch_analysis/cbor_len_summary.txt`
+- `.codex_tmp/branch_analysis_segmentio.txt`
+- `.codex_tmp/cache_analysis/docker_pmu.txt`
