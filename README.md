@@ -24,6 +24,9 @@ heap allocations. See
 [BENCHMARKS.md](BENCHMARKS.md) and [PERFORMANCE.md](PERFORMANCE.md) for the
 complete matrix and rejected alternatives.
 
+For a compact, agent-oriented decision and integration contract, see
+[LLMS.md](LLMS.md).
+
 ## Single-format policy
 
 `main` contains one current implementation and one canonical wire format. It
