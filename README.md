@@ -16,6 +16,13 @@ no heap allocations.
 
 Sailfish requires Go 1.26.5 or newer.
 
+The first stable release is `v1.0.0`. On the documented Apple M1 Max / Go
+1.26.5 benchmark host, runtime-scale uint256 parsing is 8.75 ns and direct
+uint256 CBOR decode is 4.24 ns; both are within 0.12 ns of their measured
+same-binary implementation kernels and perform no heap allocations. See
+[BENCHMARKS.md](BENCHMARKS.md) and [PERFORMANCE.md](PERFORMANCE.md) for the
+complete matrix and rejected alternatives.
+
 ## Single-format policy
 
 `main` contains one current implementation and one canonical wire format. It

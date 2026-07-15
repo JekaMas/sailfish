@@ -106,6 +106,13 @@ func TestUint256CodecAllocations(t *testing.T) {
 	assertAllocs(t, "runtime codec parse into", 0, func() {
 		_ = codec.ParseInto("123.456789", &value)
 	})
+	input := []byte("123.456789")
+	assertAllocs(t, "runtime codec parse bytes", 0, func() {
+		value, _ = codec.ParseBytes(input)
+	})
+	assertAllocs(t, "runtime codec parse bytes into", 0, func() {
+		_ = codec.ParseBytesInto(input, &value)
+	})
 	assertAllocs(t, "runtime codec append", 0, func() {
 		allocationBytesSink = codec.AppendTo(buffer[:0], value)
 	})

@@ -48,6 +48,9 @@ func TestCBORHotPathAllocations(t *testing.T) {
 	assertAllocs(t, "runtime codec parse CBOR uint256", 0, func() {
 		benchU256Sink, _ = runtimeCodec.ParseCBOR(wideWire)
 	})
+	assertAllocs(t, "runtime codec parse into CBOR uint256", 0, func() {
+		_ = runtimeCodec.ParseCBORInto(wideWire, &benchU256Sink)
+	})
 	assertAllocs(t, "codec parse first CBOR uint64", 0, func() {
 		cborNativeSink, allocationBytesSink, allocationErrorSink = nativeCodec.ParseCBORFirst(nativeWire)
 	})

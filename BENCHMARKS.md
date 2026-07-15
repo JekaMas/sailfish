@@ -38,6 +38,10 @@ GOMAXPROCS=1 GOWORK=off go test -run '^$' \
 GOMAXPROCS=1 GOWORK=off go test -run '^$' \
   -bench 'Benchmark(ScaleMetadataDispatch|GenericBackendDispatch|ExplicitUnitWidths)$' \
   -benchmem -benchtime=500ms -count=10
+
+GOMAXPROCS=1 GOWORK=off go test -run '^$' \
+  -bench '^BenchmarkPerformanceCeilings$' \
+  -benchmem -benchtime=500ms -count=15
 ```
 
 ## Snapshot
@@ -50,10 +54,11 @@ GOMAXPROCS=1 GOWORK=off go test -run '^$' \
 | `CodecParse/uint64/invalid` | 10.6 ns/op | 0 | 0 |
 | `CodecParse/uint256/canonical` | 51.7 ns/op | 0 | 0 |
 | `CodecParse/uint256/max` | 80.3 ns/op | 0 | 0 |
-| `Uint256MarketHotPaths/parse_into_runtime_codec/cex_scale6_one_limb` | 10.2 ns/op | 0 | 0 |
+| `Uint256MarketHotPaths/parse_runtime_codec/cex_scale6_one_limb` | 8.59 ns/op | 0 | 0 |
+| `Uint256MarketHotPaths/parse_into_runtime_codec/cex_scale6_one_limb` | 9.28 ns/op | 0 | 0 |
 | `Uint256MarketHotPaths/append_retained/cex_scale6_one_limb` | 3.52 ns/op | 0 | 0 |
 | `Uint256MarketHotPaths/append_retained/scale18_four_limb` | 4.22 ns/op | 0 | 0 |
-| `Uint256MarketHotPaths/append_runtime_codec/cex_scale6_one_limb` | 13.1 ns/op | 0 | 0 |
+| `Uint256MarketHotPaths/append_runtime_codec/cex_scale6_one_limb` | 12.1 ns/op | 0 | 0 |
 | `AppendTo/uint64/retained` | 2.73 ns/op | 0 | 0 |
 | `AppendTo/uint64/formatted` | 13.7 ns/op | 0 | 0 |
 | `AppendTo/uint256/formatted` | 152 ns/op | 0 | 0 |
@@ -80,7 +85,7 @@ scalar representation used when the decimal is embedded in a parent
 | `CBORDispatchLayers/decode/decimal_uint64` | 8.55 ns/op | 0 | 0 |
 | `CBORUint256Widths/runtime_codec_append/one_limb` | 4.21 ns/op | 0 | 0 |
 | `CBORUint256Widths/runtime_codec_append/maximum` | 6.91 ns/op | 0 | 0 |
-| `CBORUint256Widths/runtime_codec_decode/one_limb` | 7.27 ns/op | 0 | 0 |
+| `CBORUint256Widths/runtime_codec_decode/one_limb` | 4.24 ns/op | 0 | 0 |
 | `CBORUint256Widths/runtime_codec_decode/maximum` | 9.29 ns/op | 0 | 0 |
 | `CBORToArrayIntegration/marshal` | 206 ns/op | 120 | 4 |
 | `CBORToArrayIntegration/unmarshal` | 154 ns/op | 0 | 0 |
@@ -104,6 +109,33 @@ Memory profiles contain no per-operation allocation from append or decode.
 Cached `Codec` methods avoid repeated generic scale metadata work and are the
 recommended hot-loop surface. The figures above are means of ten
 `GOMAXPROCS=1`, 200 ms runs on the documented host.
+
+## Measured implementation ceilings
+
+`BenchmarkPerformanceCeilings` pairs a public hot operation with the
+narrowest same-binary kernel that performs equivalent numeric or ownership
+work. These are optimization bounds for this implementation, not portable CPU
+cycle guarantees.
+
+| Operation | Public | Kernel | B/op | allocs/op |
+|---|---:|---:|---:|---:|
+| Runtime uint256 parse | 8.75 ns | 8.63 ns | 0 | 0 |
+| Runtime parse into | 9.23 ns | parser + assignment | 0 | 0 |
+| Runtime one-limb append | 12.5 ns | 11.1 ns | 0 | 0 |
+| Runtime formatted length | 3.06 ns | 2.81 ns | 0 | 0 |
+| Retained native append | 2.95 ns | 2.14 ns | 0 | 0 |
+| Retained wide append | 5.01 ns | 3.03 ns | 0 | 0 |
+| Native compare | 2.09 ns | 2.27 ns | 0 | 0 |
+| Wide compare | 5.63 ns | about 3 ns | 0 | 0 |
+| Runtime CBOR length | 2.60 ns | 2.68 ns | 0 | 0 |
+| Runtime CBOR decode | 4.24 ns | 4.23 ns | 0 | 0 |
+| Runtime CBOR decode into | 4.84 ns | 4.53 ns | 0 | 0 |
+
+String/byte parse, caller-owned parse, raw/retained output, compare, checked
+addition, CBOR append/length/decode, and first-item decode all have explicit
+ceiling rows. Owned `String` and marshal operations are excluded from a
+zero-allocation target because returning owned immutable storage is their
+contract.
 
 ## Scale and backend composition
 

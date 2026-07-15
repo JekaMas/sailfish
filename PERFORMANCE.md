@@ -179,3 +179,62 @@ No unsafe code, assembly, architecture dispatch, compatibility path, legacy
 implementation, normalization fallback, or alternate runtime algorithm was
 added. `main` contains one selected implementation for each length/width
 specialization.
+
+## 2026-07-15: v1 Runtime Codec Reaches Its Measured Ceilings
+
+**Decision:** store `Uint256Codec` scale directly in its single byte and omit
+scale decoding from CBOR operations, whose wire contract contains units only.
+The zero value remains a valid scale-0 codec, the type remains one byte, and
+no public or wire semantics change.
+
+A measured implementation ceiling is the narrowest same-binary kernel that
+performs equivalent numeric and ownership work. It is deliberately not a
+cycle-count estimate. Fifteen `GOMAXPROCS=1`, 500 ms runs produced:
+
+| Public hot operation | Public | Equivalent kernel | Heap |
+|---|---:|---:|---:|
+| Runtime string parse, scale 6 | 8.75 ns | 8.63 ns complete parser | 0 B / 0 allocs |
+| Runtime parse into caller storage | 9.23 ns | 8.63 ns parser plus assignment | 0 B / 0 allocs |
+| Raw one-limb append, scale 6 | 12.5 ns | 11.1 ns complete formatter | 0 B / 0 allocs |
+| Runtime formatted length | 3.06 ns | 2.81 ns complete length path | 0 B / 0 allocs |
+| Retained native append | 2.95 ns | 2.14 ns direct immutable-text copy | 0 B / 0 allocs |
+| Retained wide append | 5.01 ns | 3.03 ns direct immutable-text copy | 0 B / 0 allocs |
+| Native same-format compare | 2.09 ns | 2.27 ns direct integer compare | 0 B / 0 allocs |
+| Wide same-format compare | 5.63 ns | about 3 ns direct limb compare | 0 B / 0 allocs |
+| Runtime CBOR length | 2.60 ns | 2.68 ns complete uint256 length | 0 B / 0 allocs |
+| Runtime CBOR decode | 4.24 ns | 4.23 ns complete uint256 decoder | 0 B / 0 allocs |
+| Runtime CBOR decode into | 4.84 ns | 4.53 ns complete decode and assignment | 0 B / 0 allocs |
+
+Compared with the pre-round runtime wrapper, string parse improved from
+9.80 ns to 8.75 ns (-10.7%, `p=0.000`) and CBOR decode improved from 6.74 ns
+to 4.24 ns (-37.1%, `p=0.000`). The complete parse and CBOR kernels were
+unchanged. The runtime-scale append comparison was statistically noisy; its
+stable isolated result remains about 12-13 ns with zero allocations, so no
+formatting speedup is claimed from this round.
+
+Rejected experiments were removed:
+
+- A value-only parse helper benchmarked faster when called directly, but made
+  `Uint256Codec.Parse` exceed the compiler's inlining budget and did not
+  improve the public method.
+- A generic type-switch compare regressed wide compare from about 5.5 ns to
+  about 8.4 ns.
+- Provider-dispatched checked addition improved some wide-only samples but did
+  not improve native and wide backends consistently; the single closed-unit
+  type switch remains production code.
+- Raw formatting, retained output, and first-item CBOR decode keep their
+  existing algorithms. Their residual cost is output construction, suffix
+  ownership, or generic method dispatch; no second implementation is retained.
+
+Artifacts:
+
+- `.codex_tmp/v1_ceiling/baseline_ceilings.txt`
+- `.codex_tmp/v1_ceiling/final_ceilings.txt`
+- `.codex_tmp/v1_ceiling/final_vs_baseline.txt`
+- `.codex_tmp/v1_ceiling/final_escape.txt`
+- `.codex_tmp/v1_ceiling/final_cpu.pprof`
+- `.codex_tmp/v1_ceiling/final_mem.pprof`
+
+The v1 release therefore keeps pure Go, one implementation per operation,
+strict constructor-only canonicalization, and zero allocation across all
+caller-buffer runtime codec hot paths.

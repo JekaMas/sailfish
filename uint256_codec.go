@@ -10,10 +10,10 @@ import "github.com/holiman/uint256"
 // dispatch and return Error directly so successful and rejected parses remain
 // allocation-free.
 //
-// The zero value is a valid scale-0 codec. The one-byte scalePlusOne encoding
-// stores nonzero configured scales without widening the type.
+// The zero value is a valid scale-0 codec. Scale is stored directly in one
+// byte so repeated boundary operations do not decode constructor metadata.
 type Uint256Codec struct {
-	scalePlusOne uint8
+	scaleValue uint8
 }
 
 // NewUint256Codec validates scale once for repeated uint256 operations.
@@ -21,14 +21,11 @@ func NewUint256Codec(scale Notion) (Uint256Codec, error) {
 	if int(scale) > maxUint256Scale {
 		return Uint256Codec{}, boxedErrScale
 	}
-	return Uint256Codec{scalePlusOne: uint8(scale + 1)}, nil
+	return Uint256Codec{scaleValue: uint8(scale)}, nil
 }
 
 func (c Uint256Codec) scale() int {
-	if c.scalePlusOne == 0 {
-		return 0
-	}
-	return int(c.scalePlusOne - 1)
+	return int(c.scaleValue)
 }
 
 // Scale returns the configured number of fractional decimal digits.
@@ -93,20 +90,17 @@ func (c Uint256Codec) Len(units uint256.Int) int {
 
 // CBORLen returns the exact preferred deterministic CBOR size for units.
 func (c Uint256Codec) CBORLen(units uint256.Int) int {
-	_ = c.scale()
 	return Uint256Units{}.unitCBORLen(units)
 }
 
 // AppendCBOR appends the preferred deterministic CBOR encoding for units. It
 // allocates only when dst has insufficient capacity.
 func (c Uint256Codec) AppendCBOR(dst []byte, units uint256.Int) []byte {
-	_ = c.scale()
 	return Uint256Units{}.unitAppendCBOR(dst, units)
 }
 
 // ParseCBOR decodes preferred deterministic CBOR into scaled units.
 func (c Uint256Codec) ParseCBOR(raw []byte) (uint256.Int, Error) {
-	_ = c.scale()
 	return Uint256Units{}.unitParseCBOR(raw)
 }
 
@@ -114,7 +108,6 @@ func (c Uint256Codec) ParseCBOR(raw []byte) (uint256.Int, Error) {
 // start of raw and returns the unconsumed suffix. It is intended for manual
 // positional-array decoders that keep aggregate decoding allocation-free.
 func (c Uint256Codec) ParseCBORFirst(raw []byte) (uint256.Int, []byte, Error) {
-	_ = c.scale()
 	value, consumed, err := Uint256Units{}.unitParseCBORFirst(raw)
 	if err != "" {
 		return uint256.Int{}, nil, err
@@ -125,7 +118,6 @@ func (c Uint256Codec) ParseCBORFirst(raw []byte) (uint256.Int, []byte, Error) {
 // ParseCBORInto decodes preferred deterministic CBOR into dst. It leaves dst
 // unchanged on failure.
 func (c Uint256Codec) ParseCBORInto(raw []byte, dst *uint256.Int) Error {
-	_ = c.scale()
 	if dst == nil {
 		return ErrNilDestination
 	}
@@ -140,7 +132,6 @@ func (c Uint256Codec) ParseCBORInto(raw []byte, dst *uint256.Int) Error {
 // ParseCBORFirstInto decodes one preferred deterministic CBOR uint256 into
 // dst and returns the unconsumed suffix. It leaves dst unchanged on failure.
 func (c Uint256Codec) ParseCBORFirstInto(raw []byte, dst *uint256.Int) ([]byte, Error) {
-	_ = c.scale()
 	if dst == nil {
 		return nil, ErrNilDestination
 	}
