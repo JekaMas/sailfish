@@ -9,13 +9,13 @@ import (
 	"github.com/holiman/uint256"
 )
 
-type examplePriceFormat = sailfish.PriceUint64[sailfish.Fraction5]
-type examplePrice = sailfish.Decimal[examplePriceFormat, uint64]
-type exampleAmountFormat = sailfish.AmountUint256[sailfish.Fraction18]
-type exampleAmount = sailfish.Decimal[exampleAmountFormat, uint256.Int]
+type examplePriceFormat = sailfish.PriceInUint64Units[sailfish.DecimalPlaces5]
+type examplePrice = sailfish.FixedDecimal[examplePriceFormat, uint64]
+type exampleAmountFormat = sailfish.AmountInUint256Units[sailfish.DecimalPlaces18]
+type exampleAmount = sailfish.FixedDecimal[exampleAmountFormat, uint256.Int]
 
-func ExampleCodec_price() {
-	codec, err := sailfish.NewCodec[examplePriceFormat]()
+func ExampleFixedDecimalCodec_price() {
+	codec, err := sailfish.NewFixedDecimalCodec[examplePriceFormat]()
 	if err != nil {
 		fmt.Println(err)
 		return
@@ -39,10 +39,10 @@ func ExampleCodec_price() {
 	// 12331233
 }
 
-func ExampleNewFromUnits() {
-	type AmountFormat = sailfish.AmountUint32[sailfish.Fraction6]
+func ExampleNewFixedDecimalFromUnits() {
+	type AmountFormat = sailfish.AmountInUint32Units[sailfish.DecimalPlaces6]
 
-	amount, err := sailfish.NewFromUnits[AmountFormat](uint32(1_234_567))
+	amount, err := sailfish.NewFixedDecimalFromUnits[AmountFormat](uint32(1_234_567))
 	if err != nil {
 		fmt.Println(err)
 		return
@@ -53,8 +53,8 @@ func ExampleNewFromUnits() {
 	// 1.234567
 }
 
-func ExampleUint256Codec() {
-	codec, err := sailfish.NewUint256Codec(18)
+func ExampleUint256FixedDecimalCodec() {
+	codec, err := sailfish.NewUint256FixedDecimalCodec(18)
 	if err != nil {
 		fmt.Println(err)
 		return
@@ -78,13 +78,13 @@ type exampleQuote struct {
 	Amount exampleAmount
 }
 
-func ExampleDecimal_serialization() {
-	priceCodec, err := sailfish.NewCodec[examplePriceFormat]()
+func ExampleFixedDecimal_serialization() {
+	priceCodec, err := sailfish.NewFixedDecimalCodec[examplePriceFormat]()
 	if err != nil {
 		fmt.Println(err)
 		return
 	}
-	amountCodec, err := sailfish.NewCodec[exampleAmountFormat]()
+	amountCodec, err := sailfish.NewFixedDecimalCodec[exampleAmountFormat]()
 	if err != nil {
 		fmt.Println(err)
 		return
@@ -136,13 +136,13 @@ func ExampleDecimal_serialization() {
 	// 1.250000000000000000
 }
 
-func ExampleCodec_manualPositionalCBOR() {
-	priceCodec, err := sailfish.NewCodec[examplePriceFormat]()
+func ExampleFixedDecimalCodec_manualPositionalCBOR() {
+	priceCodec, err := sailfish.NewFixedDecimalCodec[examplePriceFormat]()
 	if err != nil {
 		fmt.Println(err)
 		return
 	}
-	amountCodec, err := sailfish.NewCodec[exampleAmountFormat]()
+	amountCodec, err := sailfish.NewFixedDecimalCodec[exampleAmountFormat]()
 	if err != nil {
 		fmt.Println(err)
 		return

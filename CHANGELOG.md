@@ -1,5 +1,16 @@
 # Changelog
 
+## v1.0.4 - 2026-07-15
+
+- Replaced ambiguous public decimal names with one explicit API that states
+  semantic kind, scaled-integer representation, and fractional decimal places:
+  `FixedDecimal`, `FixedDecimalCodec`, `DecimalPlacesN`,
+  `PriceInUintNUnits`, and `AmountInUintNUnits`.
+- Renamed constructors, runtime codecs, format accessors, and unsupported
+  decimal-place errors to describe their exact fixed-decimal contract.
+- Removed the former public names entirely. No aliases, deprecated wrappers,
+  compatibility layer, legacy path, or fallback remains.
+
 ## v1.0.3 - 2026-07-15
 
 - Added selective reverse-SWAR native formatting for measured 5-8 and 14-20
@@ -29,7 +40,7 @@
 - Strict unsigned fixed-scale decimals backed by `uint8`, `uint16`, `uint32`,
   `uint64`, or `uint256.Int`.
 - Distinct price and amount formats with compile-time fractional scale.
-- Runtime-scale `Uint256Codec` for trusted venue metadata.
+- Runtime-scale `Uint256FixedDecimalCodec` for trusted venue metadata.
 - Caller-buffer text, JSON, and preferred deterministic CBOR APIs.
 - Checked same-format arithmetic and cross-format comparison.
 - Zero-allocation parse, append, compare, arithmetic, and direct CBOR hot

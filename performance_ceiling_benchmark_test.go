@@ -24,7 +24,7 @@ func BenchmarkPerformanceCeilings(b *testing.B) {
 func benchmarkParseCeilings(b *testing.B) {
 	const input = "123.456789"
 	inputBytes := []byte(input)
-	codec := testUint256Codec(6)
+	codec := testUint256FixedDecimalCodec(6)
 
 	b.Run("parse/runtime_codec", func(b *testing.B) {
 		b.ReportAllocs()
@@ -69,7 +69,7 @@ func benchmarkParseCeilings(b *testing.B) {
 }
 
 func benchmarkFormatCeilings(b *testing.B) {
-	codec := testUint256Codec(6)
+	codec := testUint256FixedDecimalCodec(6)
 	units := uint256.Int{123_456_789}
 	buffer := make([]byte, 0, 32)
 
@@ -108,9 +108,9 @@ func benchmarkFormatCeilings(b *testing.B) {
 }
 
 func benchmarkRetainedCeilings(b *testing.B) {
-	nativeCodec := testCodec[PriceUint64[Fraction5]]()
+	nativeCodec := testFixedDecimalCodec[PriceInUint64Units[DecimalPlaces5]]()
 	native, _ := nativeCodec.Parse("123.31232")
-	wideCodec := testCodec[uint256Scale18]()
+	wideCodec := testFixedDecimalCodec[uint256DecimalPlaces18]()
 	wide, _ := wideCodec.Parse("115792089237316195423570985008687907853269984665640564039.457584007913129639")
 	buffer := make([]byte, 0, 96)
 
@@ -143,10 +143,10 @@ func benchmarkRetainedCeilings(b *testing.B) {
 }
 
 func benchmarkCompareCeilings(b *testing.B) {
-	nativeCodec := testCodec[PriceUint64[Fraction5]]()
+	nativeCodec := testFixedDecimalCodec[PriceInUint64Units[DecimalPlaces5]]()
 	nativeA := nativeCodec.FromUnits(12_331_232)
 	nativeB := nativeCodec.FromUnits(12_331_233)
-	wideCodec := testCodec[uint256Scale18]()
+	wideCodec := testFixedDecimalCodec[uint256DecimalPlaces18]()
 	wideA := wideCodec.FromUnits(uint256.Int{1, 2, 3, 4})
 	wideB := wideCodec.FromUnits(uint256.Int{2, 2, 3, 4})
 
@@ -201,10 +201,10 @@ func compareUint256Ceiling(a, b uint256.Int) int {
 }
 
 func benchmarkArithmeticCeilings(b *testing.B) {
-	nativeCodec := testCodec[PriceUint64[Fraction5]]()
+	nativeCodec := testFixedDecimalCodec[PriceInUint64Units[DecimalPlaces5]]()
 	nativeBase := nativeCodec.FromUnits(12_300_000)
 	nativeDelta := nativeCodec.FromUnits(1)
-	wideCodec := testCodec[uint256Scale18]()
+	wideCodec := testFixedDecimalCodec[uint256DecimalPlaces18]()
 	wideBase := wideCodec.FromUnits(uint256.Int{1, 2, 3, 4})
 	wideDelta := wideCodec.FromUnits(uint256.Int{1})
 
@@ -247,7 +247,7 @@ func benchmarkArithmeticCeilings(b *testing.B) {
 }
 
 func benchmarkCBORCeilings(b *testing.B) {
-	codec := testUint256Codec(6)
+	codec := testUint256FixedDecimalCodec(6)
 	units := uint256.Int{123_456_789}
 	buffer := make([]byte, 0, MaxCBORSize)
 	raw := codec.AppendCBOR(buffer[:0], units)

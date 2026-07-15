@@ -6,10 +6,10 @@ import (
 	"github.com/holiman/uint256"
 )
 
-func TestCodecRawUnitOperations(t *testing.T) {
+func TestFixedDecimalCodecRawUnitOperations(t *testing.T) {
 	t.Parallel()
 
-	priceCodec := testCodec[PriceUint64[Fraction5]]()
+	priceCodec := testFixedDecimalCodec[PriceInUint64Units[DecimalPlaces5]]()
 	priceUnits, err := priceCodec.ParseUnits("123.31232")
 	if err != "" {
 		t.Fatalf("ParseUnits: %s", err)
@@ -34,7 +34,7 @@ func TestCodecRawUnitOperations(t *testing.T) {
 		t.Fatalf("UnitsLen = %d, want %d", got, len("123.31232"))
 	}
 
-	amountCodec := testCodec[AmountUint256[Fraction18]]()
+	amountCodec := testFixedDecimalCodec[AmountInUint256Units[DecimalPlaces18]]()
 	amountUnits, err := amountCodec.ParseUnits("18446744073709551616.000000000000000001")
 	if err != "" {
 		t.Fatalf("wide ParseUnits: %s", err)
@@ -45,10 +45,10 @@ func TestCodecRawUnitOperations(t *testing.T) {
 	}
 }
 
-func TestCodecRawUnitOperationsRejectInvalidInput(t *testing.T) {
+func TestFixedDecimalCodecRawUnitOperationsRejectInvalidInput(t *testing.T) {
 	t.Parallel()
 
-	codec := testCodec[PriceUint64[Fraction5]]()
+	codec := testFixedDecimalCodec[PriceInUint64Units[DecimalPlaces5]]()
 	for _, input := range []string{"", " 1.00000", "+1.00000", "1e0", "1.000000"} {
 		if _, err := codec.ParseUnits(input); err == "" {
 			t.Fatalf("ParseUnits(%q) unexpectedly succeeded", input)
@@ -59,8 +59,8 @@ func TestCodecRawUnitOperationsRejectInvalidInput(t *testing.T) {
 	}
 }
 
-func TestCodecRawUnitOperationsDoNotAllocate(t *testing.T) {
-	codec := testCodec[PriceUint64[Fraction5]]()
+func TestFixedDecimalCodecRawUnitOperationsDoNotAllocate(t *testing.T) {
+	codec := testFixedDecimalCodec[PriceInUint64Units[DecimalPlaces5]]()
 	var buffer [32]byte
 	allocs := testing.AllocsPerRun(1_000, func() {
 		units, err := codec.ParseUnits("123.31232")

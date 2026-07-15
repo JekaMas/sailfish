@@ -7,7 +7,7 @@ import (
 )
 
 // Arithmetic dispatches once on the closed Unit set. Keeping it outside the
-// venue method dictionary lowers uint256 mutation overhead on current Go
+// format method dictionary lowers uint256 mutation overhead on current Go
 // compilers.
 func addUnits[U Unit](a, b U) (U, bool) {
 	switch left := any(a).(type) {

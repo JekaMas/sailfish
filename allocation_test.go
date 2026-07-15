@@ -8,9 +8,9 @@ import (
 
 var (
 	allocationPriceSink  price5
-	allocationUint8Sink  Decimal[PriceUint8[Fraction1], uint8]
-	allocationUint16Sink Decimal[PriceUint16[Fraction2], uint16]
-	allocationUint32Sink Decimal[PriceUint32[Fraction5], uint32]
+	allocationUint8Sink  FixedDecimal[PriceInUint8Units[DecimalPlaces1], uint8]
+	allocationUint16Sink FixedDecimal[PriceInUint16Units[DecimalPlaces2], uint16]
+	allocationUint32Sink FixedDecimal[PriceInUint32Units[DecimalPlaces5], uint32]
 	allocationWideSink   wide18
 	allocationBytesSink  []byte
 	allocationStringSink string
@@ -20,18 +20,18 @@ var (
 )
 
 func TestHotPathAllocations(t *testing.T) {
-	priceCodec := testCodec[PriceUint64[Fraction5]]()
-	wideCodec := testCodec[uint256Scale18]()
+	priceCodec := testFixedDecimalCodec[PriceInUint64Units[DecimalPlaces5]]()
+	wideCodec := testFixedDecimalCodec[uint256DecimalPlaces18]()
 	priceBytes := []byte("123.31232")
 	appendBuffer := make([]byte, 0, 96)
 	priceRetained, _ := priceCodec.Parse("123.31232")
 	priceFromUnits := priceCodec.FromUnits(12_331_232)
 	priceDelta := priceCodec.FromUnits(1)
 	wideFromUnits := wideCodec.FromUnits(uint256.Int{1, 2, 3, 4})
-	otherScale := testCodec[uint256Scale37]().FromUnits(uint256.Int{5, 6, 7, 8})
-	uint8Codec := testCodec[PriceUint8[Fraction1]]()
-	uint16Codec := testCodec[PriceUint16[Fraction2]]()
-	uint32Codec := testCodec[PriceUint32[Fraction5]]()
+	otherScale := testFixedDecimalCodec[uint256DecimalPlaces37]().FromUnits(uint256.Int{5, 6, 7, 8})
+	uint8Codec := testFixedDecimalCodec[PriceInUint8Units[DecimalPlaces1]]()
+	uint16Codec := testFixedDecimalCodec[PriceInUint16Units[DecimalPlaces2]]()
+	uint32Codec := testFixedDecimalCodec[PriceInUint32Units[DecimalPlaces5]]()
 
 	assertAllocs(t, "parse canonical uint64", 0, func() {
 		allocationPriceSink, _ = priceCodec.Parse("123.31232")
@@ -61,7 +61,7 @@ func TestHotPathAllocations(t *testing.T) {
 		allocationPriceSink, allocationErrorSink = priceCodec.ParseCompact("184467440737095.51616")
 	})
 	assertAllocs(t, "reject scale", 0, func() {
-		_, allocationErrorSink = NewCodec[uint64Scale20]()
+		_, allocationErrorSink = NewFixedDecimalCodec[uint64DecimalPlaces20]()
 	})
 	assertAllocs(t, "append uint64", 0, func() {
 		allocationBytesSink = priceCodec.AppendTo(appendBuffer[:0], priceFromUnits)

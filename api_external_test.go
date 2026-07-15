@@ -9,19 +9,22 @@ import (
 	"github.com/holiman/uint256"
 )
 
-func TestPublicAPITypeInference(t *testing.T) {
+func TestPublicAPITypeNamesExposeRepresentationAndDecimalPlaces(t *testing.T) {
 	t.Parallel()
 
-	price, err := sailfish.New[sailfish.PriceUint64[sailfish.Fraction5]]("123.31232")
+	price, err := sailfish.NewFixedDecimal[sailfish.PriceInUint64Units[sailfish.DecimalPlaces5]]("123.31232")
 	if err != nil {
 		t.Fatal(err)
 	}
-	acceptPriceUint64Fraction5(price)
+	acceptPriceInUint64UnitsWith5DecimalPlaces(price)
 	if price.Units() != 12_331_232 {
 		t.Fatal(price.Units())
 	}
 
-	smallCodec := requireCodec[sailfish.PriceUint16[sailfish.Fraction2]](t)
+	smallCodec := requireFixedDecimalCodec[sailfish.PriceInUint16Units[sailfish.DecimalPlaces2]](t)
+	if smallCodec.FractionalDecimalPlaces() != 2 {
+		t.Fatal(smallCodec.FractionalDecimalPlaces())
+	}
 	small, err := smallCodec.Parse("655.35")
 	if err != nil {
 		t.Fatal(err)
@@ -31,17 +34,17 @@ func TestPublicAPITypeInference(t *testing.T) {
 		t.Fatal(small.Units(), smallCodec.MaxIntegerDigits())
 	}
 
-	codec := requireCodec[sailfish.AmountUint256[sailfish.Fraction18]](t)
+	codec := requireFixedDecimalCodec[sailfish.AmountInUint256Units[sailfish.DecimalPlaces18]](t)
 	amount, err := codec.Parse("1.000000000000000001")
 	if err != nil {
 		t.Fatal(err)
 	}
-	acceptAmountUint256Fraction18(amount)
+	acceptAmountInUint256UnitsWith18DecimalPlaces(amount)
 	if amount.Units() != (uint256.Int{1_000_000_000_000_000_001}) {
 		t.Fatal(amount.Units())
 	}
 
-	runtimeCodec := requireUint256Codec(t, 6)
+	runtimeCodec := requireUint256FixedDecimalCodec(t, 6)
 	var runtimeUnits uint256.Int
 	if parseErr := runtimeCodec.ParseInto("123.456789", &runtimeUnits); parseErr != "" {
 		t.Fatal(parseErr)
@@ -57,10 +60,10 @@ func TestPublicCBORToArrayAPI(t *testing.T) {
 	type quote struct {
 		_ struct{} `cbor:",toarray"`
 
-		Price sailfish.Decimal[sailfish.PriceUint64[sailfish.Fraction5], uint64]
+		Price sailfish.FixedDecimal[sailfish.PriceInUint64Units[sailfish.DecimalPlaces5], uint64]
 	}
 
-	codec := requireCodec[sailfish.PriceUint64[sailfish.Fraction5]](t)
+	codec := requireFixedDecimalCodec[sailfish.PriceInUint64Units[sailfish.DecimalPlaces5]](t)
 	original := quote{Price: codec.FromUnits(12_331_232)}
 	wire, err := cbor.Marshal(original)
 	if err != nil {
@@ -86,27 +89,34 @@ func TestPublicCBORToArrayAPI(t *testing.T) {
 	}
 }
 
-func acceptPriceUint64Fraction5(sailfish.Decimal[sailfish.PriceUint64[sailfish.Fraction5], uint64]) {}
-
-func acceptSmallPrice(sailfish.Decimal[sailfish.PriceUint16[sailfish.Fraction2], uint16]) {}
-
-func acceptAmountUint256Fraction18(
-	sailfish.Decimal[sailfish.AmountUint256[sailfish.Fraction18], uint256.Int],
+func acceptPriceInUint64UnitsWith5DecimalPlaces(
+	sailfish.FixedDecimal[sailfish.PriceInUint64Units[sailfish.DecimalPlaces5], uint64],
 ) {
 }
 
-func requireCodec[V sailfish.Venue[U], U sailfish.Unit](t *testing.T) sailfish.Codec[V, U] {
+func acceptSmallPrice(sailfish.FixedDecimal[sailfish.PriceInUint16Units[sailfish.DecimalPlaces2], uint16]) {
+}
+
+func acceptAmountInUint256UnitsWith18DecimalPlaces(
+	sailfish.FixedDecimal[sailfish.AmountInUint256Units[sailfish.DecimalPlaces18], uint256.Int],
+) {
+}
+
+func requireFixedDecimalCodec[V sailfish.FixedDecimalFormat[U], U sailfish.Unit](t *testing.T) sailfish.FixedDecimalCodec[V, U] {
 	t.Helper()
-	codec, err := sailfish.NewCodec[V]()
+	codec, err := sailfish.NewFixedDecimalCodec[V]()
 	if err != nil {
 		t.Fatal(err)
 	}
 	return codec
 }
 
-func requireUint256Codec(t *testing.T, scale sailfish.Notion) sailfish.Uint256Codec {
+func requireUint256FixedDecimalCodec(
+	t *testing.T,
+	fractionalDecimalPlaces sailfish.DecimalPlaces,
+) sailfish.Uint256FixedDecimalCodec {
 	t.Helper()
-	codec, err := sailfish.NewUint256Codec(scale)
+	codec, err := sailfish.NewUint256FixedDecimalCodec(fractionalDecimalPlaces)
 	if err != nil {
 		t.Fatal(err)
 	}

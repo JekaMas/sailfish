@@ -11,8 +11,8 @@ import (
 func TestSameVenueCompare(t *testing.T) {
 	t.Parallel()
 
-	a, _ := New[PriceUint64[Fraction5]]("1.20000")
-	b, _ := New[PriceUint64[Fraction5]]("1.20001")
+	a, _ := NewFixedDecimal[PriceInUint64Units[DecimalPlaces5]]("1.20000")
+	b, _ := NewFixedDecimal[PriceInUint64Units[DecimalPlaces5]]("1.20001")
 	if a.Compare(b) != -1 || b.Cmp(a) != 1 || !a.Less(b) || a.Equal(b) {
 		t.Fatal("same-venue comparison contract failed")
 	}
@@ -21,14 +21,14 @@ func TestSameVenueCompare(t *testing.T) {
 func TestCrossScaleAndBackendCompare(t *testing.T) {
 	t.Parallel()
 
-	a, _ := New[PriceUint64[Fraction2]]("1.20")
-	b, _ := New[uint256Scale18]("1.200000000000000000")
+	a, _ := NewFixedDecimal[PriceInUint64Units[DecimalPlaces2]]("1.20")
+	b, _ := NewFixedDecimal[uint256DecimalPlaces18]("1.200000000000000000")
 	if Compare(a, b) != 0 || Compare(b, a) != 0 {
 		t.Fatal("cross-backend equal values differ")
 	}
 
-	less, _ := New[PriceUint64[Fraction2]]("0.01")
-	more, _ := New[uint256Scale18]("0.010000000000000001")
+	less, _ := NewFixedDecimal[PriceInUint64Units[DecimalPlaces2]]("0.01")
+	more, _ := NewFixedDecimal[uint256DecimalPlaces18]("0.010000000000000001")
 	if Compare(less, more) != -1 || Compare(more, less) != 1 {
 		t.Fatal("cross-backend ordering failed")
 	}
@@ -41,8 +41,8 @@ func TestCrossScaleCompareMatchesBigIntReference(t *testing.T) {
 	for range 10_000 {
 		aUnits := rng.Uint64()
 		bUnits := uint256.Int{rng.Uint64(), rng.Uint64(), rng.Uint64(), rng.Uint64()}
-		a, _ := NewFromUnits[uint64Scale19](aUnits)
-		b, _ := NewFromUnits[uint256Scale37](bUnits)
+		a, _ := NewFixedDecimalFromUnits[uint64DecimalPlaces19](aUnits)
+		b, _ := NewFixedDecimalFromUnits[uint256DecimalPlaces37](bUnits)
 
 		got := Compare(a, b)
 		want := compareScaledBig(

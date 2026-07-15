@@ -11,8 +11,8 @@ import (
 func TestUint64Arithmetic(t *testing.T) {
 	t.Parallel()
 
-	base, _ := New[PriceUint64[Fraction5]]("1.20000")
-	delta, _ := New[PriceUint64[Fraction5]]("0.00001")
+	base, _ := NewFixedDecimal[PriceInUint64Units[DecimalPlaces5]]("1.20000")
+	delta, _ := NewFixedDecimal[PriceInUint64Units[DecimalPlaces5]]("0.00001")
 
 	sum, err := base.Add(delta)
 	if err != nil || sum.String() != "1.20001" {
@@ -23,8 +23,8 @@ func TestUint64Arithmetic(t *testing.T) {
 		t.Fatalf("difference = %q, %v", difference.String(), err)
 	}
 
-	max, _ := NewFromUnits[PriceUint64[Fraction5]](uint64(math.MaxUint64))
-	one := testCodec[PriceUint64[Fraction5]]().FromUnits(1)
+	max, _ := NewFixedDecimalFromUnits[PriceInUint64Units[DecimalPlaces5]](uint64(math.MaxUint64))
+	one := testFixedDecimalCodec[PriceInUint64Units[DecimalPlaces5]]().FromUnits(1)
 	wrapped, overflow := max.AddOverflow(one)
 	if !overflow || !wrapped.IsZero() {
 		t.Fatalf("wrapped=%d overflow=%v", wrapped.Units(), overflow)
@@ -34,7 +34,7 @@ func TestUint64Arithmetic(t *testing.T) {
 		t.Fatal("overflowing AddAssign changed receiver")
 	}
 
-	zero := testCodec[PriceUint64[Fraction5]]().FromUnits(0)
+	zero := testFixedDecimalCodec[PriceInUint64Units[DecimalPlaces5]]().FromUnits(0)
 	if _, err := zero.Sub(one); !errors.Is(err, ErrUnderflow) {
 		t.Fatalf("underflow error = %v", err)
 	}
@@ -43,7 +43,7 @@ func TestUint64Arithmetic(t *testing.T) {
 func TestUint256Arithmetic(t *testing.T) {
 	t.Parallel()
 
-	codec := testCodec[uint256Scale0]()
+	codec := testFixedDecimalCodec[uint256DecimalPlaces0]()
 	max := codec.FromUnits(uint256.Int{math.MaxUint64, math.MaxUint64, math.MaxUint64, math.MaxUint64})
 	one := codec.FromUnits(uint256.Int{1})
 	wrapped, overflow := max.AddOverflow(one)

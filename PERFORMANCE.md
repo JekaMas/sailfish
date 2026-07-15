@@ -254,9 +254,9 @@ inputs now reach full-word validation before returning `ErrSyntax`.
 - Splitting numeric and cached decimal types changes the package's ownership
   and memory API; it is not a parser optimization and was not attempted here.
 
-## 2026-07-15: v1 Runtime Codec Reaches Its Measured Ceilings
+## 2026-07-15: v1 Runtime FixedDecimalCodec Reaches Its Measured Ceilings
 
-**Decision:** store `Uint256Codec` scale directly in its single byte and omit
+**Decision:** store `Uint256FixedDecimalCodec` scale directly in its single byte and omit
 scale decoding from CBOR operations, whose wire contract contains units only.
 The zero value remains a valid scale-0 codec, the type remains one byte, and
 no public or wire semantics change.
@@ -289,7 +289,7 @@ formatting speedup is claimed from this round.
 Rejected experiments were removed:
 
 - A value-only parse helper benchmarked faster when called directly, but made
-  `Uint256Codec.Parse` exceed the compiler's inlining budget and did not
+  `Uint256FixedDecimalCodec.Parse` exceed the compiler's inlining budget and did not
   improve the public method.
 - A generic type-switch compare regressed wide compare from about 5.5 ns to
   about 8.4 ns.
@@ -313,7 +313,8 @@ Hyperliquid perpetual markets.
 
 The fixed snapshot contains each `(venue, market_type, symbol)` once. It keeps
 distinct observed min/quantile/max prices and quantities at each market's
-venue scale. Three deliberate bar workloads select minimum, median, or maximum
+fractional decimal places. Three deliberate bar workloads select minimum,
+median, or maximum
 quantity; they share the same market set instead of duplicating fixture rows.
 
 The exact 14-field schema has a 15-byte empty/zero structural floor and no
@@ -321,7 +322,7 @@ finite maximum without a symbol-length bound. The 900 realistic bar cases
 measure 48-78 bytes, with cohort/mode means from 57.42 to 65.92 bytes. Ten-run
 encoding means are 52.2-56.0 ns at zero allocations. Decode means are
 106.1-125.3 ns; its only ownership cost is the enclosing record's symbol
-string. Decimal scalar encode/decode remains allocation-free.
+string. FixedDecimal scalar encode/decode remains allocation-free.
 
 This adds benchmark and test evidence only. No production codec, wire format,
 normalization, compatibility decoder, fallback, or alternate implementation
@@ -372,9 +373,9 @@ codec, no legacy decoder, and no normalization fallback.
 
 ## 2026-07-15: Cache Locality And Raw Unit Batches
 
-**Decision:** keep the minimum 24-byte native and 48-byte uint256 `Decimal`
+**Decision:** keep the minimum 24-byte native and 48-byte uint256 `FixedDecimal`
 layouts, and use contiguous raw unit arrays for numeric-only batch kernels.
-Add `Codec.ParseUnits`, `ParseUnitsBytes`, `AppendUnits`, and `UnitsLen` so the
+Add `FixedDecimalCodec.ParseUnits`, `ParseUnitsBytes`, `AppendUnits`, and `UnitsLen` so the
 cache-efficient representation uses the same strict typed codec at its text
 boundary. Do not add padding, pointer-indirected cold state, or a second decimal
 value type.
@@ -383,7 +384,7 @@ The release host is an Apple M1 Max with a 128-byte cache line. macOS reports
 128 KiB performance-core L1 data caches and 12 MiB L2 caches shared by four
 performance cores. Eight `GOMAXPROCS=1`, 300 ms runs measured:
 
-| 699,050-value random scan | Raw units | `Decimal` | Raw-unit gain | Heap |
+| 699,050-value random scan | Raw units | `FixedDecimal` | Raw-unit gain | Heap |
 |---|---:|---:|---:|---:|
 | `uint64` | 1.77 ms | 2.84 ms | 1.60x | 0 B / 0 allocs |
 | `uint256.Int` | 3.15 ms | 11.7 ms | 3.71x | 0 B / 0 allocs |
@@ -404,7 +405,7 @@ the former public composition and the same internal kernels:
 The remaining public-to-kernel difference is generic scale/backend dispatch,
 not allocation or representation copying. A specialized second native codec
 was rejected because the measured append gain does not justify duplicating the
-typed `Codec` API, and raw batch locality is already achieved by the unit array.
+typed `FixedDecimalCodec` API, and raw batch locality is already achieved by the unit array.
 
 Hardware cache hit/miss totals are deliberately not claimed. The local
 `xctrace` CPU Counters template exported an empty `pmc-events` selection, and
@@ -452,7 +453,7 @@ equal-duration production CPU profiles, merge them with `go tool pprof
 -proto`, compare `-pgo=off` with `-pgo=<profile>` under the same traffic, and
 accept only after its own latency/CPU and minority-path regression gates pass.
 
-## 2026-07-15: Branchless Decimal Width, Not Branchless Everywhere
+## 2026-07-15: Branchless FixedDecimal Width, Not Branchless Everywhere
 
 **Decision:** replace the `decimalDigits64` comparison tree with a binary
 magnitude estimate and one branchless decimal-threshold correction. Keep the

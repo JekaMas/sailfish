@@ -10,7 +10,8 @@ const (
 )
 
 // Uint8Units, Uint16Units, and Uint32Units are zero-sized unit providers.
-// Embed one in a custom venue, or use the PriceUint* and AmountUint* formats.
+// Embed one in a custom fixed-decimal format, or use the explicit
+// PriceInUint*Units and AmountInUint*Units formats.
 type Uint8Units struct{}
 
 func (Uint8Units) unitParseString(s string, scale int) (uint8, bool, Error) {

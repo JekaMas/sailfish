@@ -7,13 +7,13 @@ import (
 	"unsafe"
 )
 
-func TestCodecAPIAndSizes(t *testing.T) {
+func TestFixedDecimalCodecAPIAndSizes(t *testing.T) {
 	t.Parallel()
 
-	codec := testCodec[PriceUint64[Fraction5]]()
+	codec := testFixedDecimalCodec[PriceInUint64Units[DecimalPlaces5]]()
 	value, err := codec.Parse("123.31232")
-	if err != nil || codec.Scale() != 5 || value.Units() != 12_331_232 {
-		t.Fatalf("codec = %v %d %d", err, codec.Scale(), value.Units())
+	if err != nil || codec.FractionalDecimalPlaces() != 5 || value.Units() != 12_331_232 {
+		t.Fatalf("codec = %v %d %d", err, codec.FractionalDecimalPlaces(), value.Units())
 	}
 	formatted := codec.FromUnits(42)
 	if got := string(codec.AppendJSON(make([]byte, 0, 16), formatted)); got != `"0.00042"` {
@@ -22,13 +22,13 @@ func TestCodecAPIAndSizes(t *testing.T) {
 
 	if strconv.IntSize == 64 {
 		if unsafe.Sizeof(price5{}) != 24 {
-			t.Fatalf("uint64 Decimal size = %d, want 24", unsafe.Sizeof(price5{}))
+			t.Fatalf("uint64 FixedDecimal size = %d, want 24", unsafe.Sizeof(price5{}))
 		}
 		if unsafe.Sizeof(wide18{}) != 48 {
-			t.Fatalf("uint256 Decimal size = %d, want 48", unsafe.Sizeof(wide18{}))
+			t.Fatalf("uint256 FixedDecimal size = %d, want 48", unsafe.Sizeof(wide18{}))
 		}
 		if unsafe.Sizeof(codec) != 1 {
-			t.Fatalf("Codec size = %d, want 1", unsafe.Sizeof(codec))
+			t.Fatalf("FixedDecimalCodec size = %d, want 1", unsafe.Sizeof(codec))
 		}
 	}
 }
@@ -36,17 +36,17 @@ func TestCodecAPIAndSizes(t *testing.T) {
 func TestInvalidScaleCodec(t *testing.T) {
 	t.Parallel()
 
-	if _, err := NewCodec[uint64Scale20](); !errors.Is(err, ErrScale) {
-		t.Fatalf("NewCodec error = %v", err)
+	if _, err := NewFixedDecimalCodec[uint64DecimalPlaces20](); !errors.Is(err, ErrUnsupportedFractionalDecimalPlaces) {
+		t.Fatalf("NewFixedDecimalCodec error = %v", err)
 	}
 }
 
 func TestZeroCodecUsesCompileTimeScale(t *testing.T) {
 	t.Parallel()
 
-	var codec Codec[PriceUint64[Fraction5], uint64]
+	var codec FixedDecimalCodec[PriceInUint64Units[DecimalPlaces5], uint64]
 	value, err := codec.Parse("1.00000")
-	if err != nil || codec.Scale() != 5 || value.Units() != 100_000 {
-		t.Fatalf("zero codec = %v, scale %d, units %d", err, codec.Scale(), value.Units())
+	if err != nil || codec.FractionalDecimalPlaces() != 5 || value.Units() != 100_000 {
+		t.Fatalf("zero codec = %v, scale %d, units %d", err, codec.FractionalDecimalPlaces(), value.Units())
 	}
 }

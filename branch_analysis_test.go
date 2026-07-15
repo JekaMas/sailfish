@@ -6,7 +6,7 @@ import (
 	"testing"
 )
 
-func TestDecimalDigits64MatchesStandardLibrary(t *testing.T) {
+func TestFixedDecimalDigits64MatchesStandardLibrary(t *testing.T) {
 	boundaries := []uint64{0, 1, 9, 10, 99, 100, ^uint64(0)}
 	for _, power := range powersOf10Uint64 {
 		boundaries = append(boundaries, power)

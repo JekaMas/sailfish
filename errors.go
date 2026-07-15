@@ -9,30 +9,30 @@ type Error string
 func (e Error) Error() string { return string(e) }
 
 const (
-	ErrSyntax               Error = "sailfish: invalid syntax"
-	ErrRange                Error = "sailfish: value does not fit unit type"
-	ErrPrecision            Error = "sailfish: too many fractional digits"
-	ErrScale                Error = "sailfish: scale is unsupported by unit type"
-	ErrOverflow             Error = "sailfish: addition overflow"
-	ErrUnderflow            Error = "sailfish: subtraction underflow"
-	ErrNilDestination       Error = "sailfish: nil destination"
-	ErrCBORSyntax           Error = "sailfish: invalid CBOR"
-	ErrCBORNonDeterministic Error = "sailfish: non-deterministic CBOR"
+	ErrSyntax                             Error = "sailfish: invalid syntax"
+	ErrRange                              Error = "sailfish: value does not fit unit type"
+	ErrPrecision                          Error = "sailfish: too many fractional digits"
+	ErrUnsupportedFractionalDecimalPlaces Error = "sailfish: fractional decimal places are unsupported by unit type"
+	ErrOverflow                           Error = "sailfish: addition overflow"
+	ErrUnderflow                          Error = "sailfish: subtraction underflow"
+	ErrNilDestination                     Error = "sailfish: nil destination"
+	ErrCBORSyntax                         Error = "sailfish: invalid CBOR"
+	ErrCBORNonDeterministic               Error = "sailfish: non-deterministic CBOR"
 )
 
 // Pre-box the fixed errors once. Returning an Error directly as an error
 // interface from generic code otherwise allocates a string header on each
 // failure. The exported source of truth remains the typed string constants.
 var (
-	boxedErrSyntax               error = ErrSyntax
-	boxedErrRange                error = ErrRange
-	boxedErrPrecision            error = ErrPrecision
-	boxedErrScale                error = ErrScale
-	boxedErrOverflow             error = ErrOverflow
-	boxedErrUnderflow            error = ErrUnderflow
-	boxedErrNilDestination       error = ErrNilDestination
-	boxedErrCBORSyntax           error = ErrCBORSyntax
-	boxedErrCBORNonDeterministic error = ErrCBORNonDeterministic
+	boxedErrSyntax                             error = ErrSyntax
+	boxedErrRange                              error = ErrRange
+	boxedErrPrecision                          error = ErrPrecision
+	boxedErrUnsupportedFractionalDecimalPlaces error = ErrUnsupportedFractionalDecimalPlaces
+	boxedErrOverflow                           error = ErrOverflow
+	boxedErrUnderflow                          error = ErrUnderflow
+	boxedErrNilDestination                     error = ErrNilDestination
+	boxedErrCBORSyntax                         error = ErrCBORSyntax
+	boxedErrCBORNonDeterministic               error = ErrCBORNonDeterministic
 )
 
 func boxedError(err Error) error {
@@ -45,8 +45,8 @@ func boxedError(err Error) error {
 		return boxedErrRange
 	case ErrPrecision:
 		return boxedErrPrecision
-	case ErrScale:
-		return boxedErrScale
+	case ErrUnsupportedFractionalDecimalPlaces:
+		return boxedErrUnsupportedFractionalDecimalPlaces
 	case ErrOverflow:
 		return boxedErrOverflow
 	case ErrUnderflow:

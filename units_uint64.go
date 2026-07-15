@@ -12,7 +12,7 @@ const (
 		1<<14 | 1<<15 | 1<<16 | 1<<17 | 1<<18 | 1<<19 | 1<<20
 )
 
-// Uint64Units is a zero-sized unit provider. Embed it in a venue type.
+// Uint64Units is a zero-sized unit provider. Embed it in a format type.
 type Uint64Units struct{}
 
 func (Uint64Units) unitParseString(s string, scale int) (uint64, bool, Error) {

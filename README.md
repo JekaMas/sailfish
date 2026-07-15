@@ -1,13 +1,13 @@
 # sailfish
 
-`sailfish` is a fast, unsigned, fixed-scale decimal package for trading and
+`sailfish` is a fast, unsigned, fixed-decimal package for trading and
 financial protocols that exchange exact values as strings such as
 `"123.31232"`.
 
 The numeric state is one scaled integer:
 
 ```text
-value = units / 10^venue scale
+value = units / 10^fractionalDecimalPlaces
 ```
 
 Supported unit backends are `uint8`, `uint16`, `uint32`, `uint64`, and
@@ -16,7 +16,7 @@ no heap allocations.
 
 Sailfish requires Go 1.26.5 or newer.
 
-The current release is `v1.0.3`. On the documented Apple M1 Max / Go
+The current release is `v1.0.4`. On the documented Apple M1 Max / Go
 1.26.5 benchmark host, common native formatting is 9.8 ns, runtime-scale
 uint256 parsing is 8.69 ns, and direct uint256 CBOR decode is 4.20 ns. These
 caller-buffer operations track measured implementation kernels and perform no
@@ -28,8 +28,8 @@ complete matrix and rejected alternatives.
 
 `main` contains one current implementation and one canonical wire format. It
 does not retain compatibility codecs, legacy decoders, alternate encodings, or
-compatibility fallback implementations. Decimal CBOR is always the preferred
-shortest unsigned integer representation, using tag 2 only when a
+compatibility fallback implementations. `FixedDecimal` CBOR is always the
+preferred shortest unsigned integer representation, using tag 2 only when a
 `uint256.Int` does not fit in `uint64`. Input in any other representation is
 rejected instead of being normalized or decoded by an older path.
 
@@ -39,10 +39,11 @@ versions.
 
 ## Quick start
 
-Select semantic kind, unit capacity, and fractional scale explicitly:
+Select semantic kind, integer representation, and fractional decimal places
+explicitly:
 
 ```go
-codec, err := sailfish.NewCodec[sailfish.PriceUint64[sailfish.Fraction5]]()
+codec, err := sailfish.NewFixedDecimalCodec[sailfish.PriceInUint64Units[sailfish.DecimalPlaces5]]()
 if err != nil {
 	return err
 }
@@ -66,34 +67,48 @@ request = codec.AppendTo(request, price)
 // request == "123.31233"
 ```
 
-For `PriceUint64[Fraction9]`, the maximum representable value is
+The type name is the storage contract:
+
+```text
+PriceInUint64Units[DecimalPlaces5]
+│            │         └─ exactly 5 digits after the decimal point
+│            └─────────── raw numeric state is one uint64 scaled integer
+└──────────────────────── semantic kind is price
+
+numeric value = raw units / 100000
+12_331_232 raw units = 123.31232
+```
+
+For `PriceInUint64Units[DecimalPlaces9]`, the maximum representable value is
 `18446744073.709551615`.
 
 ## Choosing a type
 
-Choose semantic kind, fractional scale, and integer capacity independently.
+Choose semantic kind, fractional decimal places, and integer capacity
+independently.
 The format type carries all three choices, so a price cannot be passed where
-an amount is required even when both use the same scale and backend.
+an amount is required even when both use the same decimal places and backend.
 
 | Typical value | Suggested format | Why |
 |---|---|---|
-| Small bounded ratio or rate | `PriceUint16[Fraction4]` | Compact units with four exact fractional digits |
-| CEX price or quantity | `PriceUint64[Fraction5]`, `AmountUint64[Fraction8]` | Native arithmetic with explicit venue precision |
-| Token amount | `AmountUint256[Fraction18]` | Full EVM-width scaled units |
-| Runtime venue metadata | `Uint256Codec` | Scale is validated once without storing it per value |
+| Small bounded ratio or rate | `PriceInUint16Units[DecimalPlaces4]` | Compact units with four exact fractional digits |
+| CEX price or quantity | `PriceInUint64Units[DecimalPlaces5]`, `AmountInUint64Units[DecimalPlaces8]` | Native arithmetic with explicit venue precision |
+| Token amount | `AmountInUint256Units[DecimalPlaces18]` | Full EVM-width scaled units |
+| Runtime venue metadata | `Uint256FixedDecimalCodec` | Fractional decimal places are validated once without storing them per value |
 
 Use the narrowest backend whose complete scaled-integer range covers the
-protocol contract. Fractional scale alone does not determine the backend.
+protocol contract. Fractional decimal places alone do not determine the
+backend.
 
 ## Construction patterns
 
 Parse canonical venue text with a cached codec on repeated paths:
 
 ```go
-type PriceFormat = sailfish.PriceUint64[sailfish.Fraction5]
-type Price = sailfish.Decimal[PriceFormat, uint64]
+type PriceFormat = sailfish.PriceInUint64Units[sailfish.DecimalPlaces5]
+type Price = sailfish.FixedDecimal[PriceFormat, uint64]
 
-priceCodec, err := sailfish.NewCodec[PriceFormat]()
+priceCodec, err := sailfish.NewFixedDecimalCodec[PriceFormat]()
 if err != nil {
 	return err
 }
@@ -107,9 +122,9 @@ Construct directly from already-scaled protocol units without a text
 round-trip:
 
 ```go
-type AmountFormat = sailfish.AmountUint32[sailfish.Fraction6]
+type AmountFormat = sailfish.AmountInUint32Units[sailfish.DecimalPlaces6]
 
-amount, err := sailfish.NewFromUnits[AmountFormat](uint32(1_234_567))
+amount, err := sailfish.NewFixedDecimalFromUnits[AmountFormat](uint32(1_234_567))
 if err != nil {
 	return err
 }
@@ -119,21 +134,21 @@ if err != nil {
 Use distinct formats for domain boundaries:
 
 ```go
-type CEXPrice = sailfish.Decimal[
-	sailfish.PriceUint64[sailfish.Fraction5],
+type CEXPrice = sailfish.FixedDecimal[
+	sailfish.PriceInUint64Units[sailfish.DecimalPlaces5],
 	uint64,
 ]
-type TokenAmount = sailfish.Decimal[
-	sailfish.AmountUint256[sailfish.Fraction18],
+type TokenAmount = sailfish.FixedDecimal[
+	sailfish.AmountInUint256Units[sailfish.DecimalPlaces18],
 	uint256.Int,
 ]
 ```
 
-For a scale supplied by trusted venue metadata, validate it once and parse
-into caller-owned storage:
+For fractional decimal places supplied by trusted venue metadata, validate
+them once and parse into caller-owned storage:
 
 ```go
-codec, err := sailfish.NewUint256Codec(18)
+codec, err := sailfish.NewUint256FixedDecimalCodec(18)
 if err != nil {
 	return err
 }
@@ -144,13 +159,13 @@ if err := codec.ParseInto("1.250000000000000000", &units); err != "" {
 ```
 
 For large numeric batches, keep the raw scaled units contiguous and use the
-same typed codec at the text boundary. This avoids carrying each `Decimal`'s
+same typed codec at the text boundary. This avoids carrying each `FixedDecimal`'s
 optional retained-string header through a price or amount kernel:
 
 ```go
-type PriceFormat = sailfish.PriceUint64[sailfish.Fraction5]
+type PriceFormat = sailfish.PriceInUint64Units[sailfish.DecimalPlaces5]
 
-codec, err := sailfish.NewCodec[PriceFormat]()
+codec, err := sailfish.NewFixedDecimalCodec[PriceFormat]()
 if err != nil {
 	return err
 }
@@ -164,21 +179,22 @@ var wire [32]byte
 encoded := codec.AppendUnits(wire[:0], prices[0])
 ```
 
-Use `Decimal` where retained canonical text and typed value methods are useful;
+Use `FixedDecimal` where retained canonical text and typed value methods are useful;
 use `[]uint64` or `[]uint256.Int` for large numeric-only working sets. Both
 forms use the same strict parser and canonical formatter.
 
-## Scale and storage range
+## Decimal places and storage range
 
-Fractional scale and integer capacity are independent. A scale-1 price can be
-`25.5` or `1844674407370955161.5`; scale alone cannot select a safe backend.
-Choose an explicit backend when a narrower range is part of the contract:
+Fractional decimal places and integer capacity are independent. A
+one-decimal-place price can be `25.5` or `1844674407370955161.5`; decimal
+places alone cannot select a safe backend. Choose an explicit backend when a
+narrower range is part of the contract:
 
 ```go
-type SmallPriceFormat = sailfish.PriceUint16[sailfish.Fraction2]
-type SmallPrice = sailfish.Decimal[SmallPriceFormat, uint16]
+type SmallPriceFormat = sailfish.PriceInUint16Units[sailfish.DecimalPlaces2]
+type SmallPrice = sailfish.FixedDecimal[SmallPriceFormat, uint16]
 
-codec, err := sailfish.NewCodec[SmallPriceFormat]()
+codec, err := sailfish.NewFixedDecimalCodec[SmallPriceFormat]()
 if err != nil {
 	return err
 }
@@ -189,15 +205,15 @@ price, err := codec.Parse("655.35")
 The generic format families are:
 
 ```text
-PriceUint8/16/32/64/256[FractionN]
-AmountUint8/16/32/64/256[FractionN]
+PriceInUint{8,16,32,64,256}Units[DecimalPlacesN]
+AmountInUint{8,16,32,64,256}Units[DecimalPlacesN]
 ```
 
-Price and amount formats remain different types even when backend and scale
-match. `Fraction0` through `Fraction20` are provided; custom zero-sized scale
-types can represent other supported scales.
+Price and amount formats remain different types even when backend and decimal
+places match. `DecimalPlaces0` through `DecimalPlaces20` are provided; custom
+zero-sized types can represent other supported decimal-place counts.
 
-| Backend | Maximum units | Maximum scale | Maximum decimal digits |
+| Backend | Maximum units | Maximum fractional decimal places | Maximum decimal digits |
 |---|---:|---:|---:|
 | `uint8` | `255` | 2 | 3 |
 | `uint16` | `65535` | 4 | 5 |
@@ -205,38 +221,38 @@ types can represent other supported scales.
 | `uint64` | `18446744073709551615` | 19 | 20 |
 | `uint256.Int` | `2^256 - 1` | 77 | 78 |
 
-`Codec.MaxIntegerDigits` reports the maximum integer-part digit count for a
+`FixedDecimalCodec.MaxIntegerDigits` reports the maximum integer-part digit count for a
 format. It is a capacity description, not a promise that every number with
 that many digits fits the binary backend.
 
-There is one format API: `PriceUint*` and `AmountUint*`. Cached `Codec`
-operations resolve scale once and benchmark equivalently to a test-local
-concrete venue; use a codec on hot paths. Each generic format embeds a concrete
-backend, so it does not pay generic backend dispatch.
+There is one format API: `PriceInUint*Units[DecimalPlacesN]` and
+`AmountInUint*Units[DecimalPlacesN]`. Cached `FixedDecimalCodec` operations
+resolve fractional decimal places once; use a codec on hot paths. Each generic
+format embeds a concrete backend, so it does not pay generic backend dispatch.
 
 ## Wide values
 
 The common 18-decimal on-chain amount is explicit:
 
 ```go
-type AmountFormat = sailfish.AmountUint256[sailfish.Fraction18]
-type Amount = sailfish.Decimal[AmountFormat, uint256.Int]
+type AmountFormat = sailfish.AmountInUint256Units[sailfish.DecimalPlaces18]
+type Amount = sailfish.FixedDecimal[AmountFormat, uint256.Int]
 
-amountCodec, err := sailfish.NewCodec[AmountFormat]()
+amountCodec, err := sailfish.NewFixedDecimalCodec[AmountFormat]()
 if err != nil {
 	return err
 }
 ```
 
-The format selects semantic kind, fractional scale, and unit backend. The
+The format selects semantic kind, fractional decimal places, and unit backend. The
 sealed unit-provider interface prevents pairing a format with the wrong unit
 type.
 
-When trusted venue metadata resolves a scale at runtime, use the concrete
-`Uint256Codec` to avoid generic venue dispatch:
+When trusted venue metadata resolves fractional decimal places at runtime,
+use the concrete `Uint256FixedDecimalCodec` to avoid generic format dispatch:
 
 ```go
-codec, err := sailfish.NewUint256Codec(6)
+codec, err := sailfish.NewUint256FixedDecimalCodec(6)
 if err != nil {
 	return err
 }
@@ -249,9 +265,9 @@ if err := codec.ParseInto("123.456789", &units); err != "" {
 dst := codec.AppendTo(make([]byte, 0, 32), units)
 ```
 
-`Uint256Codec` stores the validated scale once. It does not attach a dynamic
-scale to each value; callers remain responsible for selecting the codec from
-canonical venue metadata.
+`Uint256FixedDecimalCodec` stores the validated fractional decimal places once.
+It does not attach metadata to each value; callers remain responsible for
+selecting the codec from canonical venue metadata.
 
 ## Parsing and ownership
 
@@ -267,7 +283,7 @@ codec.ParseBytes(b)   // parses bytes directly and never retains them
 Non-canonical accepted input is normalized only while constructing the value:
 
 ```text
-"001.2" at scale 5 -> "1.20000"
+"001.2" with 5 fractional decimal places -> "1.20000"
 ```
 
 Use `ParseCompact` when a short input string may reference a much larger
@@ -275,7 +291,7 @@ response buffer.
 
 ## Immutable string representation
 
-`Decimal` may retain canonical wire text:
+`FixedDecimal` may retain canonical wire text:
 
 ```go
 representation string
@@ -304,27 +320,28 @@ There is no mutable lazy cache, so concurrent reads do not race.
 
 | Need | API |
 |---|---|
-| Parse retained canonical text | `New`, `Codec.Parse` |
-| Parse without retaining input | `NewCompact`, `NewBytes`, codec equivalents |
-| Construct/read scaled units | `NewFromUnits`, `Codec.FromUnits`, `Units` |
-| Parse/format compact unit batches | `Codec.ParseUnits`, `Codec.ParseUnitsBytes`, `Codec.AppendUnits`, `Codec.UnitsLen` |
-| Validate and cache a static format | `NewCodec`, `Codec.Scale`, `Codec.MaxIntegerDigits` |
+| Parse retained canonical text | `NewFixedDecimal`, `FixedDecimalCodec.Parse` |
+| Parse without retaining input | `NewCompactFixedDecimal`, `NewFixedDecimalFromBytes`, codec equivalents |
+| Construct/read scaled units | `NewFixedDecimalFromUnits`, `FixedDecimalCodec.FromUnits`, `Units` |
+| Parse/format compact unit batches | `FixedDecimalCodec.ParseUnits`, `FixedDecimalCodec.ParseUnitsBytes`, `FixedDecimalCodec.AppendUnits`, `FixedDecimalCodec.UnitsLen` |
+| Validate and cache a static format | `NewFixedDecimalCodec`, `FixedDecimalCodec.FractionalDecimalPlaces`, `FixedDecimalCodec.MaxIntegerDigits` |
 | Replace or inspect value state | `SetUnits`, `IsZero`, `HasRepresentation` |
 | Exact encoded lengths | `Len`, `CBORLen`, codec equivalents |
-| Runtime-scale uint256 text | `NewUint256Codec`, `Parse`, `ParseBytes`, `ParseInto`, `ParseBytesInto`, `AppendTo` |
+| Runtime-scale uint256 text | `NewUint256FixedDecimalCodec`, `Parse`, `ParseBytes`, `ParseInto`, `ParseBytesInto`, `AppendTo` |
 | Caller-buffer serialization | `AppendTo`, `AppendJSON`, `AppendText` |
-| Caller-buffer CBOR | `AppendCBOR`, `Codec.AppendCBOR`, `Uint256Codec.AppendCBOR` |
-| Strict CBOR decode | `UnmarshalCBOR`, `Codec.ParseCBOR`, `Uint256Codec.ParseCBOR`, `Uint256Codec.ParseCBORInto` |
-| Positional-array CBOR decode | `Codec.ParseCBORFirst`, `Uint256Codec.ParseCBORFirst`, `Uint256Codec.ParseCBORFirstInto` |
+| Caller-buffer CBOR | `AppendCBOR`, `FixedDecimalCodec.AppendCBOR`, `Uint256FixedDecimalCodec.AppendCBOR` |
+| Strict CBOR decode | `UnmarshalCBOR`, `FixedDecimalCodec.ParseCBOR`, `Uint256FixedDecimalCodec.ParseCBOR`, `Uint256FixedDecimalCodec.ParseCBORInto` |
+| Positional-array CBOR decode | `FixedDecimalCodec.ParseCBORFirst`, `Uint256FixedDecimalCodec.ParseCBORFirst`, `Uint256FixedDecimalCodec.ParseCBORFirstInto` |
 | Owned or retained serialization | `String`, `Canonical`, `MarshalText`, `MarshalJSON`, `MarshalCBOR` |
-| Same-venue ordering | `Compare`, `Cmp`, `Equal`, `Less` methods |
+| Same-format ordering | `Compare`, `Cmp`, `Equal`, `Less` methods |
 | Cross-scale/backend ordering | package-level `Compare` |
 | Checked arithmetic | `Add`, `Sub`, `AddAssign`, `SubAssign` |
 | Overflow-style arithmetic | `AddOverflow`, `SubUnderflow` |
 
-Use `Codec[V, U]` for repeated work with a compile-time format. Its zero value
-is valid; `NewCodec` additionally validates and caches the format metadata.
-Use `Uint256Codec` when a trusted venue definition supplies scale at runtime.
+Use `FixedDecimalCodec[V, U]` for repeated work with a compile-time format. Its zero value
+is valid; `NewFixedDecimalCodec` additionally validates and caches the format metadata.
+Use `Uint256FixedDecimalCodec` when trusted metadata supplies fractional
+decimal places at runtime.
 Its `Into` methods leave the destination unchanged on error. Invalid formats,
 inputs, and arithmetic return errors or status values; the package does not
 use panics as an API contract.
@@ -340,7 +357,7 @@ for MDBX records, network frames, and other hot aggregate codecs.
 | Canonical text | `AppendText`, `MarshalText` | `UnmarshalText` | Exact fixed-scale ASCII decimal |
 | JSON | `AppendJSON`, `MarshalJSON` | `UnmarshalJSON` | Quoted decimal string; bare numbers rejected |
 | CBOR scalar | `AppendCBOR`, `MarshalCBOR` | `ParseCBOR`, `UnmarshalCBOR` | Preferred unsigned integer or tag-2 bignum |
-| Positional CBOR | repeated `AppendCBOR` | repeated `ParseCBORFirst` | Decimal scalars inside a parent `toarray` record |
+| Positional CBOR | repeated `AppendCBOR` | repeated `ParseCBORFirst` | FixedDecimal scalars inside a parent `toarray` record |
 
 ### Text and JSON
 
@@ -390,8 +407,8 @@ kind are compile-time format identity, while retained source text is cache
 state; none of them is duplicated in storage.
 
 ```text
-Decimal[PriceUint64[Fraction5]] units 12331232 -> 1a00bc28e0
-Decimal[AmountUint256[Fraction18]] units 2^64 -> c249010000000000000000
+FixedDecimal[PriceInUint64Units[DecimalPlaces5]] units 12331232 -> 1a00bc28e0
+FixedDecimal[AmountInUint256Units[DecimalPlaces18]] units 2^64 -> c249010000000000000000
 ```
 
 Native values use RFC 8949's shortest unsigned-integer representation. A
@@ -408,8 +425,8 @@ parent array:
 type Quote struct {
 	_ struct{} `cbor:",toarray"`
 
-	Price  sailfish.Decimal[PriceFormat, uint64]
-	Amount sailfish.Decimal[AmountFormat, uint256.Int]
+	Price  sailfish.FixedDecimal[PriceFormat, uint64]
+	Amount sailfish.FixedDecimal[AmountFormat, uint256.Int]
 }
 ```
 
@@ -520,16 +537,17 @@ const ErrSyntax Error = "sailfish: invalid syntax"
 ```
 
 They are comparable, allocation-free to return, and work with `errors.Is`.
-Sailfish does not expose panic-on-error constructors. Invalid scale and input
-configuration are returned as errors. A zero `Codec[V, U]` derives the valid
-compile-time venue scale; a zero `Uint256Codec` is the useful scale-0 codec.
+Sailfish does not expose panic-on-error constructors. Unsupported fractional
+decimal places and invalid input are returned as errors. A zero
+`FixedDecimalCodec[V, U]` derives valid compile-time decimal places; a zero
+`Uint256FixedDecimalCodec` represents zero fractional decimal places.
 
 ## Range model
 
-The complete digit sequence is one scaled integer, so scale consumes integer
-range.
+The complete digit sequence is one scaled integer, so fractional decimal
+places consume integer range.
 
-| Backend | Maximum scale | Raw units |
+| Backend | Maximum fractional decimal places | Raw units |
 |---|---:|---:|
 | `uint8` | 2 | 1 byte |
 | `uint16` | 4 | 2 bytes |
@@ -540,16 +558,16 @@ range.
 On 64-bit systems:
 
 ```text
-Decimal[..., uint8]        24 bytes
-Decimal[..., uint16]       24 bytes
-Decimal[..., uint32]       24 bytes
-Decimal[..., uint64]       24 bytes
-Decimal[..., uint256.Int]  48 bytes
-Codec                       1 byte
+FixedDecimal[..., uint8]        24 bytes
+FixedDecimal[..., uint16]       24 bytes
+FixedDecimal[..., uint32]       24 bytes
+FixedDecimal[..., uint64]       24 bytes
+FixedDecimal[..., uint256.Int]  48 bytes
+FixedDecimalCodec                1 byte
 ```
 
 Narrow native units enforce smaller ranges and reduce standalone/raw unit
-arrays. They do not reduce the current `Decimal` struct below 24 bytes because
+arrays. They do not reduce the current `FixedDecimal` struct below 24 bytes because
 its retained immutable string header and alignment dominate the layout.
 The incomparability marker is the first zero-sized field so it does not create
 trailing zero-field padding. Layout tests lock unit and string offsets, struct
@@ -567,7 +585,7 @@ The initial package does not define:
 - a runtime-varying scale carried by every value.
 
 Those are separate financial contracts, not parser conveniences. Custom
-zero-sized `VenueScale` types cover compile-time scales beyond `Fraction20`.
+zero-sized `StaticDecimalPlaces` types cover compile-time scales beyond `DecimalPlaces20`.
 
 ## Performance
 
@@ -579,7 +597,7 @@ portable guarantees; compare changes on the same host and toolchain.
 
 | Operation | Time | B/op | allocs/op |
 |---|---:|---:|---:|
-| Parse canonical `uint64` through `Codec` | 7.75 ns | 0 | 0 |
+| Parse canonical `uint64` through `FixedDecimalCodec` | 7.75 ns | 0 | 0 |
 | Parse canonical `uint256.Int` | 49.2 ns | 0 | 0 |
 | Parse maximum 78-digit `uint256.Int` | 64.6 ns | 0 | 0 |
 | Append retained `uint64` | 2.90 ns | 0 | 0 |
@@ -635,7 +653,7 @@ results allocate by contract. Detailed commands, profiles, and allocation
 ownership are in [BENCHMARKS.md](BENCHMARKS.md).
 
 For values parsed from canonical venue text, retain the representation with
-`Codec.Parse`; subsequent appends are below 5 ns even for a four-limb value.
+`FixedDecimalCodec.Parse`; subsequent appends are below 5 ns even for a four-limb value.
 Use raw-unit formatting for constructed or mutated values, and call
 `Canonical` once when the same formatted value will be emitted repeatedly.
 
@@ -649,7 +667,7 @@ short-token latency does not justify their call and maintenance cost.
 
 | Area | Current algorithm | Reason |
 |---|---|---|
-| Scale model | Zero-sized compile-time format or one-byte `Uint256Codec` | Static strategies carry no runtime scale; dynamic venue metadata validates scale once |
+| Scale model | Zero-sized compile-time format or one-byte `Uint256FixedDecimalCodec` | Static strategies carry no runtime scale; dynamic venue metadata validates scale once |
 | Numeric model | One unsigned scaled integer | Exact comparison/arithmetic with no floating-point state |
 | Native parsing | Pairwise accumulation plus known-point SWAR for exact 8/16-digit shapes | Keeps irregular inputs simple while bringing the common `123.31232` parse to 7.75 ns |
 | Wide parsing | One or two independent eight-digit SWAR blocks plus a scalar tail | Reduced 19-78 digit parse time by roughly 9-19% in the latest round |
@@ -660,7 +678,7 @@ short-token latency does not justify their call and maintenance cost.
 | JSON | Direct quoted append and parse-first unescaped decode | Keeps canonical JSON encode/decode allocation-free; escaped input uses the standards-compliant slow path |
 | CBOR | Preferred unsigned integer; tag 2 only above `uint64` | Small deterministic wire with strict decoding |
 | Hot aggregate CBOR | Caller-buffer scalar append and positional prefix decode | Avoids reflection and owned per-field slices |
-| Type dispatch | Concrete backend embedded in each format; cached scale in `Codec` | Avoids generic backend type switches and repeated metadata work |
+| Type dispatch | Concrete backend embedded in each format; cached scale in `FixedDecimalCodec` | Avoids generic backend type switches and repeated metadata work |
 | Errors | Pre-boxed typed string constants | Comparable errors with zero per-call failure allocation |
 | Numeric batch locality | Contiguous raw units with `ParseUnits` / `AppendUnits` | Avoids scanning optional text-cache state when only numeric units are used |
 | Profile-guided optimization | Production CPU profile owned by the consuming `main` package | PGO optimizes the whole executable; Sailfish does not ship a benchmark-trained library profile |
@@ -676,11 +694,11 @@ decisions.
 
 Cache-locality crossover benchmarks on an Apple M1 Max found no meaningful
 representation difference for sequential scans, but random numeric scans above
-the measured L2 were 1.6x faster with `[]uint64` than native `Decimal` values
-and 3.7x faster with `[]uint256.Int` than wide `Decimal` values. These are
+the measured L2 were 1.6x faster with `[]uint64` than native `FixedDecimal` values
+and 3.7x faster with `[]uint256.Int` than wide `FixedDecimal` values. These are
 working-set measurements, not claimed hardware miss rates; the local CLI CPU
 counter tools exposed no configured cache-miss event. The package therefore
-keeps the existing minimum `Decimal` layout and exposes raw-unit boundary
+keeps the existing minimum `FixedDecimal` layout and exposes raw-unit boundary
 methods instead of adding padding, indirection, or another decimal type.
 
 ### Profile-guided application builds

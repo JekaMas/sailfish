@@ -7,12 +7,12 @@ import (
 )
 
 func TestJSONHotPathAllocations(t *testing.T) {
-	nativeCodec := testCodec[PriceUint64[Fraction5]]()
+	nativeCodec := testFixedDecimalCodec[PriceInUint64Units[DecimalPlaces5]]()
 	native := nativeCodec.FromUnits(1_230_000)
 	nativeWire := []byte(`"12.30000"`)
 	nativeBuffer := make([]byte, 0, len(nativeWire))
 
-	wideCodec := testCodec[uint256Scale18]()
+	wideCodec := testFixedDecimalCodec[uint256DecimalPlaces18]()
 	wide := wideCodec.FromUnits(uint256.Int{
 		^uint64(0), ^uint64(0), ^uint64(0), ^uint64(0),
 	})

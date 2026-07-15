@@ -16,11 +16,11 @@ type cborBarOracle struct {
 
 	RecordKind        uint8
 	Symbol            string
-	Open              Decimal[PriceUint64[Fraction5], uint64]
-	High              Decimal[PriceUint64[Fraction5], uint64]
-	Low               Decimal[PriceUint64[Fraction5], uint64]
-	Close             Decimal[PriceUint64[Fraction5], uint64]
-	Volume            Decimal[AmountUint256[Fraction18], uint256.Int]
+	Open              FixedDecimal[PriceInUint64Units[DecimalPlaces5], uint64]
+	High              FixedDecimal[PriceInUint64Units[DecimalPlaces5], uint64]
+	Low               FixedDecimal[PriceInUint64Units[DecimalPlaces5], uint64]
+	Close             FixedDecimal[PriceInUint64Units[DecimalPlaces5], uint64]
+	Volume            FixedDecimal[AmountInUint256Units[DecimalPlaces18], uint256.Int]
 	FirstUpdateID     uint64
 	LastUpdateID      uint64
 	UpdateCount       uint64
@@ -31,8 +31,8 @@ type cborBarOracle struct {
 }
 
 var (
-	cborBarPriceCodec  = testCodec[PriceUint64[Fraction5]]()
-	cborBarAmountCodec = testCodec[AmountUint256[Fraction18]]()
+	cborBarPriceCodec  = testFixedDecimalCodec[PriceInUint64Units[DecimalPlaces5]]()
+	cborBarAmountCodec = testFixedDecimalCodec[AmountInUint256Units[DecimalPlaces18]]()
 )
 
 func TestCBORFirstDecodesManualPositionalFields(t *testing.T) {
@@ -93,7 +93,7 @@ func TestCBORManualBarMatchesFxamackerToArray(t *testing.T) {
 func TestCBORFirstRejectsMalformedAndOverflowWithoutConsuming(t *testing.T) {
 	t.Parallel()
 
-	nativeCodec := testCodec[PriceUint8[Fraction1]]()
+	nativeCodec := testFixedDecimalCodec[PriceInUint8Units[DecimalPlaces1]]()
 	for _, tt := range []struct {
 		name string
 		wire []byte
@@ -116,10 +116,10 @@ func TestCBORFirstRejectsMalformedAndOverflowWithoutConsuming(t *testing.T) {
 	}
 }
 
-func TestUint256CodecCBORFirstAndInto(t *testing.T) {
+func TestUint256FixedDecimalCodecCBORFirstAndInto(t *testing.T) {
 	t.Parallel()
 
-	codec := testUint256Codec(18)
+	codec := testUint256FixedDecimalCodec(18)
 	want := uint256.Int{1, 2, 3, 4}
 	var buffer [MaxCBORSize + 1]byte
 	wire := codec.AppendCBOR(buffer[:0], want)

@@ -12,11 +12,11 @@ var jsonErrorSink error
 // BenchmarkJSONHotPaths separates caller-buffer encoding, required owned
 // output, direct decoding, and reflective/interface integration.
 func BenchmarkJSONHotPaths(b *testing.B) {
-	nativeCodec := testCodec[PriceUint64[Fraction5]]()
+	nativeCodec := testFixedDecimalCodec[PriceInUint64Units[DecimalPlaces5]]()
 	nativeRetained, _ := nativeCodec.Parse("12.30000")
 	nativeFormatted := nativeCodec.FromUnits(1_230_000)
 
-	wideCodec := testCodec[uint256Scale18]()
+	wideCodec := testFixedDecimalCodec[uint256DecimalPlaces18]()
 	wideUnits := uint256.Int{^uint64(0), ^uint64(0), ^uint64(0), ^uint64(0)}
 	wideFormatted := wideCodec.FromUnits(wideUnits)
 	wideRetained, _ := wideCodec.Parse(
@@ -72,10 +72,10 @@ func BenchmarkJSONHotPaths(b *testing.B) {
 	})
 }
 
-func benchmarkJSONAppend[V Venue[U], U Unit](
+func benchmarkJSONAppend[V FixedDecimalFormat[U], U Unit](
 	b *testing.B,
 	name string,
-	value Decimal[V, U],
+	value FixedDecimal[V, U],
 	buffer []byte,
 ) {
 	b.Run("append/"+name, func(b *testing.B) {
@@ -86,10 +86,10 @@ func benchmarkJSONAppend[V Venue[U], U Unit](
 	})
 }
 
-func benchmarkJSONMarshal[V Venue[U], U Unit](
+func benchmarkJSONMarshal[V FixedDecimalFormat[U], U Unit](
 	b *testing.B,
 	name string,
-	value Decimal[V, U],
+	value FixedDecimal[V, U],
 ) {
 	b.Run("marshal_direct/"+name, func(b *testing.B) {
 		b.ReportAllocs()
@@ -99,11 +99,11 @@ func benchmarkJSONMarshal[V Venue[U], U Unit](
 	})
 }
 
-func benchmarkJSONUnmarshal[V Venue[U], U Unit](
+func benchmarkJSONUnmarshal[V FixedDecimalFormat[U], U Unit](
 	b *testing.B,
 	name string,
 	wire []byte,
-	dst *Decimal[V, U],
+	dst *FixedDecimal[V, U],
 ) {
 	b.Run("unmarshal_direct/"+name, func(b *testing.B) {
 		b.ReportAllocs()

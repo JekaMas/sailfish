@@ -6,11 +6,11 @@ import (
 
 var branchAnalysisDigitsSink int
 
-// BenchmarkDecimalDigitsDistributions protects fixed-width predictable,
+// BenchmarkFixedDecimalDigitsDistributions protects fixed-width predictable,
 // mixed-width, and market-shaped inputs. The accepted production algorithm is
 // branchless with respect to decimal width; PERFORMANCE.md records the removed
 // comparison-tree baseline.
-func BenchmarkDecimalDigitsDistributions(b *testing.B) {
+func BenchmarkFixedDecimalDigitsDistributions(b *testing.B) {
 	distributions := []struct {
 		name   string
 		values []uint64

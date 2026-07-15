@@ -12,54 +12,54 @@ import (
 	"github.com/holiman/uint256"
 )
 
-func TestExplicitUnitWidthsKeepFractionScaleIndependent(t *testing.T) {
+func TestExplicitUnitWidthsKeepDecimalPlacesIndependent(t *testing.T) {
 	t.Parallel()
 
-	u8, err := New[PriceUint8[Fraction1]]("25.5")
+	u8, err := NewFixedDecimal[PriceInUint8Units[DecimalPlaces1]]("25.5")
 	if err != nil || u8.Units() != 255 || u8.String() != "25.5" {
 		t.Fatalf("uint8 price = %v %d %q", err, u8.Units(), u8.String())
 	}
-	if _, err = New[PriceUint8[Fraction1]]("25.6"); !errors.Is(err, ErrRange) {
+	if _, err = NewFixedDecimal[PriceInUint8Units[DecimalPlaces1]]("25.6"); !errors.Is(err, ErrRange) {
 		t.Fatalf("uint8 range error = %v", err)
 	}
 
-	u16, err := New[PriceUint16[Fraction2]]("655.35")
+	u16, err := NewFixedDecimal[PriceInUint16Units[DecimalPlaces2]]("655.35")
 	if err != nil || u16.Units() != 65_535 || u16.String() != "655.35" {
 		t.Fatalf("uint16 price = %v %d %q", err, u16.Units(), u16.String())
 	}
-	if _, err = New[PriceUint16[Fraction2]]("655.36"); !errors.Is(err, ErrRange) {
+	if _, err = NewFixedDecimal[PriceInUint16Units[DecimalPlaces2]]("655.36"); !errors.Is(err, ErrRange) {
 		t.Fatalf("uint16 range error = %v", err)
 	}
 
-	u32, err := New[PriceUint32[Fraction5]]("42949.67295")
+	u32, err := NewFixedDecimal[PriceInUint32Units[DecimalPlaces5]]("42949.67295")
 	if err != nil || u32.Units() != 4_294_967_295 || u32.String() != "42949.67295" {
 		t.Fatalf("uint32 price = %v %d %q", err, u32.Units(), u32.String())
 	}
-	if _, err = New[PriceUint32[Fraction5]]("42949.67296"); !errors.Is(err, ErrRange) {
+	if _, err = NewFixedDecimal[PriceInUint32Units[DecimalPlaces5]]("42949.67296"); !errors.Is(err, ErrRange) {
 		t.Fatalf("uint32 range error = %v", err)
 	}
 
-	u64, err := New[PriceUint64[Fraction5]]("184467440737095.51615")
+	u64, err := NewFixedDecimal[PriceInUint64Units[DecimalPlaces5]]("184467440737095.51615")
 	if err != nil || u64.Units() != ^uint64(0) {
 		t.Fatalf("uint64 price = %v %d", err, u64.Units())
 	}
 }
 
-func TestUnitWidthRejectsUnsupportedFractionScale(t *testing.T) {
+func TestUnitWidthRejectsUnsupportedDecimalPlaces(t *testing.T) {
 	t.Parallel()
 
 	tests := []struct {
 		name string
 		err  error
 	}{
-		{name: "uint8 scale 3", err: codecError[PriceUint8[Fraction3]]()},
-		{name: "uint16 scale 5", err: codecError[PriceUint16[Fraction5]]()},
-		{name: "uint32 scale 10", err: codecError[PriceUint32[Fraction10]]()},
-		{name: "uint64 scale 20", err: codecError[PriceUint64[Fraction20]]()},
+		{name: "uint8 scale 3", err: codecError[PriceInUint8Units[DecimalPlaces3]]()},
+		{name: "uint16 scale 5", err: codecError[PriceInUint16Units[DecimalPlaces5]]()},
+		{name: "uint32 scale 10", err: codecError[PriceInUint32Units[DecimalPlaces10]]()},
+		{name: "uint64 scale 20", err: codecError[PriceInUint64Units[DecimalPlaces20]]()},
 	}
 	for _, tt := range tests {
-		if !errors.Is(tt.err, ErrScale) {
-			t.Errorf("%s error = %v, want %v", tt.name, tt.err, ErrScale)
+		if !errors.Is(tt.err, ErrUnsupportedFractionalDecimalPlaces) {
+			t.Errorf("%s error = %v, want %v", tt.name, tt.err, ErrUnsupportedFractionalDecimalPlaces)
 		}
 	}
 }
@@ -67,31 +67,31 @@ func TestUnitWidthRejectsUnsupportedFractionScale(t *testing.T) {
 func TestPriceAndAmountFormatsAreDistinct(t *testing.T) {
 	t.Parallel()
 
-	priceType := reflect.TypeFor[PriceUint256[Fraction18]]()
-	amountType := reflect.TypeFor[AmountUint256[Fraction18]]()
+	priceType := reflect.TypeFor[PriceInUint256Units[DecimalPlaces18]]()
+	amountType := reflect.TypeFor[AmountInUint256Units[DecimalPlaces18]]()
 	if priceType == amountType {
 		t.Fatalf("price and amount formats share type %v", priceType)
 	}
 
-	genericAmount, err := New[AmountUint32[Fraction2]]("123.45")
+	genericAmount, err := NewFixedDecimal[AmountInUint32Units[DecimalPlaces2]]("123.45")
 	if err != nil || genericAmount.Units() != 12_345 {
 		t.Fatalf("generic amount = %v %d", err, genericAmount.Units())
 	}
 
-	amount, err := New[AmountUint256[Fraction18]]("1.000000000000000001")
+	amount, err := NewFixedDecimal[AmountInUint256Units[DecimalPlaces18]]("1.000000000000000001")
 	if err != nil || amount.Units() != (uint256.Int{1_000_000_000_000_000_001}) {
 		t.Fatalf("amount = %v %#v", err, amount.Units())
 	}
-	acceptAmountUint256Fraction18(amount)
+	acceptAmountInUint256UnitsWith18DecimalPlaces(amount)
 }
 
 func TestNarrowUnitEncodingRoundTrips(t *testing.T) {
 	t.Parallel()
 
 	type payload struct {
-		Price Decimal[PriceUint16[Fraction2], uint16] `json:"price"`
+		Price FixedDecimal[PriceInUint16Units[DecimalPlaces2], uint16] `json:"price"`
 	}
-	original := payload{Price: testCodec[PriceUint16[Fraction2]]().FromUnits(65_535)}
+	original := payload{Price: testFixedDecimalCodec[PriceInUint16Units[DecimalPlaces2]]().FromUnits(65_535)}
 	wire, err := json.Marshal(original)
 	if err != nil {
 		t.Fatal(err)
@@ -108,7 +108,7 @@ func TestNarrowUnitEncodingRoundTrips(t *testing.T) {
 	}
 }
 
-func TestCodecReportsBackendIntegerCapacity(t *testing.T) {
+func TestFixedDecimalCodecReportsBackendIntegerCapacity(t *testing.T) {
 	t.Parallel()
 
 	tests := []struct {
@@ -116,11 +116,11 @@ func TestCodecReportsBackendIntegerCapacity(t *testing.T) {
 		got  int
 		want int
 	}{
-		{name: "uint8 scale1", got: testCodec[PriceUint8[Fraction1]]().MaxIntegerDigits(), want: 2},
-		{name: "uint16 scale2", got: testCodec[PriceUint16[Fraction2]]().MaxIntegerDigits(), want: 3},
-		{name: "uint32 scale5", got: testCodec[PriceUint32[Fraction5]]().MaxIntegerDigits(), want: 5},
-		{name: "uint64 scale9", got: testCodec[PriceUint64[Fraction9]]().MaxIntegerDigits(), want: 11},
-		{name: "uint256 scale18", got: testCodec[AmountUint256[Fraction18]]().MaxIntegerDigits(), want: 60},
+		{name: "uint8 scale1", got: testFixedDecimalCodec[PriceInUint8Units[DecimalPlaces1]]().MaxIntegerDigits(), want: 2},
+		{name: "uint16 scale2", got: testFixedDecimalCodec[PriceInUint16Units[DecimalPlaces2]]().MaxIntegerDigits(), want: 3},
+		{name: "uint32 scale5", got: testFixedDecimalCodec[PriceInUint32Units[DecimalPlaces5]]().MaxIntegerDigits(), want: 5},
+		{name: "uint64 scale9", got: testFixedDecimalCodec[PriceInUint64Units[DecimalPlaces9]]().MaxIntegerDigits(), want: 11},
+		{name: "uint256 scale18", got: testFixedDecimalCodec[AmountInUint256Units[DecimalPlaces18]]().MaxIntegerDigits(), want: 60},
 	}
 	for _, tt := range tests {
 		if tt.got != tt.want {
@@ -132,12 +132,12 @@ func TestCodecReportsBackendIntegerCapacity(t *testing.T) {
 func TestNarrowUnitArithmeticOverflow(t *testing.T) {
 	t.Parallel()
 
-	assertNarrowArithmetic(t, testCodec[PriceUint8[Fraction1]](), uint8(255))
-	assertNarrowArithmetic(t, testCodec[PriceUint16[Fraction2]](), uint16(65_535))
-	assertNarrowArithmetic(t, testCodec[PriceUint32[Fraction5]](), ^uint32(0))
+	assertNarrowArithmetic(t, testFixedDecimalCodec[PriceInUint8Units[DecimalPlaces1]](), uint8(255))
+	assertNarrowArithmetic(t, testFixedDecimalCodec[PriceInUint16Units[DecimalPlaces2]](), uint16(65_535))
+	assertNarrowArithmetic(t, testFixedDecimalCodec[PriceInUint32Units[DecimalPlaces5]](), ^uint32(0))
 }
 
-func assertNarrowArithmetic[V Venue[U], U NativeUnit](t *testing.T, codec Codec[V, U], maxUnits U) {
+func assertNarrowArithmetic[V FixedDecimalFormat[U], U NativeUnit](t *testing.T, codec FixedDecimalCodec[V, U], maxUnits U) {
 	t.Helper()
 
 	max := codec.FromUnits(maxUnits)
@@ -155,19 +155,19 @@ func TestNarrowUnitRoundTrips(t *testing.T) {
 	t.Parallel()
 
 	for value := 0; value <= 255; value++ {
-		assertUnitRoundTrip(t, testCodec[PriceUint8[Fraction0]](), uint8(value))
-		assertUnitRoundTrip(t, testCodec[PriceUint8[Fraction1]](), uint8(value))
-		assertUnitRoundTrip(t, testCodec[PriceUint8[Fraction2]](), uint8(value))
+		assertUnitRoundTrip(t, testFixedDecimalCodec[PriceInUint8Units[DecimalPlaces0]](), uint8(value))
+		assertUnitRoundTrip(t, testFixedDecimalCodec[PriceInUint8Units[DecimalPlaces1]](), uint8(value))
+		assertUnitRoundTrip(t, testFixedDecimalCodec[PriceInUint8Units[DecimalPlaces2]](), uint8(value))
 	}
 
 	rng := rand.New(rand.NewSource(0x51a1f15))
 	for range 10_000 {
-		assertUnitRoundTrip(t, testCodec[PriceUint16[Fraction4]](), uint16(rng.Uint32()))
-		assertUnitRoundTrip(t, testCodec[PriceUint32[Fraction9]](), rng.Uint32())
+		assertUnitRoundTrip(t, testFixedDecimalCodec[PriceInUint16Units[DecimalPlaces4]](), uint16(rng.Uint32()))
+		assertUnitRoundTrip(t, testFixedDecimalCodec[PriceInUint32Units[DecimalPlaces9]](), rng.Uint32())
 	}
 }
 
-func assertUnitRoundTrip[V Venue[U], U Unit](t *testing.T, codec Codec[V, U], units U) {
+func assertUnitRoundTrip[V FixedDecimalFormat[U], U Unit](t *testing.T, codec FixedDecimalCodec[V, U], units U) {
 	t.Helper()
 
 	var buffer [maxUint256TextLen]byte
@@ -185,11 +185,11 @@ func assertUnitRoundTrip[V Venue[U], U Unit](t *testing.T, codec Codec[V, U], un
 func TestNarrowAndWideFormatsCompareExactly(t *testing.T) {
 	t.Parallel()
 
-	narrow, err := New[PriceUint8[Fraction1]]("1.2")
+	narrow, err := NewFixedDecimal[PriceInUint8Units[DecimalPlaces1]]("1.2")
 	if err != nil {
 		t.Fatal(err)
 	}
-	wide, err := New[AmountUint256[Fraction18]]("1.200000000000000000")
+	wide, err := NewFixedDecimal[AmountInUint256Units[DecimalPlaces18]]("1.200000000000000000")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -204,24 +204,25 @@ func TestNarrowUnitsDoNotShrinkDecimalWithRetainedString(t *testing.T) {
 	if strconv.IntSize != 64 {
 		t.Skip("64-bit layout assertion")
 	}
-	u8Size := unsafe.Sizeof(Decimal[PriceUint8[Fraction1], uint8]{})
-	u16Size := unsafe.Sizeof(Decimal[PriceUint16[Fraction1], uint16]{})
-	u32Size := unsafe.Sizeof(Decimal[PriceUint32[Fraction1], uint32]{})
-	u64Size := unsafe.Sizeof(Decimal[PriceUint64[Fraction1], uint64]{})
+	u8Size := unsafe.Sizeof(FixedDecimal[PriceInUint8Units[DecimalPlaces1], uint8]{})
+	u16Size := unsafe.Sizeof(FixedDecimal[PriceInUint16Units[DecimalPlaces1], uint16]{})
+	u32Size := unsafe.Sizeof(FixedDecimal[PriceInUint32Units[DecimalPlaces1], uint32]{})
+	u64Size := unsafe.Sizeof(FixedDecimal[PriceInUint64Units[DecimalPlaces1], uint64]{})
 	if u8Size != 24 || u16Size != 24 || u32Size != 24 || u64Size != 24 {
-		t.Fatalf("Decimal sizes = %d/%d/%d/%d, want 24 each", u8Size, u16Size, u32Size, u64Size)
+		t.Fatalf("FixedDecimal sizes = %d/%d/%d/%d, want 24 each", u8Size, u16Size, u32Size, u64Size)
 	}
-	if formatSize := unsafe.Sizeof(PriceUint16[Fraction2]{}); formatSize != 0 {
+	if formatSize := unsafe.Sizeof(PriceInUint16Units[DecimalPlaces2]{}); formatSize != 0 {
 		t.Fatalf("generic format size = %d, want 0", formatSize)
 	}
-	if codecSize := unsafe.Sizeof(testCodec[PriceUint16[Fraction2]]()); codecSize != 1 {
+	if codecSize := unsafe.Sizeof(testFixedDecimalCodec[PriceInUint16Units[DecimalPlaces2]]()); codecSize != 1 {
 		t.Fatalf("generic codec size = %d, want 1", codecSize)
 	}
 }
 
-func codecError[V Venue[U], U Unit]() error {
-	_, err := NewCodec[V]()
+func codecError[V FixedDecimalFormat[U], U Unit]() error {
+	_, err := NewFixedDecimalCodec[V]()
 	return err
 }
 
-func acceptAmountUint256Fraction18(Decimal[AmountUint256[Fraction18], uint256.Int]) {}
+func acceptAmountInUint256UnitsWith18DecimalPlaces(FixedDecimal[AmountInUint256Units[DecimalPlaces18], uint256.Int]) {
+}

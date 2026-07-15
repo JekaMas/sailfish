@@ -19,43 +19,43 @@ var (
 	benchU256Sink   uint256.Int
 )
 
-func BenchmarkCodecParsePriceFractions(b *testing.B) {
-	benchmarkParsePrice[PriceUint64[Fraction1]](b, "scale_1", "123456789012345678.9")
-	benchmarkParsePrice[PriceUint64[Fraction2]](b, "scale_2", "12345678901234567.89")
-	benchmarkParsePrice[PriceUint64[Fraction3]](b, "scale_3", "1234567890123456.789")
-	benchmarkParsePrice[PriceUint64[Fraction4]](b, "scale_4", "123456789012345.6789")
-	benchmarkParsePrice[PriceUint64[Fraction5]](b, "scale_5", "12345678901234.56789")
-	benchmarkParsePrice[PriceUint64[Fraction6]](b, "scale_6", "1234567890123.456789")
-	benchmarkParsePrice[PriceUint64[Fraction7]](b, "scale_7", "123456789012.3456789")
-	benchmarkParsePrice[PriceUint64[Fraction8]](b, "scale_8", "12345678901.23456789")
-	benchmarkParsePrice[PriceUint64[Fraction9]](b, "scale_9", "1234567890.123456789")
+func BenchmarkFixedDecimalCodecParsePriceDecimalPlaces(b *testing.B) {
+	benchmarkParsePrice[PriceInUint64Units[DecimalPlaces1]](b, "decimal_places_1", "123456789012345678.9")
+	benchmarkParsePrice[PriceInUint64Units[DecimalPlaces2]](b, "decimal_places_2", "12345678901234567.89")
+	benchmarkParsePrice[PriceInUint64Units[DecimalPlaces3]](b, "decimal_places_3", "1234567890123456.789")
+	benchmarkParsePrice[PriceInUint64Units[DecimalPlaces4]](b, "decimal_places_4", "123456789012345.6789")
+	benchmarkParsePrice[PriceInUint64Units[DecimalPlaces5]](b, "decimal_places_5", "12345678901234.56789")
+	benchmarkParsePrice[PriceInUint64Units[DecimalPlaces6]](b, "decimal_places_6", "1234567890123.456789")
+	benchmarkParsePrice[PriceInUint64Units[DecimalPlaces7]](b, "decimal_places_7", "123456789012.3456789")
+	benchmarkParsePrice[PriceInUint64Units[DecimalPlaces8]](b, "decimal_places_8", "12345678901.23456789")
+	benchmarkParsePrice[PriceInUint64Units[DecimalPlaces9]](b, "decimal_places_9", "1234567890.123456789")
 }
 
-type benchmarkConcreteFraction5 struct{ Uint64Units }
+type benchmarkConcreteDecimalPlaces5 struct{ Uint64Units }
 
-func (benchmarkConcreteFraction5) NotionScale() Notion { return 5 }
+func (benchmarkConcreteDecimalPlaces5) FractionalDecimalPlaces() DecimalPlaces { return 5 }
 
 // BenchmarkScaleMetadataDispatch measures the explicit generic format against
-// a test-local concrete venue. Codec caches scale metadata, while one-shot
-// constructors and direct Decimal methods resolve it on every call.
+// a test-local concrete venue. FixedDecimalCodec caches scale metadata, while one-shot
+// constructors and direct FixedDecimal methods resolve it on every call.
 func BenchmarkScaleMetadataDispatch(b *testing.B) {
 	b.Run("new/explicit_format", func(b *testing.B) {
 		b.ReportAllocs()
 		for b.Loop() {
-			value, _ := New[PriceUint64[Fraction5]]("123.31232")
+			value, _ := NewFixedDecimal[PriceInUint64Units[DecimalPlaces5]]("123.31232")
 			_ = value
 		}
 	})
 	b.Run("new/test_concrete", func(b *testing.B) {
 		b.ReportAllocs()
 		for b.Loop() {
-			value, _ := New[benchmarkConcreteFraction5]("123.31232")
+			value, _ := NewFixedDecimal[benchmarkConcreteDecimalPlaces5]("123.31232")
 			_ = value
 		}
 	})
 
-	explicitCodec := testCodec[PriceUint64[Fraction5]]()
-	concreteCodec := testCodec[benchmarkConcreteFraction5]()
+	explicitCodec := testFixedDecimalCodec[PriceInUint64Units[DecimalPlaces5]]()
+	concreteCodec := testFixedDecimalCodec[benchmarkConcreteDecimalPlaces5]()
 	b.Run("codec_parse/explicit_format", func(b *testing.B) {
 		b.ReportAllocs()
 		for b.Loop() {
@@ -153,21 +153,21 @@ func benchmarkGenericBackendParse[U Unit](input string, scale int) (U, bool, Err
 		value, canonical, err := parseUint256(input, scale)
 		return any(value).(U), canonical, err
 	default:
-		return zero, false, ErrScale
+		return zero, false, ErrUnsupportedFractionalDecimalPlaces
 	}
 }
 
 func BenchmarkExplicitUnitWidths(b *testing.B) {
-	benchmarkUnitWidth(b, "uint8", testCodec[PriceUint8[Fraction1]](), uint8(255), "25.5")
-	benchmarkUnitWidth(b, "uint16", testCodec[PriceUint16[Fraction1]](), uint16(255), "25.5")
-	benchmarkUnitWidth(b, "uint32", testCodec[PriceUint32[Fraction1]](), uint32(255), "25.5")
-	benchmarkUnitWidth(b, "uint64", testCodec[PriceUint64[Fraction1]](), uint64(255), "25.5")
+	benchmarkUnitWidth(b, "uint8", testFixedDecimalCodec[PriceInUint8Units[DecimalPlaces1]](), uint8(255), "25.5")
+	benchmarkUnitWidth(b, "uint16", testFixedDecimalCodec[PriceInUint16Units[DecimalPlaces1]](), uint16(255), "25.5")
+	benchmarkUnitWidth(b, "uint32", testFixedDecimalCodec[PriceInUint32Units[DecimalPlaces1]](), uint32(255), "25.5")
+	benchmarkUnitWidth(b, "uint64", testFixedDecimalCodec[PriceInUint64Units[DecimalPlaces1]](), uint64(255), "25.5")
 }
 
-func benchmarkUnitWidth[V Venue[U], U Unit](
+func benchmarkUnitWidth[V FixedDecimalFormat[U], U Unit](
 	b *testing.B,
 	name string,
-	codec Codec[V, U],
+	codec FixedDecimalCodec[V, U],
 	units U,
 	input string,
 ) {
@@ -190,9 +190,9 @@ func benchmarkUnitWidth[V Venue[U], U Unit](
 	})
 }
 
-func benchmarkParsePrice[V Venue[uint64]](b *testing.B, name, input string) {
+func benchmarkParsePrice[V FixedDecimalFormat[uint64]](b *testing.B, name, input string) {
 	b.Helper()
-	codec := testCodec[V]()
+	codec := testFixedDecimalCodec[V]()
 	b.Run(name, func(b *testing.B) {
 		b.ReportAllocs()
 		for b.Loop() {
@@ -202,23 +202,23 @@ func benchmarkParsePrice[V Venue[uint64]](b *testing.B, name, input string) {
 	})
 }
 
-func BenchmarkCodecParse(b *testing.B) {
+func BenchmarkFixedDecimalCodecParse(b *testing.B) {
 	b.Run("uint64/canonical", func(b *testing.B) {
-		codec := testCodec[PriceUint64[Fraction5]]()
+		codec := testFixedDecimalCodec[PriceInUint64Units[DecimalPlaces5]]()
 		b.ReportAllocs()
 		for b.Loop() {
 			benchPriceSink, _ = codec.Parse("123.31232")
 		}
 	})
 	b.Run("uint64/compact", func(b *testing.B) {
-		codec := testCodec[PriceUint64[Fraction5]]()
+		codec := testFixedDecimalCodec[PriceInUint64Units[DecimalPlaces5]]()
 		b.ReportAllocs()
 		for b.Loop() {
 			benchPriceSink, _ = codec.ParseCompact("123.31232")
 		}
 	})
 	b.Run("uint64/bytes", func(b *testing.B) {
-		codec := testCodec[PriceUint64[Fraction5]]()
+		codec := testFixedDecimalCodec[PriceInUint64Units[DecimalPlaces5]]()
 		input := []byte("123.31232")
 		b.ReportAllocs()
 		for b.Loop() {
@@ -226,28 +226,28 @@ func BenchmarkCodecParse(b *testing.B) {
 		}
 	})
 	b.Run("uint64/noncanonical", func(b *testing.B) {
-		codec := testCodec[PriceUint64[Fraction5]]()
+		codec := testFixedDecimalCodec[PriceInUint64Units[DecimalPlaces5]]()
 		b.ReportAllocs()
 		for b.Loop() {
 			benchPriceSink, _ = codec.ParseCompact("00123.31")
 		}
 	})
 	b.Run("uint64/invalid", func(b *testing.B) {
-		codec := testCodec[PriceUint64[Fraction5]]()
+		codec := testFixedDecimalCodec[PriceInUint64Units[DecimalPlaces5]]()
 		b.ReportAllocs()
 		for b.Loop() {
 			benchPriceSink, _ = codec.ParseCompact("123x31232")
 		}
 	})
 	b.Run("uint256/canonical", func(b *testing.B) {
-		codec := testCodec[uint256Scale18]()
+		codec := testFixedDecimalCodec[uint256DecimalPlaces18]()
 		b.ReportAllocs()
 		for b.Loop() {
 			benchWideSink, _ = codec.Parse("12345678901234567890.123456789012345678")
 		}
 	})
 	b.Run("uint256/max", func(b *testing.B) {
-		codec := testCodec[uint256Scale0]()
+		codec := testFixedDecimalCodec[uint256DecimalPlaces0]()
 		b.ReportAllocs()
 		for b.Loop() {
 			_, _ = codec.Parse(maxUint256Decimal)
@@ -268,7 +268,7 @@ func BenchmarkReferenceStrconvSplitUint64(b *testing.B) {
 
 func BenchmarkAppendTo(b *testing.B) {
 	b.Run("uint64/retained", func(b *testing.B) {
-		codec := testCodec[PriceUint64[Fraction5]]()
+		codec := testFixedDecimalCodec[PriceInUint64Units[DecimalPlaces5]]()
 		value, _ := codec.Parse("123.31232")
 		buffer := make([]byte, 0, 32)
 		b.ReportAllocs()
@@ -277,7 +277,7 @@ func BenchmarkAppendTo(b *testing.B) {
 		}
 	})
 	b.Run("uint64/formatted", func(b *testing.B) {
-		codec := testCodec[PriceUint64[Fraction5]]()
+		codec := testFixedDecimalCodec[PriceInUint64Units[DecimalPlaces5]]()
 		value := codec.FromUnits(12_331_232)
 		buffer := make([]byte, 0, 32)
 		b.ReportAllocs()
@@ -286,7 +286,7 @@ func BenchmarkAppendTo(b *testing.B) {
 		}
 	})
 	b.Run("uint256/formatted", func(b *testing.B) {
-		codec := testCodec[uint256Scale18]()
+		codec := testFixedDecimalCodec[uint256DecimalPlaces18]()
 		value := codec.FromUnits(uint256.Int{1, 2, 3, 4})
 		buffer := make([]byte, 0, 96)
 		b.ReportAllocs()
@@ -302,7 +302,7 @@ func BenchmarkAppendTo(b *testing.B) {
 // worst-case contract without letting them obscure the dominant workload.
 func BenchmarkUint256MarketHotPaths(b *testing.B) {
 	b.Run("parse_string/cex_scale6_one_limb", func(b *testing.B) {
-		codec := testCodec[uint256Scale6]()
+		codec := testFixedDecimalCodec[uint256DecimalPlaces6]()
 		b.ReportAllocs()
 		for b.Loop() {
 			value, _ := codec.ParseCompact("123.456789")
@@ -317,14 +317,14 @@ func BenchmarkUint256MarketHotPaths(b *testing.B) {
 		}
 	})
 	b.Run("parse_runtime_codec/cex_scale6_one_limb", func(b *testing.B) {
-		codec := testUint256Codec(6)
+		codec := testUint256FixedDecimalCodec(6)
 		b.ReportAllocs()
 		for b.Loop() {
 			benchU256Sink, _ = codec.Parse("123.456789")
 		}
 	})
 	b.Run("parse_into_runtime_codec/cex_scale6_one_limb", func(b *testing.B) {
-		codec := testUint256Codec(6)
+		codec := testUint256FixedDecimalCodec(6)
 		var value uint256.Int
 		b.ReportAllocs()
 		for b.Loop() {
@@ -347,7 +347,7 @@ func BenchmarkUint256MarketHotPaths(b *testing.B) {
 		}
 	})
 	b.Run("parse_bytes/cex_scale6_one_limb", func(b *testing.B) {
-		codec := testCodec[uint256Scale6]()
+		codec := testFixedDecimalCodec[uint256DecimalPlaces6]()
 		input := []byte("123.456789")
 		b.ReportAllocs()
 		for b.Loop() {
@@ -356,7 +356,7 @@ func BenchmarkUint256MarketHotPaths(b *testing.B) {
 		}
 	})
 	b.Run("parse_string/scale18_one_limb", func(b *testing.B) {
-		codec := testCodec[uint256Scale18]()
+		codec := testFixedDecimalCodec[uint256DecimalPlaces18]()
 		b.ReportAllocs()
 		for b.Loop() {
 			value, _ := codec.ParseCompact("0.123456789012345678")
@@ -364,7 +364,7 @@ func BenchmarkUint256MarketHotPaths(b *testing.B) {
 		}
 	})
 	b.Run("parse_string/scale18_two_limb", func(b *testing.B) {
-		codec := testCodec[uint256Scale18]()
+		codec := testFixedDecimalCodec[uint256DecimalPlaces18]()
 		b.ReportAllocs()
 		for b.Loop() {
 			value, _ := codec.ParseCompact("12345678901234567890.123456789012345678")
@@ -372,7 +372,7 @@ func BenchmarkUint256MarketHotPaths(b *testing.B) {
 		}
 	})
 	b.Run("parse_string/scale0_four_limb", func(b *testing.B) {
-		codec := testCodec[uint256Scale0]()
+		codec := testFixedDecimalCodec[uint256DecimalPlaces0]()
 		b.ReportAllocs()
 		for b.Loop() {
 			value, _ := codec.ParseCompact(maxUint256Decimal)
@@ -381,7 +381,7 @@ func BenchmarkUint256MarketHotPaths(b *testing.B) {
 	})
 
 	b.Run("append/cex_scale6_one_limb", func(b *testing.B) {
-		codec := testCodec[uint256Scale6]()
+		codec := testFixedDecimalCodec[uint256DecimalPlaces6]()
 		value := codec.FromUnits(uint256.Int{123_456_789})
 		buffer := make([]byte, 0, 32)
 		b.ReportAllocs()
@@ -390,7 +390,7 @@ func BenchmarkUint256MarketHotPaths(b *testing.B) {
 		}
 	})
 	b.Run("append_retained/cex_scale6_one_limb", func(b *testing.B) {
-		codec := testCodec[uint256Scale6]()
+		codec := testFixedDecimalCodec[uint256DecimalPlaces6]()
 		value, err := codec.Parse("123.456789")
 		if err != nil {
 			b.Fatal(err)
@@ -410,7 +410,7 @@ func BenchmarkUint256MarketHotPaths(b *testing.B) {
 		}
 	})
 	b.Run("append_runtime_codec/cex_scale6_one_limb", func(b *testing.B) {
-		codec := testUint256Codec(6)
+		codec := testUint256FixedDecimalCodec(6)
 		value := uint256.Int{123_456_789}
 		buffer := make([]byte, 0, 32)
 		b.ReportAllocs()
@@ -434,7 +434,7 @@ func BenchmarkUint256MarketHotPaths(b *testing.B) {
 		}
 	})
 	b.Run("append/scale18_one_limb", func(b *testing.B) {
-		codec := testCodec[uint256Scale18]()
+		codec := testFixedDecimalCodec[uint256DecimalPlaces18]()
 		value := codec.FromUnits(uint256.Int{123_456_789_012_345_678})
 		buffer := make([]byte, 0, 32)
 		b.ReportAllocs()
@@ -443,7 +443,7 @@ func BenchmarkUint256MarketHotPaths(b *testing.B) {
 		}
 	})
 	b.Run("append/scale18_two_limb", func(b *testing.B) {
-		codec := testCodec[uint256Scale18]()
+		codec := testFixedDecimalCodec[uint256DecimalPlaces18]()
 		value := codec.FromUnits(uint256.Int{1, 1})
 		buffer := make([]byte, 0, 64)
 		b.ReportAllocs()
@@ -452,7 +452,7 @@ func BenchmarkUint256MarketHotPaths(b *testing.B) {
 		}
 	})
 	b.Run("append/scale18_four_limb", func(b *testing.B) {
-		codec := testCodec[uint256Scale18]()
+		codec := testFixedDecimalCodec[uint256DecimalPlaces18]()
 		value := codec.FromUnits(uint256.Int{1, 2, 3, 4})
 		buffer := make([]byte, 0, 96)
 		b.ReportAllocs()
@@ -461,7 +461,7 @@ func BenchmarkUint256MarketHotPaths(b *testing.B) {
 		}
 	})
 	b.Run("append_runtime_codec/scale18_four_limb", func(b *testing.B) {
-		codec := testUint256Codec(18)
+		codec := testUint256FixedDecimalCodec(18)
 		value := uint256.Int{1, 2, 3, 4}
 		buffer := make([]byte, 0, 96)
 		b.ReportAllocs()
@@ -470,7 +470,7 @@ func BenchmarkUint256MarketHotPaths(b *testing.B) {
 		}
 	})
 	b.Run("append_retained/scale18_four_limb", func(b *testing.B) {
-		codec := testCodec[uint256Scale18]()
+		codec := testFixedDecimalCodec[uint256DecimalPlaces18]()
 		units := uint256.Int{1, 2, 3, 4}
 		text := string(appendUint256Decimal(nil, units, 18))
 		value, err := codec.Parse(text)
@@ -487,14 +487,14 @@ func BenchmarkUint256MarketHotPaths(b *testing.B) {
 
 func BenchmarkString(b *testing.B) {
 	b.Run("uint64/retained", func(b *testing.B) {
-		value, _ := New[PriceUint64[Fraction5]]("123.31232")
+		value, _ := NewFixedDecimal[PriceInUint64Units[DecimalPlaces5]]("123.31232")
 		b.ReportAllocs()
 		for b.Loop() {
 			benchStringSink = value.String()
 		}
 	})
 	b.Run("uint64/formatted", func(b *testing.B) {
-		value := testCodec[PriceUint64[Fraction5]]().FromUnits(12_331_232)
+		value := testFixedDecimalCodec[PriceInUint64Units[DecimalPlaces5]]().FromUnits(12_331_232)
 		b.ReportAllocs()
 		for b.Loop() {
 			benchStringSink = value.String()
@@ -504,7 +504,7 @@ func BenchmarkString(b *testing.B) {
 
 func BenchmarkCompare(b *testing.B) {
 	b.Run("uint64/same-scale", func(b *testing.B) {
-		codec := testCodec[PriceUint64[Fraction5]]()
+		codec := testFixedDecimalCodec[PriceInUint64Units[DecimalPlaces5]]()
 		a := codec.FromUnits(12_331_232)
 		c := codec.FromUnits(12_331_233)
 		b.ReportAllocs()
@@ -513,7 +513,7 @@ func BenchmarkCompare(b *testing.B) {
 		}
 	})
 	b.Run("uint256/same-scale", func(b *testing.B) {
-		codec := testCodec[uint256Scale18]()
+		codec := testFixedDecimalCodec[uint256DecimalPlaces18]()
 		a := codec.FromUnits(uint256.Int{1, 2, 3, 4})
 		c := codec.FromUnits(uint256.Int{2, 2, 3, 4})
 		b.ReportAllocs()
@@ -522,8 +522,8 @@ func BenchmarkCompare(b *testing.B) {
 		}
 	})
 	b.Run("cross-scale", func(b *testing.B) {
-		a := testCodec[PriceUint64[Fraction5]]().FromUnits(12_331_232)
-		c := testCodec[uint256Scale18]().FromUnits(uint256.Int{12_331_232_000_000_000_000})
+		a := testFixedDecimalCodec[PriceInUint64Units[DecimalPlaces5]]().FromUnits(12_331_232)
+		c := testFixedDecimalCodec[uint256DecimalPlaces18]().FromUnits(uint256.Int{12_331_232_000_000_000_000})
 		b.ReportAllocs()
 		for b.Loop() {
 			benchIntSink = Compare(a, c)
@@ -533,7 +533,7 @@ func BenchmarkCompare(b *testing.B) {
 
 func BenchmarkAddAssign(b *testing.B) {
 	b.Run("uint64", func(b *testing.B) {
-		codec := testCodec[PriceUint64[Fraction5]]()
+		codec := testFixedDecimalCodec[PriceInUint64Units[DecimalPlaces5]]()
 		base := codec.FromUnits(12_300_000)
 		delta := codec.FromUnits(1)
 		b.ReportAllocs()
@@ -544,7 +544,7 @@ func BenchmarkAddAssign(b *testing.B) {
 		}
 	})
 	b.Run("uint256", func(b *testing.B) {
-		codec := testCodec[uint256Scale18]()
+		codec := testFixedDecimalCodec[uint256DecimalPlaces18]()
 		base := codec.FromUnits(uint256.Int{1, 2, 3, 4})
 		delta := codec.FromUnits(uint256.Int{1})
 		b.ReportAllocs()

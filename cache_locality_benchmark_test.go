@@ -8,12 +8,12 @@ import (
 	"github.com/holiman/uint256"
 )
 
-type cacheAmount18 = Decimal[AmountUint256[Fraction18], uint256.Int]
+type cacheAmount18 = FixedDecimal[AmountInUint256Units[DecimalPlaces18], uint256.Int]
 
 // BenchmarkCacheLocalityUnitScans measures the representation choice that can
-// affect cache residency in numeric batches. Decimal carries optional retained
-// text by contract; callers that need only scaled units can use Codec/Units or
-// Uint256Codec and keep compact unit arrays instead.
+// affect cache residency in numeric batches. FixedDecimal carries optional retained
+// text by contract; callers that need only scaled units can use FixedDecimalCodec/Units or
+// Uint256FixedDecimalCodec and keep compact unit arrays instead.
 func BenchmarkCacheLocalityUnitScans(b *testing.B) {
 	for _, count := range [...]int{
 		2_048,   // 48 KiB native / 96 KiB wide: below the performance-core L1.
@@ -28,7 +28,7 @@ func BenchmarkCacheLocalityUnitScans(b *testing.B) {
 
 // BenchmarkCacheLocalityRandomUnitScans removes the sequential prefetch
 // advantage while keeping index generation outside the timed region. It
-// measures whether Decimal's optional text state makes a numeric working set
+// measures whether FixedDecimal's optional text state makes a numeric working set
 // materially more expensive than the raw-unit representation already exposed
 // by the package.
 func BenchmarkCacheLocalityRandomUnitScans(b *testing.B) {
@@ -47,8 +47,8 @@ func BenchmarkCacheLocalityRandomUnitScans(b *testing.B) {
 func BenchmarkRawUnitBoundaryCost(b *testing.B) {
 	const input = "123.31232"
 	const units = uint64(12_331_232)
-	codec := testCodec[PriceUint64[Fraction5]]()
-	var venue PriceUint64[Fraction5]
+	codec := testFixedDecimalCodec[PriceInUint64Units[DecimalPlaces5]]()
+	var venue PriceInUint64Units[DecimalPlaces5]
 
 	b.Run("parse/public_compact_then_units", func(b *testing.B) {
 		b.ReportAllocs()
@@ -121,7 +121,7 @@ func BenchmarkRawUnitBoundaryCost(b *testing.B) {
 }
 
 func benchmarkCacheLocalityUint64Scans(b *testing.B, name string, count int) {
-	codec := testCodec[PriceUint64[Fraction5]]()
+	codec := testFixedDecimalCodec[PriceInUint64Units[DecimalPlaces5]]()
 	units := make([]uint64, count)
 	decimals := make([]price5, count)
 	for i := range count {
@@ -159,7 +159,7 @@ func benchmarkCacheLocalityUint64Scans(b *testing.B, name string, count int) {
 }
 
 func benchmarkCacheLocalityUint256Scans(b *testing.B, name string, count int) {
-	codec := testCodec[AmountUint256[Fraction18]]()
+	codec := testFixedDecimalCodec[AmountInUint256Units[DecimalPlaces18]]()
 	units := make([]uint256.Int, count)
 	decimals := make([]cacheAmount18, count)
 	for i := range count {
@@ -197,7 +197,7 @@ func benchmarkCacheLocalityUint256Scans(b *testing.B, name string, count int) {
 }
 
 func benchmarkCacheLocalityRandomUint64Scans(b *testing.B, name string, count int, order []int) {
-	codec := testCodec[PriceUint64[Fraction5]]()
+	codec := testFixedDecimalCodec[PriceInUint64Units[DecimalPlaces5]]()
 	units := make([]uint64, count)
 	decimals := make([]price5, count)
 	for i := range count {
@@ -233,7 +233,7 @@ func benchmarkCacheLocalityRandomUint64Scans(b *testing.B, name string, count in
 }
 
 func benchmarkCacheLocalityRandomUint256Scans(b *testing.B, name string, count int, order []int) {
-	codec := testCodec[AmountUint256[Fraction18]]()
+	codec := testFixedDecimalCodec[AmountInUint256Units[DecimalPlaces18]]()
 	units := make([]uint256.Int, count)
 	decimals := make([]cacheAmount18, count)
 	for i := range count {

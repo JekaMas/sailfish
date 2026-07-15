@@ -7,15 +7,15 @@ import (
 	"github.com/holiman/uint256"
 )
 
-func TestUint256CodecRuntimeScaleAPI(t *testing.T) {
+func TestUint256FixedDecimalCodecRuntimeScaleAPI(t *testing.T) {
 	t.Parallel()
 
-	codec, err := NewUint256Codec(6)
+	codec, err := NewUint256FixedDecimalCodec(6)
 	if err != nil {
 		t.Fatal(err)
 	}
-	if codec.Scale() != 6 {
-		t.Fatalf("Scale = %d", codec.Scale())
+	if codec.FractionalDecimalPlaces() != 6 {
+		t.Fatalf("Scale = %d", codec.FractionalDecimalPlaces())
 	}
 
 	value, parseErr := codec.Parse("123.456789")
@@ -33,10 +33,10 @@ func TestUint256CodecRuntimeScaleAPI(t *testing.T) {
 	}
 }
 
-func TestUint256CodecParseIntoPreservesDestinationOnError(t *testing.T) {
+func TestUint256FixedDecimalCodecParseIntoPreservesDestinationOnError(t *testing.T) {
 	t.Parallel()
 
-	codec := testUint256Codec(6)
+	codec := testUint256FixedDecimalCodec(6)
 	destination := uint256.Int{9, 8, 7, 6}
 	want := destination
 	if err := codec.ParseInto("bad", &destination); err != ErrSyntax {
@@ -56,19 +56,19 @@ func TestUint256CodecParseIntoPreservesDestinationOnError(t *testing.T) {
 	}
 }
 
-func TestUint256CodecScaleValidation(t *testing.T) {
+func TestUint256FixedDecimalCodecScaleValidation(t *testing.T) {
 	t.Parallel()
 
-	if _, err := NewUint256Codec(77); err != nil {
+	if _, err := NewUint256FixedDecimalCodec(77); err != nil {
 		t.Fatalf("scale 77: %v", err)
 	}
-	if _, err := NewUint256Codec(78); err != ErrScale {
+	if _, err := NewUint256FixedDecimalCodec(78); err != ErrUnsupportedFractionalDecimalPlaces {
 		t.Fatalf("scale 78 error = %v", err)
 	}
 
-	var zero Uint256Codec
-	if zero.Scale() != 0 {
-		t.Fatalf("zero codec scale = %d", zero.Scale())
+	var zero Uint256FixedDecimalCodec
+	if zero.FractionalDecimalPlaces() != 0 {
+		t.Fatalf("zero codec scale = %d", zero.FractionalDecimalPlaces())
 	}
 	value, parseErr := zero.Parse("123")
 	if parseErr != "" || value != (uint256.Int{123}) {
@@ -76,12 +76,12 @@ func TestUint256CodecScaleValidation(t *testing.T) {
 	}
 }
 
-func TestUint256CodecRoundTripAllScalesAndLimbs(t *testing.T) {
+func TestUint256FixedDecimalCodecRoundTripAllScalesAndLimbs(t *testing.T) {
 	t.Parallel()
 
 	random := rand.New(rand.NewPCG(0x51a1f15, 0xc0dec))
 	for scale := 0; scale <= maxUint256Scale; scale++ {
-		codec := testUint256Codec(Notion(scale))
+		codec := testUint256FixedDecimalCodec(DecimalPlaces(scale))
 		for range 256 {
 			want := uint256.Int{
 				random.Uint64(), random.Uint64(), random.Uint64(), random.Uint64(),
@@ -95,8 +95,8 @@ func TestUint256CodecRoundTripAllScalesAndLimbs(t *testing.T) {
 	}
 }
 
-func TestUint256CodecAllocations(t *testing.T) {
-	codec := testUint256Codec(6)
+func TestUint256FixedDecimalCodecAllocations(t *testing.T) {
+	codec := testUint256FixedDecimalCodec(6)
 	buffer := make([]byte, 0, 32)
 	var value uint256.Int
 

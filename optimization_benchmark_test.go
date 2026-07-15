@@ -78,13 +78,13 @@ func BenchmarkOptimizationCanonicalParse(b *testing.B) {
 		input string
 		scale int
 	}{
-		{name: "digits_8_scale_5", input: "123.45678", scale: 5},
-		{name: "digits_16_scale_5", input: "12345678901.23456", scale: 5},
-		{name: "digits_16_scale_9", input: "1234567.890123456", scale: 9},
-		{name: "scale_2", input: "12345678901234567.89", scale: 2},
-		{name: "scale_5", input: "12345678901234.56789", scale: 5},
-		{name: "scale_9", input: "1234567890.123456789", scale: 9},
-		{name: "scale_18", input: "1.234567890123456789", scale: 18},
+		{name: "digits_8_decimal_places_5", input: "123.45678", scale: 5},
+		{name: "digits_16_decimal_places_5", input: "12345678901.23456", scale: 5},
+		{name: "digits_16_decimal_places_9", input: "1234567.890123456", scale: 9},
+		{name: "decimal_places_2", input: "12345678901234567.89", scale: 2},
+		{name: "decimal_places_5", input: "12345678901234.56789", scale: 5},
+		{name: "decimal_places_9", input: "1234567890.123456789", scale: 9},
+		{name: "decimal_places_18", input: "1.234567890123456789", scale: 18},
 	}
 	for _, tt := range cases {
 		b.Run("string/"+tt.name, func(b *testing.B) {
@@ -160,13 +160,13 @@ func BenchmarkOptimizationFormatNative(b *testing.B) {
 		units uint64
 		scale int
 	}{
-		{name: "digits_1_scale_0", units: 7, scale: 0},
-		{name: "digits_2_scale_0", units: 42, scale: 0},
-		{name: "digits_8_scale_0", units: 12_345_678, scale: 0},
-		{name: "digits_9_scale_5", units: 123_456_789, scale: 5},
-		{name: "digits_16_scale_9", units: 1_234_567_890_123_456, scale: 9},
-		{name: "digits_19_scale_18", units: 1_234_567_890_123_456_789, scale: 18},
-		{name: "digits_20_scale_0", units: ^uint64(0), scale: 0},
+		{name: "digits_1_decimal_places_0", units: 7, scale: 0},
+		{name: "digits_2_decimal_places_0", units: 42, scale: 0},
+		{name: "digits_8_decimal_places_0", units: 12_345_678, scale: 0},
+		{name: "digits_9_decimal_places_5", units: 123_456_789, scale: 5},
+		{name: "digits_16_decimal_places_9", units: 1_234_567_890_123_456, scale: 9},
+		{name: "digits_19_decimal_places_18", units: 1_234_567_890_123_456_789, scale: 18},
+		{name: "digits_20_decimal_places_0", units: ^uint64(0), scale: 0},
 		{name: "below_scale", units: 123, scale: 9},
 	}
 	buffer := make([]byte, 0, maxUint64TextLen)
@@ -188,26 +188,26 @@ func BenchmarkOptimizationFormatReverseSWAR(b *testing.B) {
 		units uint64
 		scale int
 	}{
-		{name: "digits_2_scale_1", units: 77, scale: 1},
-		{name: "digits_3_scale_2", units: 777, scale: 2},
-		{name: "digits_4_scale_2", units: 7_777, scale: 2},
-		{name: "digits_5_scale_2", units: 77_777, scale: 2},
-		{name: "digits_6_scale_5", units: 777_777, scale: 5},
-		{name: "digits_7_scale_5", units: 7_777_777, scale: 5},
-		{name: "digits_8_scale_1", units: 77_777_777, scale: 1},
-		{name: "digits_8_scale_5", units: 77_777_777, scale: 5},
-		{name: "digits_8_scale_7", units: 77_777_777, scale: 7},
-		{name: "digits_9_scale_5_protected", units: 777_777_777, scale: 5},
-		{name: "digits_11_scale_5_protected", units: 77_777_777_777, scale: 5},
-		{name: "digits_12_scale_9", units: 777_777_777_777, scale: 9},
-		{name: "digits_13_scale_9", units: 7_777_777_777_777, scale: 9},
-		{name: "digits_14_scale_9", units: 77_777_777_777_777, scale: 9},
-		{name: "digits_15_scale_9", units: 777_777_777_777_777, scale: 9},
-		{name: "digits_16_scale_9", units: 7_777_777_777_777_777, scale: 9},
-		{name: "digits_17_scale_9", units: 77_777_777_777_777_777, scale: 9},
-		{name: "digits_18_scale_9", units: 777_777_777_777_777_777, scale: 9},
-		{name: "digits_19_scale_18", units: 7_777_777_777_777_777_777, scale: 18},
-		{name: "digits_20_scale_18", units: ^uint64(0), scale: 18},
+		{name: "digits_2_decimal_places_1", units: 77, scale: 1},
+		{name: "digits_3_decimal_places_2", units: 777, scale: 2},
+		{name: "digits_4_decimal_places_2", units: 7_777, scale: 2},
+		{name: "digits_5_decimal_places_2", units: 77_777, scale: 2},
+		{name: "digits_6_decimal_places_5", units: 777_777, scale: 5},
+		{name: "digits_7_decimal_places_5", units: 7_777_777, scale: 5},
+		{name: "digits_8_decimal_places_1", units: 77_777_777, scale: 1},
+		{name: "digits_8_decimal_places_5", units: 77_777_777, scale: 5},
+		{name: "digits_8_decimal_places_7", units: 77_777_777, scale: 7},
+		{name: "digits_9_decimal_places_5_protected", units: 777_777_777, scale: 5},
+		{name: "digits_11_decimal_places_5_protected", units: 77_777_777_777, scale: 5},
+		{name: "digits_12_decimal_places_9", units: 777_777_777_777, scale: 9},
+		{name: "digits_13_decimal_places_9", units: 7_777_777_777_777, scale: 9},
+		{name: "digits_14_decimal_places_9", units: 77_777_777_777_777, scale: 9},
+		{name: "digits_15_decimal_places_9", units: 777_777_777_777_777, scale: 9},
+		{name: "digits_16_decimal_places_9", units: 7_777_777_777_777_777, scale: 9},
+		{name: "digits_17_decimal_places_9", units: 77_777_777_777_777_777, scale: 9},
+		{name: "digits_18_decimal_places_9", units: 777_777_777_777_777_777, scale: 9},
+		{name: "digits_19_decimal_places_18", units: 7_777_777_777_777_777_777, scale: 18},
+		{name: "digits_20_decimal_places_18", units: ^uint64(0), scale: 18},
 	}
 	var buffer [maxUint64TextLen]byte
 	for _, test := range cases {
@@ -226,12 +226,12 @@ func BenchmarkOptimizationFormatWide(b *testing.B) {
 		units uint256.Int
 		scale int
 	}{
-		{name: "one_limb_scale_18", units: uint256.Int{123_456_789_012_345_678}, scale: 18},
-		{name: "two_limbs_scale_5", units: uint256.Int{1, 1}, scale: 5},
-		{name: "three_limbs_scale_18", units: uint256.Int{1, 2, 3}, scale: 18},
-		{name: "four_limbs_scale_0", units: uint256.Int{1, 2, 3, 4}, scale: 0},
-		{name: "four_limbs_scale_18", units: uint256.Int{1, 2, 3, 4}, scale: 18},
-		{name: "maximum_scale_18", units: uint256.Int{^uint64(0), ^uint64(0), ^uint64(0), ^uint64(0)}, scale: 18},
+		{name: "one_limb_decimal_places_18", units: uint256.Int{123_456_789_012_345_678}, scale: 18},
+		{name: "two_limbs_decimal_places_5", units: uint256.Int{1, 1}, scale: 5},
+		{name: "three_limbs_decimal_places_18", units: uint256.Int{1, 2, 3}, scale: 18},
+		{name: "four_limbs_decimal_places_0", units: uint256.Int{1, 2, 3, 4}, scale: 0},
+		{name: "four_limbs_decimal_places_18", units: uint256.Int{1, 2, 3, 4}, scale: 18},
+		{name: "maximum_decimal_places_18", units: uint256.Int{^uint64(0), ^uint64(0), ^uint64(0), ^uint64(0)}, scale: 18},
 	}
 	buffer := make([]byte, 0, maxUint256TextLen)
 	for _, tt := range cases {

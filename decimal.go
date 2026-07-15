@@ -4,16 +4,18 @@ type decimalInput interface {
 	string | []byte
 }
 
-// Decimal is an unsigned fixed-scale decimal stored as one scaled integer.
+// FixedDecimal is an unsigned fixed-scale decimal stored as one scaled integer.
 //
-// Numeric value = units / 10^venue-scale.
+// Numeric value = units / 10^fractional-decimal-places. For example,
+// FixedDecimal[PriceInUint64Units[DecimalPlaces5], uint64] stores one uint64;
+// raw units 12_331_232 represent the price 123.31232.
 //
 // representation is optional immutable wire text. Numeric mutation clears the
 // string header; it never edits string bytes. Clearing the header allocates
 // nothing, and strings previously returned by String remain valid.
-type Decimal[V Venue[U], U Unit] struct {
+type FixedDecimal[V FixedDecimalFormat[U], U Unit] struct {
 	// representation is cache state, not numeric state. The zero-length field
-	// intentionally makes Decimal incomparable so callers cannot accidentally
+	// intentionally makes FixedDecimal incomparable so callers cannot accidentally
 	// include cache state in numeric equality. It stays first because a trailing
 	// zero-sized field can increase the enclosing struct size.
 	_ [0]func()
@@ -28,69 +30,69 @@ type Decimal[V Venue[U], U Unit] struct {
 	representation string
 }
 
-// New parses s. It retains s only when s is already canonical fixed-scale
-// text. Parsing is strict: no whitespace, signs, exponent notation, or excess
-// fractional digits are accepted.
-func New[V Venue[U], U Unit](s string) (Decimal[V, U], error) {
-	scale, err := checkedScale[V, U]()
+// NewFixedDecimal parses s. It retains s only when s is already canonical
+// fixed-decimal text. Parsing is strict: no whitespace, signs, exponent
+// notation, or excess fractional digits are accepted.
+func NewFixedDecimal[V FixedDecimalFormat[U], U Unit](s string) (FixedDecimal[V, U], error) {
+	decimalPlaces, err := checkedFractionalDecimalPlaces[V, U]()
 	if err != "" {
-		return Decimal[V, U]{}, boxedError(err)
+		return FixedDecimal[V, U]{}, boxedError(err)
 	}
-	var venue V
-	units, canonical, parseErr := venue.unitParseString(s, scale)
+	var format V
+	units, canonical, parseErr := format.unitParseString(s, decimalPlaces)
 	if parseErr != "" {
-		return Decimal[V, U]{}, boxedError(parseErr)
+		return FixedDecimal[V, U]{}, boxedError(parseErr)
 	}
-	d := Decimal[V, U]{units: units}
+	d := FixedDecimal[V, U]{units: units}
 	if canonical {
 		d.representation = s
 	}
 	return d, nil
 }
 
-// NewCompact parses s without retaining its backing storage.
-func NewCompact[V Venue[U], U Unit](s string) (Decimal[V, U], error) {
-	scale, err := checkedScale[V, U]()
+// NewCompactFixedDecimal parses s without retaining its backing storage.
+func NewCompactFixedDecimal[V FixedDecimalFormat[U], U Unit](s string) (FixedDecimal[V, U], error) {
+	decimalPlaces, err := checkedFractionalDecimalPlaces[V, U]()
 	if err != "" {
-		return Decimal[V, U]{}, boxedError(err)
+		return FixedDecimal[V, U]{}, boxedError(err)
 	}
-	var venue V
-	units, _, parseErr := venue.unitParseString(s, scale)
+	var format V
+	units, _, parseErr := format.unitParseString(s, decimalPlaces)
 	if parseErr != "" {
-		return Decimal[V, U]{}, boxedError(parseErr)
+		return FixedDecimal[V, U]{}, boxedError(parseErr)
 	}
-	return Decimal[V, U]{units: units}, nil
+	return FixedDecimal[V, U]{units: units}, nil
 }
 
-// NewBytes parses b without retaining or converting it.
-func NewBytes[V Venue[U], U Unit](b []byte) (Decimal[V, U], error) {
-	scale, err := checkedScale[V, U]()
+// NewFixedDecimalFromBytes parses b without retaining or converting it.
+func NewFixedDecimalFromBytes[V FixedDecimalFormat[U], U Unit](b []byte) (FixedDecimal[V, U], error) {
+	decimalPlaces, err := checkedFractionalDecimalPlaces[V, U]()
 	if err != "" {
-		return Decimal[V, U]{}, boxedError(err)
+		return FixedDecimal[V, U]{}, boxedError(err)
 	}
-	var venue V
-	units, _, parseErr := venue.unitParseBytes(b, scale)
+	var format V
+	units, _, parseErr := format.unitParseBytes(b, decimalPlaces)
 	if parseErr != "" {
-		return Decimal[V, U]{}, boxedError(parseErr)
+		return FixedDecimal[V, U]{}, boxedError(parseErr)
 	}
-	return Decimal[V, U]{units: units}, nil
+	return FixedDecimal[V, U]{units: units}, nil
 }
 
-// NewFromUnits constructs a decimal from already-scaled units.
-func NewFromUnits[V Venue[U], U Unit](units U) (Decimal[V, U], error) {
-	if _, err := checkedScale[V, U](); err != "" {
-		return Decimal[V, U]{}, boxedError(err)
+// NewFixedDecimalFromUnits constructs a decimal from already-scaled units.
+func NewFixedDecimalFromUnits[V FixedDecimalFormat[U], U Unit](units U) (FixedDecimal[V, U], error) {
+	if _, err := checkedFractionalDecimalPlaces[V, U](); err != "" {
+		return FixedDecimal[V, U]{}, boxedError(err)
 	}
-	return Decimal[V, U]{units: units}, nil
+	return FixedDecimal[V, U]{units: units}, nil
 }
 
 // Units returns the scaled integer by value. uint256.Int is an inline
 // four-limb value, so the returned value owns its storage without allocation.
-func (d Decimal[V, U]) Units() U { return d.units }
+func (d FixedDecimal[V, U]) Units() U { return d.units }
 
 // SetUnits replaces the scaled integer. A value-changing update invalidates
 // cached text without allocation; setting the same value preserves it.
-func (d *Decimal[V, U]) SetUnits(units U) {
+func (d *FixedDecimal[V, U]) SetUnits(units U) {
 	if d.units == units {
 		return
 	}
@@ -98,37 +100,37 @@ func (d *Decimal[V, U]) SetUnits(units U) {
 	d.representation = ""
 }
 
-func (d Decimal[V, U]) IsZero() bool {
+func (d FixedDecimal[V, U]) IsZero() bool {
 	var zero U
 	return d.units == zero
 }
 
 // HasRepresentation reports whether canonical wire text is currently
 // retained.
-func (d Decimal[V, U]) HasRepresentation() bool { return d.representation != "" }
+func (d FixedDecimal[V, U]) HasRepresentation() bool { return d.representation != "" }
 
 // Len returns the exact canonical text length.
-func (d Decimal[V, U]) Len() int {
+func (d FixedDecimal[V, U]) Len() int {
 	if d.representation != "" {
 		return len(d.representation)
 	}
-	var venue V
-	return venue.unitLen(d.units, scaleOf[V, U]())
+	var format V
+	return format.unitLen(d.units, fractionalDecimalPlacesOf[V, U]())
 }
 
-// AppendTo appends canonical fixed-scale text. It allocates only when dst has
-// insufficient capacity.
-func (d Decimal[V, U]) AppendTo(dst []byte) []byte {
+// AppendTo appends canonical fixed-decimal text. It allocates only when dst
+// has insufficient capacity.
+func (d FixedDecimal[V, U]) AppendTo(dst []byte) []byte {
 	if d.representation != "" {
 		return append(dst, d.representation...)
 	}
-	var venue V
-	return venue.unitAppend(dst, d.units, scaleOf[V, U]())
+	var format V
+	return format.unitAppend(dst, d.units, fractionalDecimalPlacesOf[V, U]())
 }
 
-// AppendJSON appends a quoted JSON decimal string. Decimal text contains only
+// AppendJSON appends a quoted JSON decimal string. FixedDecimal text contains only
 // ASCII digits and a decimal point, so no escaping pass is needed.
-func (d Decimal[V, U]) AppendJSON(dst []byte) []byte {
+func (d FixedDecimal[V, U]) AppendJSON(dst []byte) []byte {
 	dst = append(dst, '"')
 	dst = d.AppendTo(dst)
 	return append(dst, '"')
@@ -136,17 +138,17 @@ func (d Decimal[V, U]) AppendJSON(dst []byte) []byte {
 
 // String returns retained text when available. Otherwise it creates exactly
 // one result string allocation and does not mutate d.
-func (d Decimal[V, U]) String() string {
+func (d FixedDecimal[V, U]) String() string {
 	if d.representation != "" {
 		return d.representation
 	}
-	var venue V
-	return venue.unitString(d.units, scaleOf[V, U]())
+	var format V
+	return format.unitString(d.units, fractionalDecimalPlacesOf[V, U]())
 }
 
 // Canonical returns a copy retaining canonical text. It never mutates shared
 // state and is safe to use concurrently with readers of the original value.
-func (d Decimal[V, U]) Canonical() Decimal[V, U] {
+func (d FixedDecimal[V, U]) Canonical() FixedDecimal[V, U] {
 	if d.representation == "" {
 		d.representation = d.String()
 	}
@@ -154,36 +156,36 @@ func (d Decimal[V, U]) Canonical() Decimal[V, U] {
 }
 
 // Compare returns -1, 0, or +1.
-func (d Decimal[V, U]) Compare(other Decimal[V, U]) int {
-	var venue V
-	return venue.unitCompare(d.units, other.units)
+func (d FixedDecimal[V, U]) Compare(other FixedDecimal[V, U]) int {
+	var format V
+	return format.unitCompare(d.units, other.units)
 }
 
-func (d Decimal[V, U]) Cmp(other Decimal[V, U]) int { return d.Compare(other) }
+func (d FixedDecimal[V, U]) Cmp(other FixedDecimal[V, U]) int { return d.Compare(other) }
 
-func (d Decimal[V, U]) Equal(other Decimal[V, U]) bool {
+func (d FixedDecimal[V, U]) Equal(other FixedDecimal[V, U]) bool {
 	return d.units == other.units
 }
 
-func (d Decimal[V, U]) Less(other Decimal[V, U]) bool { return d.Compare(other) < 0 }
+func (d FixedDecimal[V, U]) Less(other FixedDecimal[V, U]) bool { return d.Compare(other) < 0 }
 
 // AddOverflow returns the wrapped sum and reports unit overflow.
-func (d Decimal[V, U]) AddOverflow(other Decimal[V, U]) (Decimal[V, U], bool) {
+func (d FixedDecimal[V, U]) AddOverflow(other FixedDecimal[V, U]) (FixedDecimal[V, U], bool) {
 	units, overflow := addUnits(d.units, other.units)
-	return Decimal[V, U]{units: units}, overflow
+	return FixedDecimal[V, U]{units: units}, overflow
 }
 
-func (d Decimal[V, U]) Add(other Decimal[V, U]) (Decimal[V, U], error) {
+func (d FixedDecimal[V, U]) Add(other FixedDecimal[V, U]) (FixedDecimal[V, U], error) {
 	result, overflow := d.AddOverflow(other)
 	if overflow {
-		return Decimal[V, U]{}, boxedErrOverflow
+		return FixedDecimal[V, U]{}, boxedErrOverflow
 	}
 	return result, nil
 }
 
 // AddAssign leaves d unchanged on overflow. A value-changing success clears
 // cached text without allocation; adding zero preserves it.
-func (d *Decimal[V, U]) AddAssign(other Decimal[V, U]) (overflow bool) {
+func (d *FixedDecimal[V, U]) AddAssign(other FixedDecimal[V, U]) (overflow bool) {
 	units, overflow := addUnits(d.units, other.units)
 	if overflow {
 		return true
@@ -197,22 +199,22 @@ func (d *Decimal[V, U]) AddAssign(other Decimal[V, U]) (overflow bool) {
 }
 
 // SubUnderflow returns the wrapped difference and reports unit underflow.
-func (d Decimal[V, U]) SubUnderflow(other Decimal[V, U]) (Decimal[V, U], bool) {
+func (d FixedDecimal[V, U]) SubUnderflow(other FixedDecimal[V, U]) (FixedDecimal[V, U], bool) {
 	units, underflow := subUnits(d.units, other.units)
-	return Decimal[V, U]{units: units}, underflow
+	return FixedDecimal[V, U]{units: units}, underflow
 }
 
-func (d Decimal[V, U]) Sub(other Decimal[V, U]) (Decimal[V, U], error) {
+func (d FixedDecimal[V, U]) Sub(other FixedDecimal[V, U]) (FixedDecimal[V, U], error) {
 	result, underflow := d.SubUnderflow(other)
 	if underflow {
-		return Decimal[V, U]{}, boxedErrUnderflow
+		return FixedDecimal[V, U]{}, boxedErrUnderflow
 	}
 	return result, nil
 }
 
 // SubAssign leaves d unchanged on underflow. A value-changing success clears
 // cached text without allocation; subtracting zero preserves it.
-func (d *Decimal[V, U]) SubAssign(other Decimal[V, U]) (underflow bool) {
+func (d *FixedDecimal[V, U]) SubAssign(other FixedDecimal[V, U]) (underflow bool) {
 	units, underflow := subUnits(d.units, other.units)
 	if underflow {
 		return true
@@ -225,11 +227,12 @@ func (d *Decimal[V, U]) SubAssign(other Decimal[V, U]) (underflow bool) {
 	return false
 }
 
-// Compare compares decimals across scales and unit backends exactly. It does
-// not rescale either integer, so comparison cannot overflow.
-func Compare[VA Venue[UA], UA Unit, VB Venue[UB], UB Unit](
-	a Decimal[VA, UA],
-	b Decimal[VB, UB],
+// Compare compares fixed decimals across fractional decimal-place counts and
+// unit backends exactly. It does not rescale either integer, so comparison
+// cannot overflow.
+func Compare[VA FixedDecimalFormat[UA], UA Unit, VB FixedDecimalFormat[UB], UB Unit](
+	a FixedDecimal[VA, UA],
+	b FixedDecimal[VB, UB],
 ) int {
 	var azero UA
 	var bzero UB
@@ -246,8 +249,8 @@ func Compare[VA Venue[UA], UA Unit, VB Venue[UB], UB Unit](
 		}
 	}
 
-	as := scaleOf[VA, UA]()
-	bs := scaleOf[VB, UB]()
+	as := fractionalDecimalPlacesOf[VA, UA]()
+	bs := fractionalDecimalPlacesOf[VB, UB]()
 
 	var abuf [maxUnitDigits]byte
 	var bbuf [maxUnitDigits]byte
@@ -256,7 +259,7 @@ func Compare[VA Venue[UA], UA Unit, VB Venue[UB], UB Unit](
 	ad := abuf[:adLen]
 	bd := bbuf[:bdLen]
 
-	// Decimal digit count before the conceptual point determines magnitude.
+	// FixedDecimal digit count before the conceptual point determines magnitude.
 	aExponent := adLen - as
 	bExponent := bdLen - bs
 	if aExponent < bExponent {
@@ -266,8 +269,8 @@ func Compare[VA Venue[UA], UA Unit, VB Venue[UB], UB Unit](
 		return 1
 	}
 
-	maxScale := max(bs, as)
-	alignedLen := adLen + maxScale - as
+	maxFractionalDecimalPlaces := max(bs, as)
+	alignedLen := adLen + maxFractionalDecimalPlaces - as
 
 	// Compare scaled integers with conceptual trailing zeroes.
 	for i := range alignedLen {

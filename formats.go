@@ -1,158 +1,183 @@
 package sailfish
 
-// Fraction0 through Fraction20 are zero-sized fractional-scale policies.
-// Scale is independent from the scaled-integer backend: callers choose both
-// the number of digits after the point and the required numeric capacity.
-type Fraction0 struct{}
+// DecimalPlaces0 through DecimalPlaces20 are zero-sized policies that state
+// the exact number of digits represented after the decimal point. Decimal
+// places are independent from the scaled-integer backend: callers choose both
+// the fractional precision and numeric capacity.
+type DecimalPlaces0 struct{}
 
-func (Fraction0) NotionScale() Notion { return 0 }
+func (DecimalPlaces0) FractionalDecimalPlaces() DecimalPlaces { return 0 }
 
-type Fraction1 struct{}
+type DecimalPlaces1 struct{}
 
-func (Fraction1) NotionScale() Notion { return 1 }
+func (DecimalPlaces1) FractionalDecimalPlaces() DecimalPlaces { return 1 }
 
-type Fraction2 struct{}
+type DecimalPlaces2 struct{}
 
-func (Fraction2) NotionScale() Notion { return 2 }
+func (DecimalPlaces2) FractionalDecimalPlaces() DecimalPlaces { return 2 }
 
-type Fraction3 struct{}
+type DecimalPlaces3 struct{}
 
-func (Fraction3) NotionScale() Notion { return 3 }
+func (DecimalPlaces3) FractionalDecimalPlaces() DecimalPlaces { return 3 }
 
-type Fraction4 struct{}
+type DecimalPlaces4 struct{}
 
-func (Fraction4) NotionScale() Notion { return 4 }
+func (DecimalPlaces4) FractionalDecimalPlaces() DecimalPlaces { return 4 }
 
-type Fraction5 struct{}
+type DecimalPlaces5 struct{}
 
-func (Fraction5) NotionScale() Notion { return 5 }
+func (DecimalPlaces5) FractionalDecimalPlaces() DecimalPlaces { return 5 }
 
-type Fraction6 struct{}
+type DecimalPlaces6 struct{}
 
-func (Fraction6) NotionScale() Notion { return 6 }
+func (DecimalPlaces6) FractionalDecimalPlaces() DecimalPlaces { return 6 }
 
-type Fraction7 struct{}
+type DecimalPlaces7 struct{}
 
-func (Fraction7) NotionScale() Notion { return 7 }
+func (DecimalPlaces7) FractionalDecimalPlaces() DecimalPlaces { return 7 }
 
-type Fraction8 struct{}
+type DecimalPlaces8 struct{}
 
-func (Fraction8) NotionScale() Notion { return 8 }
+func (DecimalPlaces8) FractionalDecimalPlaces() DecimalPlaces { return 8 }
 
-type Fraction9 struct{}
+type DecimalPlaces9 struct{}
 
-func (Fraction9) NotionScale() Notion { return 9 }
+func (DecimalPlaces9) FractionalDecimalPlaces() DecimalPlaces { return 9 }
 
-type Fraction10 struct{}
+type DecimalPlaces10 struct{}
 
-func (Fraction10) NotionScale() Notion { return 10 }
+func (DecimalPlaces10) FractionalDecimalPlaces() DecimalPlaces { return 10 }
 
-type Fraction11 struct{}
+type DecimalPlaces11 struct{}
 
-func (Fraction11) NotionScale() Notion { return 11 }
+func (DecimalPlaces11) FractionalDecimalPlaces() DecimalPlaces { return 11 }
 
-type Fraction12 struct{}
+type DecimalPlaces12 struct{}
 
-func (Fraction12) NotionScale() Notion { return 12 }
+func (DecimalPlaces12) FractionalDecimalPlaces() DecimalPlaces { return 12 }
 
-type Fraction13 struct{}
+type DecimalPlaces13 struct{}
 
-func (Fraction13) NotionScale() Notion { return 13 }
+func (DecimalPlaces13) FractionalDecimalPlaces() DecimalPlaces { return 13 }
 
-type Fraction14 struct{}
+type DecimalPlaces14 struct{}
 
-func (Fraction14) NotionScale() Notion { return 14 }
+func (DecimalPlaces14) FractionalDecimalPlaces() DecimalPlaces { return 14 }
 
-type Fraction15 struct{}
+type DecimalPlaces15 struct{}
 
-func (Fraction15) NotionScale() Notion { return 15 }
+func (DecimalPlaces15) FractionalDecimalPlaces() DecimalPlaces { return 15 }
 
-type Fraction16 struct{}
+type DecimalPlaces16 struct{}
 
-func (Fraction16) NotionScale() Notion { return 16 }
+func (DecimalPlaces16) FractionalDecimalPlaces() DecimalPlaces { return 16 }
 
-type Fraction17 struct{}
+type DecimalPlaces17 struct{}
 
-func (Fraction17) NotionScale() Notion { return 17 }
+func (DecimalPlaces17) FractionalDecimalPlaces() DecimalPlaces { return 17 }
 
-type Fraction18 struct{}
+type DecimalPlaces18 struct{}
 
-func (Fraction18) NotionScale() Notion { return 18 }
+func (DecimalPlaces18) FractionalDecimalPlaces() DecimalPlaces { return 18 }
 
-type Fraction19 struct{}
+type DecimalPlaces19 struct{}
 
-func (Fraction19) NotionScale() Notion { return 19 }
+func (DecimalPlaces19) FractionalDecimalPlaces() DecimalPlaces { return 19 }
 
-type Fraction20 struct{}
+type DecimalPlaces20 struct{}
 
-func (Fraction20) NotionScale() Notion { return 20 }
+func (DecimalPlaces20) FractionalDecimalPlaces() DecimalPlaces { return 20 }
 
-func notionScale[S VenueScale]() Notion {
-	var scale S
-	return scale.NotionScale()
+func fractionalDecimalPlaces[S StaticDecimalPlaces]() DecimalPlaces {
+	var decimalPlaces S
+	return decimalPlaces.FractionalDecimalPlaces()
 }
 
-// PriceUint8 through PriceUint256 combine price identity and a fractional
-// scale with an explicit scaled-integer backend. Backend width controls range;
-// it is not inferred from fractional scale.
-type PriceUint8[S VenueScale] struct {
+// PriceInUint8Units through PriceInUint256Units identify prices represented by
+// one unsigned scaled integer of the named width. The type parameter states
+// the exact fractional decimal places. For example,
+// PriceInUint64Units[DecimalPlaces5] stores uint64 units and represents
+// numeric value as units / 100000. Backend width controls range; it is not
+// inferred from the decimal places.
+type PriceInUint8Units[S StaticDecimalPlaces] struct {
 	Uint8Units
 }
 
-func (PriceUint8[S]) NotionScale() Notion { return notionScale[S]() }
+func (PriceInUint8Units[S]) FractionalDecimalPlaces() DecimalPlaces {
+	return fractionalDecimalPlaces[S]()
+}
 
-type PriceUint16[S VenueScale] struct {
+type PriceInUint16Units[S StaticDecimalPlaces] struct {
 	Uint16Units
 }
 
-func (PriceUint16[S]) NotionScale() Notion { return notionScale[S]() }
+func (PriceInUint16Units[S]) FractionalDecimalPlaces() DecimalPlaces {
+	return fractionalDecimalPlaces[S]()
+}
 
-type PriceUint32[S VenueScale] struct {
+type PriceInUint32Units[S StaticDecimalPlaces] struct {
 	Uint32Units
 }
 
-func (PriceUint32[S]) NotionScale() Notion { return notionScale[S]() }
+func (PriceInUint32Units[S]) FractionalDecimalPlaces() DecimalPlaces {
+	return fractionalDecimalPlaces[S]()
+}
 
-type PriceUint64[S VenueScale] struct {
+type PriceInUint64Units[S StaticDecimalPlaces] struct {
 	Uint64Units
 }
 
-func (PriceUint64[S]) NotionScale() Notion { return notionScale[S]() }
+func (PriceInUint64Units[S]) FractionalDecimalPlaces() DecimalPlaces {
+	return fractionalDecimalPlaces[S]()
+}
 
-type PriceUint256[S VenueScale] struct {
+type PriceInUint256Units[S StaticDecimalPlaces] struct {
 	Uint256Units
 }
 
-func (PriceUint256[S]) NotionScale() Notion { return notionScale[S]() }
+func (PriceInUint256Units[S]) FractionalDecimalPlaces() DecimalPlaces {
+	return fractionalDecimalPlaces[S]()
+}
 
-// AmountUint8 through AmountUint256 are the amount-kind equivalents. Price
-// and amount formats remain distinct types even with equal scale and backend.
-type AmountUint8[S VenueScale] struct {
+// AmountInUint8Units through AmountInUint256Units are the amount-kind
+// equivalents. Price and amount formats remain distinct types even with equal
+// fractional decimal places and the same backend.
+type AmountInUint8Units[S StaticDecimalPlaces] struct {
 	Uint8Units
 }
 
-func (AmountUint8[S]) NotionScale() Notion { return notionScale[S]() }
+func (AmountInUint8Units[S]) FractionalDecimalPlaces() DecimalPlaces {
+	return fractionalDecimalPlaces[S]()
+}
 
-type AmountUint16[S VenueScale] struct {
+type AmountInUint16Units[S StaticDecimalPlaces] struct {
 	Uint16Units
 }
 
-func (AmountUint16[S]) NotionScale() Notion { return notionScale[S]() }
+func (AmountInUint16Units[S]) FractionalDecimalPlaces() DecimalPlaces {
+	return fractionalDecimalPlaces[S]()
+}
 
-type AmountUint32[S VenueScale] struct {
+type AmountInUint32Units[S StaticDecimalPlaces] struct {
 	Uint32Units
 }
 
-func (AmountUint32[S]) NotionScale() Notion { return notionScale[S]() }
+func (AmountInUint32Units[S]) FractionalDecimalPlaces() DecimalPlaces {
+	return fractionalDecimalPlaces[S]()
+}
 
-type AmountUint64[S VenueScale] struct {
+type AmountInUint64Units[S StaticDecimalPlaces] struct {
 	Uint64Units
 }
 
-func (AmountUint64[S]) NotionScale() Notion { return notionScale[S]() }
+func (AmountInUint64Units[S]) FractionalDecimalPlaces() DecimalPlaces {
+	return fractionalDecimalPlaces[S]()
+}
 
-type AmountUint256[S VenueScale] struct {
+type AmountInUint256Units[S StaticDecimalPlaces] struct {
 	Uint256Units
 }
 
-func (AmountUint256[S]) NotionScale() Notion { return notionScale[S]() }
+func (AmountInUint256Units[S]) FractionalDecimalPlaces() DecimalPlaces {
+	return fractionalDecimalPlaces[S]()
+}

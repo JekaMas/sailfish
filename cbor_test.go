@@ -14,8 +14,8 @@ import (
 type cborQuote struct {
 	_ struct{} `cbor:",toarray"`
 
-	Price  Decimal[PriceUint64[Fraction5], uint64]
-	Amount Decimal[AmountUint256[Fraction18], uint256.Int]
+	Price  FixedDecimal[PriceInUint64Units[DecimalPlaces5], uint64]
+	Amount FixedDecimal[AmountInUint256Units[DecimalPlaces18], uint256.Int]
 }
 
 func TestCBORNativePreferredSerialization(t *testing.T) {
@@ -38,7 +38,7 @@ func TestCBORNativePreferredSerialization(t *testing.T) {
 		{name: "uint64 max", value: math.MaxUint64, wire: "1bffffffffffffffff"},
 	}
 
-	codec := testCodec[PriceUint64[Fraction5]]()
+	codec := testFixedDecimalCodec[PriceInUint64Units[DecimalPlaces5]]()
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			value := codec.FromUnits(tt.value)
@@ -71,21 +71,21 @@ func TestCBORNarrowUnitsEnforceRange(t *testing.T) {
 		{
 			name: "uint8",
 			decode: func(raw []byte) error {
-				var value Decimal[PriceUint8[Fraction1], uint8]
+				var value FixedDecimal[PriceInUint8Units[DecimalPlaces1], uint8]
 				return value.UnmarshalCBOR(raw)
 			},
 		},
 		{
 			name: "uint16",
 			decode: func(raw []byte) error {
-				var value Decimal[PriceUint16[Fraction2], uint16]
+				var value FixedDecimal[PriceInUint16Units[DecimalPlaces2], uint16]
 				return value.UnmarshalCBOR(raw)
 			},
 		},
 		{
 			name: "uint32",
 			decode: func(raw []byte) error {
-				var value Decimal[PriceUint32[Fraction5], uint32]
+				var value FixedDecimal[PriceInUint32Units[DecimalPlaces5], uint32]
 				return value.UnmarshalCBOR(raw)
 			},
 		},
@@ -127,7 +127,7 @@ func TestCBORUint256PreferredSerialization(t *testing.T) {
 		},
 	}
 
-	codec := testCodec[AmountUint256[Fraction18]]()
+	codec := testFixedDecimalCodec[AmountInUint256Units[DecimalPlaces18]]()
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			value := codec.FromUnits(tt.units)
@@ -149,7 +149,7 @@ func TestCBORUint256PreferredSerialization(t *testing.T) {
 func TestCBORRoundTripsEveryUint256MagnitudeWidth(t *testing.T) {
 	t.Parallel()
 
-	codec := testCodec[AmountUint256[Fraction18]]()
+	codec := testFixedDecimalCodec[AmountInUint256Units[DecimalPlaces18]]()
 	for byteLen := 9; byteLen <= 32; byteLen++ {
 		var magnitude [32]byte
 		magnitude[len(magnitude)-byteLen] = 1
@@ -172,18 +172,18 @@ func TestCBORRoundTripsNativeWidthCrossProducts(t *testing.T) {
 	t.Parallel()
 
 	for units := 0; units <= math.MaxUint8; units++ {
-		assertCBORRoundTrip(t, testCodec[PriceUint8[Fraction2]](), uint8(units))
+		assertCBORRoundTrip(t, testFixedDecimalCodec[PriceInUint8Units[DecimalPlaces2]](), uint8(units))
 	}
 
 	rng := rand.New(rand.NewSource(0xcb0_2026))
 	for range 10_000 {
-		assertCBORRoundTrip(t, testCodec[PriceUint16[Fraction4]](), uint16(rng.Uint32()))
-		assertCBORRoundTrip(t, testCodec[PriceUint32[Fraction9]](), rng.Uint32())
-		assertCBORRoundTrip(t, testCodec[PriceUint64[Fraction19]](), rng.Uint64())
+		assertCBORRoundTrip(t, testFixedDecimalCodec[PriceInUint16Units[DecimalPlaces4]](), uint16(rng.Uint32()))
+		assertCBORRoundTrip(t, testFixedDecimalCodec[PriceInUint32Units[DecimalPlaces9]](), rng.Uint32())
+		assertCBORRoundTrip(t, testFixedDecimalCodec[PriceInUint64Units[DecimalPlaces19]](), rng.Uint64())
 	}
 }
 
-func assertCBORRoundTrip[V Venue[U], U Unit](t *testing.T, codec Codec[V, U], units U) {
+func assertCBORRoundTrip[V FixedDecimalFormat[U], U Unit](t *testing.T, codec FixedDecimalCodec[V, U], units U) {
 	t.Helper()
 
 	value := codec.FromUnits(units)
@@ -231,7 +231,7 @@ func TestCBORRejectsNonDeterministicOrMalformedInput(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			value := testCodec[AmountUint256[Fraction18]]().FromUnits(uint256.Int{42})
+			value := testFixedDecimalCodec[AmountInUint256Units[DecimalPlaces18]]().FromUnits(uint256.Int{42})
 			before := value
 			if err := value.UnmarshalCBOR(tt.wire); !errors.Is(err, tt.err) {
 				t.Fatalf("UnmarshalCBOR error = %v, want %v", err, tt.err)
@@ -246,20 +246,20 @@ func TestCBORRejectsNonDeterministicOrMalformedInput(t *testing.T) {
 func TestCBORRejectsUnsupportedFormatScale(t *testing.T) {
 	t.Parallel()
 
-	invalid := Decimal[uint64Scale20, uint64]{}
-	if _, err := invalid.MarshalCBOR(); !errors.Is(err, ErrScale) {
-		t.Fatalf("MarshalCBOR error = %v, want %v", err, ErrScale)
+	invalid := FixedDecimal[uint64DecimalPlaces20, uint64]{}
+	if _, err := invalid.MarshalCBOR(); !errors.Is(err, ErrUnsupportedFractionalDecimalPlaces) {
+		t.Fatalf("MarshalCBOR error = %v, want %v", err, ErrUnsupportedFractionalDecimalPlaces)
 	}
-	if err := invalid.UnmarshalCBOR([]byte{0}); !errors.Is(err, ErrScale) {
-		t.Fatalf("UnmarshalCBOR error = %v, want %v", err, ErrScale)
+	if err := invalid.UnmarshalCBOR([]byte{0}); !errors.Is(err, ErrUnsupportedFractionalDecimalPlaces) {
+		t.Fatalf("UnmarshalCBOR error = %v, want %v", err, ErrUnsupportedFractionalDecimalPlaces)
 	}
 }
 
 func TestCBORToArrayInteroperabilityIsCompact(t *testing.T) {
 	t.Parallel()
 
-	price := testCodec[PriceUint64[Fraction5]]().FromUnits(12_331_232)
-	amount := testCodec[AmountUint256[Fraction18]]().FromUnits(uint256.Int{0, 1})
+	price := testFixedDecimalCodec[PriceInUint64Units[DecimalPlaces5]]().FromUnits(12_331_232)
+	amount := testFixedDecimalCodec[AmountInUint256Units[DecimalPlaces18]]().FromUnits(uint256.Int{0, 1})
 	original := cborQuote{Price: price, Amount: amount}
 
 	wire, err := cbor.Marshal(original)
@@ -286,7 +286,7 @@ func TestCBORToArrayInteroperabilityIsCompact(t *testing.T) {
 func TestCBORMarshalInterfacesUseCompactScalar(t *testing.T) {
 	t.Parallel()
 
-	value := testCodec[PriceUint16[Fraction2]]().FromUnits(65_535)
+	value := testFixedDecimalCodec[PriceInUint16Units[DecimalPlaces2]]().FromUnits(65_535)
 	wire, err := value.MarshalCBOR()
 	if err != nil {
 		t.Fatal(err)
@@ -295,7 +295,7 @@ func TestCBORMarshalInterfacesUseCompactScalar(t *testing.T) {
 		t.Fatalf("MarshalCBOR = %s", got)
 	}
 
-	var decoded Decimal[PriceUint16[Fraction2], uint16]
+	var decoded FixedDecimal[PriceInUint16Units[DecimalPlaces2], uint16]
 	if err = decoded.UnmarshalCBOR(wire); err != nil {
 		t.Fatal(err)
 	}
@@ -307,8 +307,8 @@ func TestCBORMarshalInterfacesUseCompactScalar(t *testing.T) {
 func TestCBORCarriesUnitsWhileTypeCarriesScale(t *testing.T) {
 	t.Parallel()
 
-	one := testCodec[PriceUint64[Fraction1]]().FromUnits(123)
-	nine := testCodec[PriceUint64[Fraction9]]().FromUnits(123)
+	one := testFixedDecimalCodec[PriceInUint64Units[DecimalPlaces1]]().FromUnits(123)
+	nine := testFixedDecimalCodec[PriceInUint64Units[DecimalPlaces9]]().FromUnits(123)
 	if got, want := hex.EncodeToString(one.AppendCBOR(nil)), hex.EncodeToString(nine.AppendCBOR(nil)); got != want {
 		t.Fatalf("equal units encoded differently: %s != %s", got, want)
 	}
@@ -320,7 +320,7 @@ func TestCBORCarriesUnitsWhileTypeCarriesScale(t *testing.T) {
 func TestUint256RuntimeCodecCBORRoundTrip(t *testing.T) {
 	t.Parallel()
 
-	codec := testUint256Codec(18)
+	codec := testUint256FixedDecimalCodec(18)
 	units := uint256.Int{1, 2, 3, 4}
 	var buffer [MaxCBORSize]byte
 	wire := codec.AppendCBOR(buffer[:0], units)

@@ -11,23 +11,23 @@ func TestCanonicalRetentionAndCompactOwnership(t *testing.T) {
 	t.Parallel()
 
 	canonicalInput := "123.31232"
-	canonical, err := New[PriceUint64[Fraction5]](canonicalInput)
+	canonical, err := NewFixedDecimal[PriceInUint64Units[DecimalPlaces5]](canonicalInput)
 	if err != nil || !canonical.HasRepresentation() || canonical.String() != canonicalInput {
 		t.Fatalf("canonical = %v %#v", err, canonical)
 	}
 
-	nonCanonical, err := New[PriceUint64[Fraction5]]("00123.31")
+	nonCanonical, err := NewFixedDecimal[PriceInUint64Units[DecimalPlaces5]]("00123.31")
 	if err != nil || nonCanonical.HasRepresentation() || nonCanonical.String() != "123.31000" {
 		t.Fatalf("non-canonical = %v %q", err, nonCanonical.String())
 	}
 
-	compact, err := NewCompact[PriceUint64[Fraction5]](canonicalInput)
+	compact, err := NewCompactFixedDecimal[PriceInUint64Units[DecimalPlaces5]](canonicalInput)
 	if err != nil || compact.HasRepresentation() {
 		t.Fatalf("compact retained input: %v", err)
 	}
 
 	bytesInput := []byte(canonicalInput)
-	fromBytes, err := NewBytes[PriceUint64[Fraction5]](bytesInput)
+	fromBytes, err := NewFixedDecimalFromBytes[PriceInUint64Units[DecimalPlaces5]](bytesInput)
 	if err != nil || fromBytes.HasRepresentation() {
 		t.Fatalf("bytes retained input: %v", err)
 	}
@@ -40,8 +40,8 @@ func TestCanonicalRetentionAndCompactOwnership(t *testing.T) {
 func TestRepresentationInvalidationDoesNotMutateReturnedString(t *testing.T) {
 	t.Parallel()
 
-	value, _ := New[PriceUint64[Fraction5]]("9.99999")
-	delta, _ := New[PriceUint64[Fraction5]]("0.00001")
+	value, _ := NewFixedDecimal[PriceInUint64Units[DecimalPlaces5]]("9.99999")
+	delta, _ := NewFixedDecimal[PriceInUint64Units[DecimalPlaces5]]("0.00001")
 	old := value.String()
 
 	if value.AddAssign(delta) {
@@ -61,8 +61,8 @@ func TestRepresentationInvalidationDoesNotMutateReturnedString(t *testing.T) {
 func TestNoOpMutationPreservesRepresentation(t *testing.T) {
 	t.Parallel()
 
-	value, _ := New[PriceUint64[Fraction5]]("1.20000")
-	zero, _ := New[PriceUint64[Fraction5]]("0.00000")
+	value, _ := NewFixedDecimal[PriceInUint64Units[DecimalPlaces5]]("1.20000")
+	zero, _ := NewFixedDecimal[PriceInUint64Units[DecimalPlaces5]]("0.00000")
 	if value.AddAssign(zero) || !value.HasRepresentation() {
 		t.Fatal("adding zero invalidated representation")
 	}
@@ -75,7 +75,7 @@ func TestNoOpMutationPreservesRepresentation(t *testing.T) {
 func TestCanonicalReturnsIndependentCopy(t *testing.T) {
 	t.Parallel()
 
-	codec := testCodec[PriceUint64[Fraction5]]()
+	codec := testFixedDecimalCodec[PriceInUint64Units[DecimalPlaces5]]()
 	original := codec.FromUnits(12_000_000)
 	canonical := original.Canonical()
 	if original.HasRepresentation() || !canonical.HasRepresentation() {
@@ -86,7 +86,7 @@ func TestCanonicalReturnsIndependentCopy(t *testing.T) {
 func TestConcurrentStringReadsHaveNoMutableCache(t *testing.T) {
 	t.Parallel()
 
-	value, _ := NewFromUnits[uint256Scale18](uint256.Int{1, 2, 3, 4})
+	value, _ := NewFixedDecimalFromUnits[uint256DecimalPlaces18](uint256.Int{1, 2, 3, 4})
 	const readers = 16
 	var wg sync.WaitGroup
 	wg.Add(readers)

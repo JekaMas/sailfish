@@ -194,7 +194,7 @@ price fields and the wide amount decode without allocation through
 CPU profiles place direct CBOR work in shortest-form integer validation,
 `uint256` byte-width selection, big-endian limb transfer, and scale validation.
 Memory profiles contain no per-operation allocation from append or decode.
-Cached `Codec` methods avoid repeated generic scale metadata work and are the
+Cached `FixedDecimalCodec` methods avoid repeated generic scale metadata work and are the
 recommended hot-loop surface. The figures above are means of ten
 `GOMAXPROCS=1`, 200 ms runs on the documented host.
 
@@ -260,7 +260,7 @@ Ten 500 ms runs per sub-benchmark produced these arithmetic means:
 
 The fractional Hyperliquid-perp allocation count is Go's per-operation average
 for short owned symbol strings and rounds to zero in benchmark output; the
-reported bytes remain nonzero. Decimal scalar encoding and decoding are 5.7-
+reported bytes remain nonzero. FixedDecimal scalar encoding and decoding are 5.7-
 7.0 ns across the six price/quantity cohorts, with `0 B/op, 0 allocs/op`.
 Observed scalar wires range from 1 to 9 bytes. The benchmark reports sample
 count and min/p50/p95/max/mean wire size alongside timing, and the unit test
@@ -316,11 +316,12 @@ small generic metadata cost:
 
 | Operation | Explicit format | Test-local concrete | B/op | allocs/op |
 |---|---:|---:|---:|---:|
-| `New` | 12.1 ns/op | 11.3 ns/op | 0 | 0 |
-| cached `Codec.Parse` | 9.62 ns/op | 9.62 ns/op | 0 | 0 |
-| direct `Decimal.AppendTo` | 16.4 ns/op | 15.7 ns/op | 0 | 0 |
+| `NewFixedDecimal` | 12.1 ns/op | 11.3 ns/op | 0 | 0 |
+| cached `FixedDecimalCodec.Parse` | 9.62 ns/op | 9.62 ns/op | 0 | 0 |
+| direct `FixedDecimal.AppendTo` | 16.4 ns/op | 15.7 ns/op | 0 | 0 |
 
-The only public format path is explicit `PriceUint*` / `AmountUint*`
+The only public format path is explicit
+`PriceInUint*Units[DecimalPlacesN]` / `AmountInUint*Units[DecimalPlacesN]`
 composition. These formats embed concrete backend providers. A measured
 alternative that selected backend operations through a generic type switch
 cost roughly 21-29% on parse/format microbenchmarks, so it was not adopted.
@@ -403,7 +404,7 @@ reverse-SWAR lane conversion, in-register point insertion, and exact-width
 stores. No table lookup or divide-by-100 loop remains on selected widths.
 
 The market-shape matrix separates ordinary CEX values from maximum-width
-values. Runtime-scale one-limb parsing uses `Uint256Codec` and stays below
+values. Runtime-scale one-limb parsing uses `Uint256FixedDecimalCodec` and stays below
 10 ns on the measured host. A raw four-limb append performs reciprocal decimal
 chunk reduction and takes roughly 108-113 ns; retaining canonical input or
 calling `Canonical` once reduces repeated appends of that same value to about

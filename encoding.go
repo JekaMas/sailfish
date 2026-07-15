@@ -9,17 +9,17 @@ import (
 
 // AppendText implements the append-style text encoding contract available in
 // current Go versions without requiring a newly owned result slice.
-func (d Decimal[V, U]) AppendText(dst []byte) ([]byte, error) {
+func (d FixedDecimal[V, U]) AppendText(dst []byte) ([]byte, error) {
 	return d.AppendTo(dst), nil
 }
 
-func (d Decimal[V, U]) MarshalText() ([]byte, error) {
+func (d FixedDecimal[V, U]) MarshalText() ([]byte, error) {
 	out := make([]byte, 0, d.Len())
 	return d.AppendTo(out), nil
 }
 
-func (d *Decimal[V, U]) UnmarshalText(text []byte) error {
-	parsed, err := NewBytes[V](text)
+func (d *FixedDecimal[V, U]) UnmarshalText(text []byte) error {
+	parsed, err := NewFixedDecimalFromBytes[V](text)
 	if err != nil {
 		return err
 	}
@@ -27,7 +27,7 @@ func (d *Decimal[V, U]) UnmarshalText(text []byte) error {
 	return nil
 }
 
-func (d Decimal[V, U]) MarshalJSON() ([]byte, error) {
+func (d FixedDecimal[V, U]) MarshalJSON() ([]byte, error) {
 	capacity := 0
 	if d.representation == "" {
 		var units U
@@ -48,10 +48,10 @@ func (d Decimal[V, U]) MarshalJSON() ([]byte, error) {
 
 // UnmarshalJSON parses ordinary quoted decimals directly without a separate
 // escape scan. go-json handles escaped strings and non-string JSON syntax.
-func (d *Decimal[V, U]) UnmarshalJSON(data []byte) error {
+func (d *FixedDecimal[V, U]) UnmarshalJSON(data []byte) error {
 	if len(data) >= 2 && data[0] == '"' && data[len(data)-1] == '"' {
 		text := data[1 : len(data)-1]
-		parsed, err := NewBytes[V](text)
+		parsed, err := NewFixedDecimalFromBytes[V](text)
 		if err == nil {
 			*d = parsed
 			return nil
@@ -65,7 +65,7 @@ func (d *Decimal[V, U]) UnmarshalJSON(data []byte) error {
 	if err := json.Unmarshal(data, &text); err != nil {
 		return err
 	}
-	parsed, err := New[V](text)
+	parsed, err := NewFixedDecimal[V](text)
 	if err != nil {
 		return err
 	}

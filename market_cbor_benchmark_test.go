@@ -25,14 +25,14 @@ type marketCBORSource struct {
 }
 
 type marketCBORMarket struct {
-	Venue         string   `json:"venue"`
-	MarketType    string   `json:"market_type"`
-	Rank          int      `json:"rank"`
-	Symbol        string   `json:"symbol"`
-	PriceScale    Notion   `json:"price_scale"`
-	QuantityScale Notion   `json:"quantity_scale"`
-	Prices        []string `json:"prices"`
-	Quantities    []string `json:"quantities"`
+	Venue         string        `json:"venue"`
+	MarketType    string        `json:"market_type"`
+	Rank          int           `json:"rank"`
+	Symbol        string        `json:"symbol"`
+	PriceScale    DecimalPlaces `json:"price_scale"`
+	QuantityScale DecimalPlaces `json:"quantity_scale"`
+	Prices        []string      `json:"prices"`
+	Quantities    []string      `json:"quantities"`
 }
 
 type preparedMarketCBORCohort struct {
@@ -43,14 +43,14 @@ type preparedMarketCBORCohort struct {
 }
 
 type preparedMarketCBORScalar struct {
-	codec Uint256Codec
+	codec Uint256FixedDecimalCodec
 	units uint256.Int
 	wire  []byte
 }
 
 type preparedMarketCBORBar struct {
-	priceCodec    Uint256Codec
-	quantityCodec Uint256Codec
+	priceCodec    Uint256FixedDecimalCodec
+	quantityCodec Uint256FixedDecimalCodec
 	symbol        string
 	prices        [4]uint256.Int
 	volume        uint256.Int
@@ -65,7 +65,7 @@ type preparedMarketCBORBar struct {
 
 type marketCBORScalarKey struct {
 	kind  uint8
-	scale Notion
+	scale DecimalPlaces
 	units uint256.Int
 }
 
@@ -130,7 +130,7 @@ func TestCBORRealMarketSnapshot(t *testing.T) {
 }
 
 func TestCBORManualPositionalBarTheoreticalMinimum(t *testing.T) {
-	codec, err := NewUint256Codec(0)
+	codec, err := NewUint256FixedDecimalCodec(0)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -227,11 +227,11 @@ func prepareMarketCBORCohorts(tb testing.TB) []preparedMarketCBORCohort {
 			}
 			identities[identity] = struct{}{}
 
-			priceCodec, codecErr := NewUint256Codec(market.PriceScale)
+			priceCodec, codecErr := NewUint256FixedDecimalCodec(market.PriceScale)
 			if codecErr != nil {
 				tb.Fatalf("%s price scale: %v", market.Symbol, codecErr)
 			}
-			quantityCodec, codecErr := NewUint256Codec(market.QuantityScale)
+			quantityCodec, codecErr := NewUint256FixedDecimalCodec(market.QuantityScale)
 			if codecErr != nil {
 				tb.Fatalf("%s quantity scale: %v", market.Symbol, codecErr)
 			}
@@ -275,7 +275,7 @@ func prepareMarketCBORValues(
 	tb testing.TB,
 	symbol string,
 	kind string,
-	codec Uint256Codec,
+	codec Uint256FixedDecimalCodec,
 	values []string,
 ) []uint256.Int {
 	tb.Helper()
@@ -308,11 +308,11 @@ func appendUniqueMarketCBORScalars(
 	destination *[]preparedMarketCBORScalar,
 	seen map[marketCBORScalarKey]struct{},
 	kind uint8,
-	codec Uint256Codec,
+	codec Uint256FixedDecimalCodec,
 	values []uint256.Int,
 ) {
 	for _, units := range values {
-		key := marketCBORScalarKey{kind: kind, scale: codec.Scale(), units: units}
+		key := marketCBORScalarKey{kind: kind, scale: codec.FractionalDecimalPlaces(), units: units}
 		if _, duplicate := seen[key]; duplicate {
 			continue
 		}
@@ -371,8 +371,8 @@ func appendPreparedMarketCBORBar(dst []byte, bar preparedMarketCBORBar) []byte {
 
 func decodePreparedMarketCBORBar(
 	raw []byte,
-	priceCodec Uint256Codec,
-	quantityCodec Uint256Codec,
+	priceCodec Uint256FixedDecimalCodec,
+	quantityCodec Uint256FixedDecimalCodec,
 ) (preparedMarketCBORBar, error) {
 	if len(raw) == 0 || raw[0] != 0x8e {
 		return preparedMarketCBORBar{}, boxedErrCBORSyntax

@@ -8,8 +8,8 @@ import (
 )
 
 func BenchmarkCBOR(b *testing.B) {
-	nativeCodec := testCodec[PriceUint64[Fraction5]]()
-	wideCodec := testCodec[AmountUint256[Fraction18]]()
+	nativeCodec := testFixedDecimalCodec[PriceInUint64Units[DecimalPlaces5]]()
+	wideCodec := testFixedDecimalCodec[AmountInUint256Units[DecimalPlaces18]]()
 	native := nativeCodec.FromUnits(^uint64(0))
 	wide := wideCodec.FromUnits(uint256.Int{1, 2, 3, 4})
 	nativeWire := native.AppendCBOR(make([]byte, 0, MaxCBORSize))
@@ -29,7 +29,7 @@ func BenchmarkCBOR(b *testing.B) {
 		}
 	})
 	b.Run("decode/uint64", func(b *testing.B) {
-		var value Decimal[PriceUint64[Fraction5], uint64]
+		var value FixedDecimal[PriceInUint64Units[DecimalPlaces5], uint64]
 		b.ReportAllocs()
 		for b.Loop() {
 			_ = value.UnmarshalCBOR(nativeWire)
@@ -37,7 +37,7 @@ func BenchmarkCBOR(b *testing.B) {
 		cborNativeSink = value
 	})
 	b.Run("decode/uint256", func(b *testing.B) {
-		var value Decimal[AmountUint256[Fraction18], uint256.Int]
+		var value FixedDecimal[AmountInUint256Units[DecimalPlaces18], uint256.Int]
 		b.ReportAllocs()
 		for b.Loop() {
 			_ = value.UnmarshalCBOR(wideWire)
@@ -59,8 +59,8 @@ func BenchmarkCBOR(b *testing.B) {
 }
 
 func BenchmarkCBORToArrayIntegration(b *testing.B) {
-	price := testCodec[PriceUint64[Fraction5]]().FromUnits(12_331_232)
-	amount := testCodec[AmountUint256[Fraction18]]().FromUnits(uint256.Int{0, 1})
+	price := testFixedDecimalCodec[PriceInUint64Units[DecimalPlaces5]]().FromUnits(12_331_232)
+	amount := testFixedDecimalCodec[AmountInUint256Units[DecimalPlaces18]]().FromUnits(uint256.Int{0, 1})
 	value := cborQuote{Price: price, Amount: amount}
 	wire, err := cbor.Marshal(value)
 	if err != nil {
@@ -85,7 +85,7 @@ func BenchmarkCBORToArrayIntegration(b *testing.B) {
 }
 
 func BenchmarkCBORDispatchLayers(b *testing.B) {
-	nativeCodec := testCodec[PriceUint64[Fraction5]]()
+	nativeCodec := testFixedDecimalCodec[PriceInUint64Units[DecimalPlaces5]]()
 	native := nativeCodec.FromUnits(^uint64(0))
 	nativeWire := native.AppendCBOR(make([]byte, 0, MaxCBORSize))
 	buffer := make([]byte, 0, MaxCBORSize)
@@ -136,7 +136,7 @@ func BenchmarkCBORDispatchLayers(b *testing.B) {
 		}
 	})
 	b.Run("decode/decimal_uint64", func(b *testing.B) {
-		var value Decimal[PriceUint64[Fraction5], uint64]
+		var value FixedDecimal[PriceInUint64Units[DecimalPlaces5], uint64]
 		b.ReportAllocs()
 		for b.Loop() {
 			_ = value.UnmarshalCBOR(nativeWire)
@@ -146,8 +146,8 @@ func BenchmarkCBORDispatchLayers(b *testing.B) {
 }
 
 func BenchmarkCBORUint256Widths(b *testing.B) {
-	codec := testCodec[AmountUint256[Fraction18]]()
-	runtimeCodec := testUint256Codec(18)
+	codec := testFixedDecimalCodec[AmountInUint256Units[DecimalPlaces18]]()
+	runtimeCodec := testUint256FixedDecimalCodec(18)
 	buffer := make([]byte, 0, MaxCBORSize)
 	values := []struct {
 		name  string
@@ -168,7 +168,7 @@ func BenchmarkCBORUint256Widths(b *testing.B) {
 			}
 		})
 		b.Run("decode/"+tt.name, func(b *testing.B) {
-			var decoded Decimal[AmountUint256[Fraction18], uint256.Int]
+			var decoded FixedDecimal[AmountInUint256Units[DecimalPlaces18], uint256.Int]
 			b.ReportAllocs()
 			for b.Loop() {
 				_ = decoded.UnmarshalCBOR(wire)

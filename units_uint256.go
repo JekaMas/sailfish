@@ -14,7 +14,7 @@ const (
 	maxUint256Chunks       = 5
 )
 
-// Uint256Units is a zero-sized unit provider. Embed it in a venue type.
+// Uint256Units is a zero-sized unit provider. Embed it in a format type.
 type Uint256Units struct{}
 
 func (Uint256Units) unitParseString(s string, scale int) (uint256.Int, bool, Error) {

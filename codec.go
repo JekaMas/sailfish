@@ -1,49 +1,56 @@
 package sailfish
 
-// Codec validates a venue once and carries its scale through repeated
-// parse/format operations. It is the preferred hot-loop API. Its zero value is
-// usable and derives scale from the compile-time venue; NewCodec validates and
-// caches that scale for the hot path.
+// FixedDecimalCodec validates a fixed-decimal format once and carries its
+// fractional decimal places through repeated parse and format operations. It
+// is the preferred hot-loop API. Its zero value derives the decimal places
+// from the compile-time format; NewFixedDecimalCodec validates and caches them.
 //
-// The one-byte scalePlusOne encoding reserves zero for zero-value derivation.
-type Codec[V Venue[U], U Unit] struct {
-	scalePlusOne uint8
+// The one-byte decimalPlacesPlusOne encoding reserves zero for zero-value
+// derivation.
+type FixedDecimalCodec[V FixedDecimalFormat[U], U Unit] struct {
+	decimalPlacesPlusOne uint8
 }
 
-func NewCodec[V Venue[U], U Unit]() (Codec[V, U], error) {
-	scale, err := checkedScale[V, U]()
+// NewFixedDecimalCodec validates the format's fractional decimal places and
+// caches them for repeated operations.
+func NewFixedDecimalCodec[V FixedDecimalFormat[U], U Unit]() (FixedDecimalCodec[V, U], error) {
+	decimalPlaces, err := checkedFractionalDecimalPlaces[V, U]()
 	if err != "" {
-		return Codec[V, U]{}, boxedError(err)
+		return FixedDecimalCodec[V, U]{}, boxedError(err)
 	}
-	return Codec[V, U]{scalePlusOne: uint8(scale + 1)}, nil
+	return FixedDecimalCodec[V, U]{decimalPlacesPlusOne: uint8(decimalPlaces + 1)}, nil
 }
 
-func (c Codec[V, U]) scale() int {
-	if c.scalePlusOne == 0 {
-		scale, _ := checkedScale[V, U]()
-		return scale
+func (c FixedDecimalCodec[V, U]) fractionalDecimalPlaces() int {
+	if c.decimalPlacesPlusOne == 0 {
+		decimalPlaces, _ := checkedFractionalDecimalPlaces[V, U]()
+		return decimalPlaces
 	}
-	return int(c.scalePlusOne - 1)
+	return int(c.decimalPlacesPlusOne - 1)
 }
 
-func (c Codec[V, U]) Scale() Notion { return Notion(c.scale()) }
+// FractionalDecimalPlaces returns the exact number of digits represented
+// after the decimal point.
+func (c FixedDecimalCodec[V, U]) FractionalDecimalPlaces() DecimalPlaces {
+	return DecimalPlaces(c.fractionalDecimalPlaces())
+}
 
 // MaxIntegerDigits reports how many decimal digits can occur before the point
-// in this backend's maximum value at the configured scale. It describes
-// capacity independently from fractional scale; it does not imply that every
-// value with that many digits fits the binary backend.
-func (c Codec[V, U]) MaxIntegerDigits() int {
-	return unitDecimalDigits[U]() - c.scale()
+// in this backend's maximum value for the configured fractional decimal
+// places. It describes capacity independently from fractional precision; it
+// does not imply every value with that many digits fits the binary backend.
+func (c FixedDecimalCodec[V, U]) MaxIntegerDigits() int {
+	return unitDecimalDigits[U]() - c.fractionalDecimalPlaces()
 }
 
-// Parse retains s only when it is already canonical fixed-scale text.
-func (c Codec[V, U]) Parse(s string) (Decimal[V, U], error) {
-	var venue V
-	units, canonical, err := venue.unitParseString(s, c.scale())
+// Parse retains s only when it is already canonical fixed-decimal text.
+func (c FixedDecimalCodec[V, U]) Parse(s string) (FixedDecimal[V, U], error) {
+	var format V
+	units, canonical, err := format.unitParseString(s, c.fractionalDecimalPlaces())
 	if err != "" {
-		return Decimal[V, U]{}, boxedError(err)
+		return FixedDecimal[V, U]{}, boxedError(err)
 	}
-	d := Decimal[V, U]{units: units}
+	d := FixedDecimal[V, U]{units: units}
 	if canonical {
 		d.representation = s
 	}
@@ -51,92 +58,92 @@ func (c Codec[V, U]) Parse(s string) (Decimal[V, U], error) {
 }
 
 // ParseCompact never retains s.
-func (c Codec[V, U]) ParseCompact(s string) (Decimal[V, U], error) {
-	var venue V
-	units, _, err := venue.unitParseString(s, c.scale())
+func (c FixedDecimalCodec[V, U]) ParseCompact(s string) (FixedDecimal[V, U], error) {
+	var format V
+	units, _, err := format.unitParseString(s, c.fractionalDecimalPlaces())
 	if err != "" {
-		return Decimal[V, U]{}, boxedError(err)
+		return FixedDecimal[V, U]{}, boxedError(err)
 	}
-	return Decimal[V, U]{units: units}, nil
+	return FixedDecimal[V, U]{units: units}, nil
 }
 
 // ParseBytes parses b directly and never retains it.
-func (c Codec[V, U]) ParseBytes(b []byte) (Decimal[V, U], error) {
-	var venue V
-	units, _, err := venue.unitParseBytes(b, c.scale())
+func (c FixedDecimalCodec[V, U]) ParseBytes(b []byte) (FixedDecimal[V, U], error) {
+	var format V
+	units, _, err := format.unitParseBytes(b, c.fractionalDecimalPlaces())
 	if err != "" {
-		return Decimal[V, U]{}, boxedError(err)
+		return FixedDecimal[V, U]{}, boxedError(err)
 	}
-	return Decimal[V, U]{units: units}, nil
+	return FixedDecimal[V, U]{units: units}, nil
 }
 
-// ParseUnits parses strict fixed-scale text directly into the selected unit
+// ParseUnits parses strict fixed-decimal text directly into the selected unit
 // backend. Use it when a numeric batch stores raw units for the smallest cache
-// footprint and does not need Decimal's optional retained representation.
+// footprint and does not need FixedDecimal's optional retained representation.
 // Successful and rejected parses allocate no memory.
-func (c Codec[V, U]) ParseUnits(s string) (U, Error) {
-	var venue V
-	units, _, err := venue.unitParseString(s, c.scale())
+func (c FixedDecimalCodec[V, U]) ParseUnits(s string) (U, Error) {
+	var format V
+	units, _, err := format.unitParseString(s, c.fractionalDecimalPlaces())
 	return units, err
 }
 
 // ParseUnitsBytes is ParseUnits for byte input. It neither converts nor
 // retains b.
-func (c Codec[V, U]) ParseUnitsBytes(b []byte) (U, Error) {
-	var venue V
-	units, _, err := venue.unitParseBytes(b, c.scale())
+func (c FixedDecimalCodec[V, U]) ParseUnitsBytes(b []byte) (U, Error) {
+	var format V
+	units, _, err := format.unitParseBytes(b, c.fractionalDecimalPlaces())
 	return units, err
 }
 
-func (c Codec[V, U]) FromUnits(units U) Decimal[V, U] {
-	_ = c.scale()
-	return Decimal[V, U]{units: units}
+func (c FixedDecimalCodec[V, U]) FromUnits(units U) FixedDecimal[V, U] {
+	_ = c.fractionalDecimalPlaces()
+	return FixedDecimal[V, U]{units: units}
 }
 
-// UnitsLen returns the exact canonical text length of raw scaled units.
-func (c Codec[V, U]) UnitsLen(units U) int {
-	var venue V
-	return venue.unitLen(units, c.scale())
+// UnitsLen returns the exact canonical text length of raw integer units.
+func (c FixedDecimalCodec[V, U]) UnitsLen(units U) int {
+	var format V
+	return format.unitLen(units, c.fractionalDecimalPlaces())
 }
 
-// AppendUnits appends canonical fixed-scale text directly from raw scaled
+// AppendUnits appends canonical fixed-decimal text directly from raw integer
 // units. It allocates only when dst has insufficient capacity.
-func (c Codec[V, U]) AppendUnits(dst []byte, units U) []byte {
-	var venue V
-	return venue.unitAppend(dst, units, c.scale())
+func (c FixedDecimalCodec[V, U]) AppendUnits(dst []byte, units U) []byte {
+	var format V
+	return format.unitAppend(dst, units, c.fractionalDecimalPlaces())
 }
 
-func (c Codec[V, U]) Len(d Decimal[V, U]) int {
+func (c FixedDecimalCodec[V, U]) Len(d FixedDecimal[V, U]) int {
 	if d.representation != "" {
 		return len(d.representation)
 	}
-	var venue V
-	return venue.unitLen(d.units, c.scale())
+	var format V
+	return format.unitLen(d.units, c.fractionalDecimalPlaces())
 }
 
-func (c Codec[V, U]) AppendTo(dst []byte, d Decimal[V, U]) []byte {
+func (c FixedDecimalCodec[V, U]) AppendTo(dst []byte, d FixedDecimal[V, U]) []byte {
 	if d.representation != "" {
 		return append(dst, d.representation...)
 	}
-	var venue V
-	return venue.unitAppend(dst, d.units, c.scale())
+	var format V
+	return format.unitAppend(dst, d.units, c.fractionalDecimalPlaces())
 }
 
-func (c Codec[V, U]) AppendJSON(dst []byte, d Decimal[V, U]) []byte {
+func (c FixedDecimalCodec[V, U]) AppendJSON(dst []byte, d FixedDecimal[V, U]) []byte {
 	dst = append(dst, '"')
 	dst = c.AppendTo(dst, d)
 	return append(dst, '"')
 }
 
-func (c Codec[V, U]) String(d Decimal[V, U]) string {
+func (c FixedDecimalCodec[V, U]) String(d FixedDecimal[V, U]) string {
 	if d.representation != "" {
 		return d.representation
 	}
-	var venue V
-	return venue.unitString(d.units, c.scale())
+	var format V
+	return format.unitString(d.units, c.fractionalDecimalPlaces())
 }
 
-func (c Codec[V, U]) Canonical(d Decimal[V, U]) Decimal[V, U] {
+func (c FixedDecimalCodec[V, U]) Canonical(d FixedDecimal[V, U]) FixedDecimal[V, U] {
 	if d.representation == "" {
 		d.representation = c.String(d)
 	}

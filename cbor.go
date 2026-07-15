@@ -8,7 +8,7 @@ import (
 	"github.com/holiman/uint256"
 )
 
-// MaxCBORSize is the maximum preferred CBOR encoding size of one Decimal.
+// MaxCBORSize is the maximum preferred CBOR encoding size of one FixedDecimal.
 // It is tag 2, a one-byte length argument, and a 32-byte uint256 magnitude.
 const MaxCBORSize = 35
 
@@ -21,44 +21,44 @@ const (
 	cborByteStringOneByteLength  = 0x58
 )
 
-// CBORLen returns the exact size of the preferred CBOR encoding. Decimal is
+// CBORLen returns the exact size of the preferred CBOR encoding. FixedDecimal is
 // encoded as its scaled unsigned integer. Scale and retained source text are
 // type/cache metadata and are intentionally absent from the wire format.
-func (d Decimal[V, U]) CBORLen() int {
-	var venue V
-	return venue.unitCBORLen(d.units)
+func (d FixedDecimal[V, U]) CBORLen() int {
+	var format V
+	return format.unitCBORLen(d.units)
 }
 
 // AppendCBOR appends the preferred deterministic CBOR encoding. It allocates
-// only when dst has insufficient capacity. When Decimal is a field in a
+// only when dst has insufficient capacity. When FixedDecimal is a field in a
 // cbor:",toarray" struct, the result is a scalar array element rather than a
 // redundant nested one-element array.
-func (d Decimal[V, U]) AppendCBOR(dst []byte) []byte {
-	var venue V
-	return venue.unitAppendCBOR(dst, d.units)
+func (d FixedDecimal[V, U]) AppendCBOR(dst []byte) []byte {
+	var format V
+	return format.unitAppendCBOR(dst, d.units)
 }
 
 // MarshalCBOR implements the fxamacker/cbor Marshaler contract. The returned
 // owned slice necessarily allocates once; use AppendCBOR on hot paths.
-func (d Decimal[V, U]) MarshalCBOR() ([]byte, error) {
-	if _, err := checkedScale[V, U](); err != "" {
+func (d FixedDecimal[V, U]) MarshalCBOR() ([]byte, error) {
+	if _, err := checkedFractionalDecimalPlaces[V, U](); err != "" {
 		return nil, boxedError(err)
 	}
-	var venue V
-	out := make([]byte, 0, venue.unitCBORLen(d.units))
-	return venue.unitAppendCBOR(out, d.units), nil
+	var format V
+	out := make([]byte, 0, format.unitCBORLen(d.units))
+	return format.unitAppendCBOR(out, d.units), nil
 }
 
 // UnmarshalCBOR implements the fxamacker/cbor Unmarshaler contract. It accepts
 // only RFC 8949 preferred deterministic unsigned encodings and leaves d
 // unchanged on failure. Successful decode clears retained text because CBOR
 // carries numeric units only.
-func (d *Decimal[V, U]) UnmarshalCBOR(raw []byte) error {
-	if _, err := checkedScale[V, U](); err != "" {
+func (d *FixedDecimal[V, U]) UnmarshalCBOR(raw []byte) error {
+	if _, err := checkedFractionalDecimalPlaces[V, U](); err != "" {
 		return boxedError(err)
 	}
-	var venue V
-	units, err := venue.unitParseCBOR(raw)
+	var format V
+	units, err := format.unitParseCBOR(raw)
 	if err != "" {
 		return boxedError(err)
 	}
@@ -68,42 +68,42 @@ func (d *Decimal[V, U]) UnmarshalCBOR(raw []byte) error {
 }
 
 // CBORLen returns the exact preferred CBOR size after validating the codec.
-func (c Codec[V, U]) CBORLen(d Decimal[V, U]) int {
-	_ = c.scale()
-	var venue V
-	return venue.unitCBORLen(d.units)
+func (c FixedDecimalCodec[V, U]) CBORLen(d FixedDecimal[V, U]) int {
+	_ = c.fractionalDecimalPlaces()
+	var format V
+	return format.unitCBORLen(d.units)
 }
 
 // AppendCBOR appends preferred deterministic CBOR after validating the codec.
-func (c Codec[V, U]) AppendCBOR(dst []byte, d Decimal[V, U]) []byte {
-	_ = c.scale()
-	var venue V
-	return venue.unitAppendCBOR(dst, d.units)
+func (c FixedDecimalCodec[V, U]) AppendCBOR(dst []byte, d FixedDecimal[V, U]) []byte {
+	_ = c.fractionalDecimalPlaces()
+	var format V
+	return format.unitAppendCBOR(dst, d.units)
 }
 
 // ParseCBOR decodes preferred deterministic CBOR without retaining raw input.
-func (c Codec[V, U]) ParseCBOR(raw []byte) (Decimal[V, U], error) {
-	_ = c.scale()
-	var venue V
-	units, err := venue.unitParseCBOR(raw)
+func (c FixedDecimalCodec[V, U]) ParseCBOR(raw []byte) (FixedDecimal[V, U], error) {
+	_ = c.fractionalDecimalPlaces()
+	var format V
+	units, err := format.unitParseCBOR(raw)
 	if err != "" {
-		return Decimal[V, U]{}, boxedError(err)
+		return FixedDecimal[V, U]{}, boxedError(err)
 	}
-	return Decimal[V, U]{units: units}, nil
+	return FixedDecimal[V, U]{units: units}, nil
 }
 
 // ParseCBORFirst decodes one preferred deterministic CBOR decimal from the
 // start of raw and returns the unconsumed suffix. It is the typed hot-path
 // decoder for decimal fields inside manually encoded positional arrays.
 // ParseCBOR remains the strict whole-item API.
-func (c Codec[V, U]) ParseCBORFirst(raw []byte) (Decimal[V, U], []byte, error) {
-	_ = c.scale()
-	var venue V
-	units, consumed, err := venue.unitParseCBORFirst(raw)
+func (c FixedDecimalCodec[V, U]) ParseCBORFirst(raw []byte) (FixedDecimal[V, U], []byte, error) {
+	_ = c.fractionalDecimalPlaces()
+	var format V
+	units, consumed, err := format.unitParseCBORFirst(raw)
 	if err != "" {
-		return Decimal[V, U]{}, nil, boxedError(err)
+		return FixedDecimal[V, U]{}, nil, boxedError(err)
 	}
-	return Decimal[V, U]{units: units}, raw[consumed:], nil
+	return FixedDecimal[V, U]{units: units}, raw[consumed:], nil
 }
 
 func (Uint8Units) unitCBORLen(units uint8) int {

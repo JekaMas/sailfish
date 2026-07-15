@@ -123,8 +123,8 @@ func TestUint256AddSubMatchesBigInt(t *testing.T) {
 	for range 20_000 {
 		a := uint256.Int{rng.Uint64(), rng.Uint64(), rng.Uint64(), rng.Uint64()}
 		b := uint256.Int{rng.Uint64(), rng.Uint64(), rng.Uint64(), rng.Uint64()}
-		left := testCodec[uint256Scale0]().FromUnits(a)
-		right := testCodec[uint256Scale0]().FromUnits(b)
+		left := testFixedDecimalCodec[uint256DecimalPlaces0]().FromUnits(a)
+		right := testFixedDecimalCodec[uint256DecimalPlaces0]().FromUnits(b)
 
 		gotSum, overflow := left.AddOverflow(right)
 		wantSumBig := new(big.Int).Add(uint256ToBig(a), uint256ToBig(b))
