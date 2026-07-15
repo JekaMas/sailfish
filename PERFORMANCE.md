@@ -175,10 +175,90 @@ Final artifacts:
 - `.codex_tmp/cpu_algorithm_round/final_mem_top.txt`
 - `.codex_tmp/cpu_algorithm_round/final_escape_bce.txt`
 
-No unsafe code, assembly, architecture dispatch, compatibility path, legacy
-implementation, normalization fallback, or alternate runtime algorithm was
-added. `main` contains one selected implementation for each length/width
-specialization.
+That round added no unsafe code, assembly, architecture dispatch,
+compatibility path, legacy implementation, normalization fallback, or
+alternate runtime algorithm. The later short-token round below replaced the
+portable byte-shift load on amd64/arm64 after measuring the native load.
+
+## 2026-07-15: Shape-Specialized SWAR And Reciprocal Formatting
+
+**Decision:** keep one hybrid scalar implementation selected by token shape:
+
+1. pairwise accumulation for short and irregular native inputs;
+2. one or two explicit SWAR8 blocks for dense wide chunks;
+3. a known-point SWAR compaction for exactly 8 or 16 fixed-scale digits;
+4. reciprocal 2-by-1 division for the fixed `1e19` wide-format chunk base.
+
+On amd64 and arm64, SWAR words are loaded with one read-only unaligned native
+load. Other architectures compile the endian-independent byte-shift loader.
+The unsafe pointer is internal, never retained, never used for a write, and is
+only reached after callers prove an eight-byte range. Cross-builds, race, and
+`checkptr=2` are release gates for this architecture split.
+
+The ten-run `GOMAXPROCS=1` comparison against `fc2777a` measured:
+
+| Workload | Before | After | Change | Allocations |
+|---|---:|---:|---:|---:|
+| Dense `uint256`, 19 digits, string / bytes | 11.4 / 11.5 ns | 9.5 / 9.3 ns | -16.6% / -18.9% | 0 -> 0 |
+| Dense `uint256`, 38 digits, string / bytes | 21.8 / 22.0 ns | 19.1 / 18.3 ns | -12.6% / -17.0% | 0 -> 0 |
+| Dense `uint256`, maximum 78 digits, string / bytes | 47.9 / 48.4 ns | 43.6 / 43.3 ns | -9.0% / -10.6% | 0 -> 0 |
+| Wide format, two limbs | 48.3 ns | 43.8 ns | -9.3% | 0 -> 0 |
+| Wide format, three limbs | 81.9 ns | 70.1 ns | -14.4% | 0 -> 0 |
+| Wide format, four limbs, scale 18 | 136 ns | 108 ns | -21.2% | 0 -> 0 |
+| Wide format, maximum value | 171 ns | 129 ns | -24.4% | 0 -> 0 |
+
+The fixed-point shape matrix measured 4.82/4.66 ns for an 8-digit
+string/byte value, 7.20/7.15 ns for 16 digits at scale 5, and 6.47/6.22 ns for
+16 digits at scale 9. The public cached-codec parse of `123.31232` improved
+from about 10.1 ns to 7.76 ns. Longer canonical forms outside those shapes
+changed between -2.7% and +2.7%; the accepted dispatch is therefore a
+short-token latency choice, not a claim that every length improves. The cold
+invalid-token benchmark moved from 10.6 ns to 11.6 ns because exact-shape
+inputs now reach full-word validation before returning `ErrSyntax`.
+
+### Algorithm choices
+
+- **Two independent SWAR8 blocks:** explicit blocks remove the loop branch and
+  expose instruction-level parallelism. The direct dense kernels improved
+  about 13-16% before integration.
+- **Native read:** one little-endian unaligned load beat eight shifts on the
+  measured arm64 host. Build tags restrict it to amd64/arm64; the portable
+  implementation remains the implementation for all other architectures.
+- **Known decimal point:** the scale proves the point position. Compacting it
+  with shifts and reducing the resulting word validates each digit once.
+- **Invariant `1e19` division:** reciprocal `0xd83c94fb6d2ac34a` implements
+  Algorithm 4 from "Improved division by invariant integers" with at most two
+  corrections. A 50,000-value property test compares it with `math/big`, and
+  direct boundary tests compare each 2-by-1 reduction with `bits.Div64`.
+
+### Measured rejections
+
+- Base-`1e8` native formatting regressed all measured widths by roughly 3-16%;
+  the digit-pair writer remains the only native formatter.
+- Merely specializing the divisor argument to `1e19` improved isolated calls
+  slightly but did not improve complete formatting. The actual reciprocal
+  algorithm above was retained because it improved the complete path.
+- Generated scale-5 masks reached 2.46 ns for one direct eight-digit kernel,
+  but require duplicated code by scale and token length. A shared dispatch was
+  slower and the retained runtime-shift implementation covers every scale in
+  one audited path.
+- A shared constant-mask switch improved selected shapes modestly but remained
+  slower than the retained runtime-point compaction after public dispatch.
+- SSSE3/AVX2 cannot be measured on the arm64 release host. NEON, padded-input,
+  and batch assembly need a real exchange-decoder workload that amortizes the
+  call and feature-dispatch cost. No unmeasured assembly or new padded/batch API
+  was added.
+- Splitting numeric and cached decimal types changes the package's ownership
+  and memory API; it is not a parser optimization and was not attempted here.
+
+Artifacts:
+
+- `.codex_tmp/algorithm_round_2/baseline.txt`
+- `.codex_tmp/algorithm_round_2/final.txt`
+- `.codex_tmp/algorithm_round_2/final_vs_baseline.txt`
+- `.codex_tmp/algorithm_round_2/canonical_final_stable.txt`
+- `.codex_tmp/algorithm_round_2/reciprocal_candidate_short.txt`
+- `.codex_tmp/algorithm_round_2/public_final.txt`
 
 ## 2026-07-15: v1 Runtime Codec Reaches Its Measured Ceilings
 

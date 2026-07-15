@@ -33,17 +33,27 @@ func parseUint64Chunk[S decimalInput](s S, begin, end int) (uint64, Error) {
 // parsing calls it only for dense chunks, keeping SWAR dispatch out of the
 // latency-sensitive short native path.
 func parseUint64DenseChunk[S decimalInput](s S, begin, end int) (uint64, Error) {
-	if s[begin]-'0' > 9 {
-		return 0, ErrSyntax
+	remaining := end - begin
+	if remaining < 8 {
+		return parseUint64Chunk(s, begin, end)
 	}
 
-	var value uint64
-	for end-begin >= 8 {
-		chunk, ok := parseEightDigits(loadEightBytes(s, begin))
-		if !ok {
+	// Reduce the first eight digits and, for 16-19 digit chunks, a second
+	// independent block. Keeping these blocks explicit removes the loop branch
+	// from the common 8/16/19-digit paths and lets the CPU overlap both SWAR
+	// reductions before the single base-1e8 combination.
+	first, ok := parseEightDigits(loadEightBytes(s, begin))
+	if !ok {
+		return 0, ErrSyntax
+	}
+	value := uint64(first)
+	begin += 8
+	if remaining >= 16 {
+		second, valid := parseEightDigits(loadEightBytes(s, begin))
+		if !valid {
 			return 0, ErrSyntax
 		}
-		value = value*100_000_000 + uint64(chunk)
+		value = value*100_000_000 + uint64(second)
 		begin += 8
 	}
 	if (end-begin)&1 != 0 {
@@ -65,17 +75,10 @@ func parseUint64DenseChunk[S decimalInput](s S, begin, end int) (uint64, Error) 
 	return value, ""
 }
 
-func loadEightBytes[S decimalInput](s S, i int) uint64 {
-	return uint64(s[i]) |
-		uint64(s[i+1])<<8 |
-		uint64(s[i+2])<<16 |
-		uint64(s[i+3])<<24 |
-		uint64(s[i+4])<<32 |
-		uint64(s[i+5])<<40 |
-		uint64(s[i+6])<<48 |
-		uint64(s[i+7])<<56
-}
-
+// parseEightDigits validates and reduces eight ASCII digits in one SWAR word.
+// Three mask/multiply stages form pairs, four-digit groups, and the final
+// uint32. This is the lowest-latency measured kernel for one short token on the
+// supported arm64 host; it also avoids an assembly call and CPU-feature branch.
 func parseEightDigits(raw uint64) (uint32, bool) {
 	if ((raw+ascii46x8)|(raw-asciiZero8))&asciiHigh8 != 0 {
 		return 0, false

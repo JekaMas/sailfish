@@ -60,20 +60,20 @@ GOMAXPROCS=1 GOWORK=off go test -run '^$' \
 
 | Benchmark | Typical result | B/op | allocs/op |
 |---|---:|---:|---:|
-| `CodecParse/uint64/canonical` | 9.79 ns/op | 0 | 0 |
-| `CodecParse/uint64/compact` | 9.55 ns/op | 0 | 0 |
-| `CodecParse/uint64/bytes` | 9.77 ns/op | 0 | 0 |
-| `CodecParse/uint64/invalid` | 10.6 ns/op | 0 | 0 |
-| `CodecParse/uint256/canonical` | 51.7 ns/op | 0 | 0 |
-| `CodecParse/uint256/max` | 80.3 ns/op | 0 | 0 |
+| `CodecParse/uint64/canonical` | 7.76 ns/op | 0 | 0 |
+| `CodecParse/uint64/compact` | 7.58 ns/op | 0 | 0 |
+| `CodecParse/uint64/bytes` | 7.53 ns/op | 0 | 0 |
+| `CodecParse/uint64/invalid` | 11.6 ns/op | 0 | 0 |
+| `CodecParse/uint256/canonical` | 49.4 ns/op | 0 | 0 |
+| `CodecParse/uint256/max` | 64.8 ns/op | 0 | 0 |
 | `Uint256MarketHotPaths/parse_runtime_codec/cex_scale6_one_limb` | 8.59 ns/op | 0 | 0 |
 | `Uint256MarketHotPaths/parse_into_runtime_codec/cex_scale6_one_limb` | 9.28 ns/op | 0 | 0 |
 | `Uint256MarketHotPaths/append_retained/cex_scale6_one_limb` | 3.52 ns/op | 0 | 0 |
 | `Uint256MarketHotPaths/append_retained/scale18_four_limb` | 4.22 ns/op | 0 | 0 |
 | `Uint256MarketHotPaths/append_runtime_codec/cex_scale6_one_limb` | 12.1 ns/op | 0 | 0 |
-| `AppendTo/uint64/retained` | 2.73 ns/op | 0 | 0 |
-| `AppendTo/uint64/formatted` | 13.7 ns/op | 0 | 0 |
-| `AppendTo/uint256/formatted` | 152 ns/op | 0 | 0 |
+| `AppendTo/uint64/retained` | 2.95 ns/op | 0 | 0 |
+| `AppendTo/uint64/formatted` | 12.9 ns/op | 0 | 0 |
+| `AppendTo/uint256/formatted` | 113 ns/op | 0 | 0 |
 | `String/uint64/retained` | 2.14 ns/op | 0 | 0 |
 | `String/uint64/formatted` | 32.8 ns/op | 16 | 1 |
 | `Compare/uint64/same-scale` | 2.14 ns/op | 0 | 0 |
@@ -115,12 +115,12 @@ result allocation. Parse-first canonical decode improved the native path from
 standards path and changed from 109 ns to 120 ns; its two allocations remain
 owned by JSON unescaping.
 
-CPU profiles attribute formatted wide output to `bits.Div64` and
-`splitUint256Decimal`; canonical decode is decimal parsing and scale
-validation. Allocation and escape profiles attribute the direct marshal's
-single allocation to its returned slice. Canonical direct decode allocates
-nothing. The goccy integration rows include interface and library ownership
-in addition to Sailfish work.
+CPU profiles attribute formatted wide output to reciprocal `bits.Mul64`
+reductions and fixed-width chunk writing in `splitUint256Decimal`; canonical
+decode is decimal parsing and scale validation. Allocation and escape profiles
+attribute the direct marshal's single allocation to its returned slice.
+Canonical direct decode allocates nothing. The goccy integration rows include
+interface and library ownership in addition to Sailfish work.
 
 ## CBOR
 
@@ -359,17 +359,20 @@ Escape analysis identifies only these relevant classes:
 
 The wide-value profile is dominated by:
 
-- pairwise decimal chunk parsing (`parseUint64Chunk`);
+- pairwise and validated-SWAR decimal chunk parsing;
 - four-limb decimal multiplication/addition while parsing;
-- `bits.Div64` and fixed-width chunk formatting while appending uint256 values.
+- reciprocal `bits.Mul64` reductions and fixed-width chunk formatting while
+  appending uint256 values.
 
 The market-shape matrix separates ordinary CEX values from maximum-width
 values. Runtime-scale one-limb parsing uses `Uint256Codec` and stays below
-10 ns on the measured host. A raw four-limb append still performs decimal
-division and takes roughly 146-152 ns; retaining canonical input or calling
-`Canonical` once reduces repeated appends of that same value to about 4.4 ns.
+10 ns on the measured host. A raw four-limb append performs reciprocal decimal
+chunk reduction and takes roughly 108-113 ns; retaining canonical input or
+calling `Canonical` once reduces repeated appends of that same value to about
+4.4 ns.
 
-These are the expected arithmetic owners. The current pure-Go path has no heap
-traffic. Replacing it with `unsafe`, assembly, or architecture-specific code
-requires a concrete production target and repeatable evidence that one new
-implementation is faster across the supported workload.
+These are the expected arithmetic owners and have no heap traffic. One
+read-only unsafe load is selected at build time for amd64/arm64 SWAR words;
+other architectures use the portable load. Assembly and runtime feature
+dispatch still require a concrete production target and repeatable evidence
+that one new implementation wins across the supported workload.

@@ -1,7 +1,7 @@
 package sailfish
 
 type decimalInput interface {
-	~string | ~[]byte
+	string | []byte
 }
 
 // Decimal is an unsigned fixed-scale decimal stored as one scaled integer.

@@ -7,10 +7,11 @@ import (
 )
 
 const (
-	maxUint256Scale   = 77
-	maxUint256TextLen = 79
-	uint256ChunkBase  = uint64(10_000_000_000_000_000_000) // 1e19
-	maxUint256Chunks  = 5
+	maxUint256Scale        = 77
+	maxUint256TextLen      = 79
+	uint256ChunkBase       = uint64(10_000_000_000_000_000_000) // 1e19
+	uint256ChunkReciprocal = uint64(0xd83c94fb6d2ac34a)
+	maxUint256Chunks       = 5
 )
 
 // Uint256Units is a zero-sized unit provider. Embed it in a venue type.
@@ -346,12 +347,65 @@ func splitUint256Decimal(value uint256.Int) ([maxUint256Chunks]uint64, int, int)
 	count := 0
 	for value[0]|value[1]|value[2]|value[3] != 0 {
 		var remainder uint64
-		value, remainder = uint256DivMod64(value, uint256ChunkBase)
+		value, remainder = uint256DivMod1e19(value)
 		chunks[count] = remainder
 		count++
 	}
 	digits := (count-1)*19 + decimalDigits64(chunks[count-1])
 	return chunks, count, digits
+}
+
+// uint256DivMod1e19 divides a four-limb value by the fixed decimal chunk base.
+// uint256ChunkReciprocal is floor((2^128-1)/1e19)-2^64. It replaces each
+// hardware divide with a multiply-high, two additions, and at most two bounded
+// corrections, following "Improved division by invariant integers",
+// Algorithm 4. The first limb and every propagated remainder are below 1e19,
+// satisfying divMod1e19Reciprocal's high<divisor precondition.
+func uint256DivMod1e19(value uint256.Int) (uint256.Int, uint64) {
+	var quotient uint256.Int
+	var remainder uint64
+
+	// Skip known-zero high limbs. The quotient shrinks on every decimal-chunk
+	// iteration, so later rounds perform fewer reciprocal reductions.
+	switch {
+	case value[3] != 0:
+		quotient[3], remainder = divMod1e19Reciprocal(0, value[3])
+		quotient[2], remainder = divMod1e19Reciprocal(remainder, value[2])
+		quotient[1], remainder = divMod1e19Reciprocal(remainder, value[1])
+		quotient[0], remainder = divMod1e19Reciprocal(remainder, value[0])
+	case value[2] != 0:
+		quotient[2], remainder = divMod1e19Reciprocal(0, value[2])
+		quotient[1], remainder = divMod1e19Reciprocal(remainder, value[1])
+		quotient[0], remainder = divMod1e19Reciprocal(remainder, value[0])
+	case value[1] != 0:
+		quotient[1], remainder = divMod1e19Reciprocal(0, value[1])
+		quotient[0], remainder = divMod1e19Reciprocal(remainder, value[0])
+	default:
+		quotient[0] = value[0] / uint256ChunkBase
+		remainder = value[0] - quotient[0]*uint256ChunkBase
+	}
+	return quotient, remainder
+}
+
+// divMod1e19Reciprocal divides the 128-bit numerator high:low by 1e19. The
+// correction branches are bounded by the reciprocal construction; there is no
+// data-dependent retry loop.
+func divMod1e19Reciprocal(high, low uint64) (uint64, uint64) {
+	quotientHigh, quotientLow := bits.Mul64(uint256ChunkReciprocal, high)
+	quotientLow, carry := bits.Add64(quotientLow, low, 0)
+	quotientHigh, _ = bits.Add64(quotientHigh, high, carry)
+	quotientHigh++
+
+	remainder := low - quotientHigh*uint256ChunkBase
+	if remainder > quotientLow {
+		quotientHigh--
+		remainder += uint256ChunkBase
+	}
+	if remainder >= uint256ChunkBase {
+		quotientHigh++
+		remainder -= uint256ChunkBase
+	}
+	return quotientHigh, remainder
 }
 
 func uint256DivMod64(value uint256.Int, divisor uint64) (uint256.Int, uint64) {

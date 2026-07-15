@@ -2,6 +2,7 @@ package sailfish
 
 import (
 	"math/big"
+	"math/bits"
 	"math/rand"
 	"testing"
 
@@ -67,6 +68,49 @@ func TestUint256DivMod64MatchesBigInt(t *testing.T) {
 				"divmod(%#v, %d) = %#v/%d, want %#v/%d",
 				value, divisor, gotQuotient, gotRemainder, *want, wantRemainder.Uint64(),
 			)
+		}
+	}
+}
+
+func TestUint256DivMod1e19ReciprocalMatchesReference(t *testing.T) {
+	t.Parallel()
+
+	reciprocal, _ := bits.Div64(^uint256ChunkBase, ^uint64(0), uint256ChunkBase)
+	if reciprocal != uint256ChunkReciprocal {
+		t.Fatalf("reciprocal = %#x, want %#x", uint256ChunkReciprocal, reciprocal)
+	}
+
+	rng := rand.New(rand.NewSource(0x1e19))
+	for range 50_000 {
+		value := uint256.Int{rng.Uint64(), rng.Uint64(), rng.Uint64(), rng.Uint64()}
+		gotQuotient, gotRemainder := uint256DivMod1e19(value)
+		wantQuotient, wantRemainder := new(big.Int).QuoRem(
+			uint256ToBig(value),
+			new(big.Int).SetUint64(uint256ChunkBase),
+			new(big.Int),
+		)
+		want, overflow := uint256.FromBig(wantQuotient)
+		if overflow {
+			t.Fatal("quotient does not fit uint256")
+		}
+		if gotQuotient != *want || gotRemainder != wantRemainder.Uint64() {
+			t.Fatalf(
+				"divmod1e19(%#v) = %#v/%d, want %#v/%d",
+				value, gotQuotient, gotRemainder, *want, wantRemainder.Uint64(),
+			)
+		}
+	}
+
+	for _, high := range [...]uint64{0, 1, uint256ChunkBase - 1} {
+		for _, low := range [...]uint64{0, 1, ^uint64(0)} {
+			gotQuotient, gotRemainder := divMod1e19Reciprocal(high, low)
+			wantQuotient, wantRemainder := bits.Div64(high, low, uint256ChunkBase)
+			if gotQuotient != wantQuotient || gotRemainder != wantRemainder {
+				t.Fatalf(
+					"div2by1(%d, %d) = %d/%d, want %d/%d",
+					high, low, gotQuotient, gotRemainder, wantQuotient, wantRemainder,
+				)
+			}
 		}
 	}
 }

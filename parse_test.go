@@ -66,6 +66,50 @@ func TestParseUint64ChunkRejectsEveryInvalidPosition(t *testing.T) {
 	}
 }
 
+func TestParseUint64KnownDotSWAR(t *testing.T) {
+	t.Parallel()
+
+	const digits = "1234567890123456"
+	for _, count := range [...]int{8, 16} {
+		want, err := strconv.ParseUint(digits[:count], 10, 64)
+		if err != nil {
+			t.Fatal(err)
+		}
+		for dot := 1; dot < count; dot++ {
+			input := digits[:dot] + "." + digits[dot:count]
+			scale := count - dot
+			for _, raw := range []decimalTestInput{
+				{name: "string", parse: func() (uint64, Error) { value, _, parseErr := parseUint64(input, scale); return value, parseErr }},
+				{name: "bytes", parse: func() (uint64, Error) {
+					value, _, parseErr := parseUint64([]byte(input), scale)
+					return value, parseErr
+				}},
+			} {
+				got, parseErr := raw.parse()
+				if parseErr != "" || got != want {
+					t.Fatalf("%s digits=%d dot=%d = (%d, %v), want %d", raw.name, count, dot, got, parseErr, want)
+				}
+			}
+
+			for invalidAt := range len(input) {
+				if invalidAt == dot {
+					continue
+				}
+				invalid := []byte(input)
+				invalid[invalidAt] = 'x'
+				if _, _, parseErr := parseUint64(invalid, scale); parseErr != ErrSyntax {
+					t.Fatalf("digits=%d dot=%d invalid=%d error=%v", count, dot, invalidAt, parseErr)
+				}
+			}
+		}
+	}
+}
+
+type decimalTestInput struct {
+	name  string
+	parse func() (uint64, Error)
+}
+
 func TestErrorsAreTypedConstants(t *testing.T) {
 	t.Parallel()
 

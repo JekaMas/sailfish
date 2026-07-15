@@ -78,6 +78,9 @@ func BenchmarkOptimizationCanonicalParse(b *testing.B) {
 		input string
 		scale int
 	}{
+		{name: "digits_8_scale_5", input: "123.45678", scale: 5},
+		{name: "digits_16_scale_5", input: "12345678901.23456", scale: 5},
+		{name: "digits_16_scale_9", input: "1234567.890123456", scale: 9},
 		{name: "scale_2", input: "12345678901234567.89", scale: 2},
 		{name: "scale_5", input: "12345678901234.56789", scale: 5},
 		{name: "scale_9", input: "1234567890.123456789", scale: 9},

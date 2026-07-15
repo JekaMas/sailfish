@@ -543,12 +543,12 @@ portable guarantees; compare changes on the same host and toolchain.
 
 | Operation | Time | B/op | allocs/op |
 |---|---:|---:|---:|
-| Parse canonical `uint64` through `Codec` | 10.2 ns | 0 | 0 |
-| Parse canonical `uint256.Int` | 49.8 ns | 0 | 0 |
-| Parse maximum 78-digit `uint256.Int` | 69.7 ns | 0 | 0 |
-| Append retained `uint64` | 2.87 ns | 0 | 0 |
-| Append formatted `uint64` | 13.0 ns | 0 | 0 |
-| Append formatted four-limb `uint256.Int` | 141 ns | 0 | 0 |
+| Parse canonical `uint64` through `Codec` | 7.76 ns | 0 | 0 |
+| Parse canonical `uint256.Int` | 49.4 ns | 0 | 0 |
+| Parse maximum 78-digit `uint256.Int` | 64.8 ns | 0 | 0 |
+| Append retained `uint64` | 2.95 ns | 0 | 0 |
+| Append formatted `uint64` | 12.9 ns | 0 | 0 |
+| Append formatted four-limb `uint256.Int` | 113 ns | 0 | 0 |
 | Return retained `String` | 2.11 ns | 0 | 0 |
 | Return newly formatted `String` | 27.1 ns | 16 | 1 |
 
@@ -556,12 +556,12 @@ portable guarantees; compare changes on the same host and toolchain.
 
 | Dense parse kernel | 19 digits | 38 digits | 57 digits | 77 digits |
 |---|---:|---:|---:|---:|
-| `string` input | 11.3 ns | 22.0 ns | 32.2 ns | 47.6 ns |
-| `[]byte` input | 11.4 ns | 21.9 ns | 32.5 ns | 47.9 ns |
+| `string` input | 9.53 ns | 19.1 ns | 28.6 ns | 43.5 ns |
+| `[]byte` input | 9.30 ns | 18.3 ns | 28.0 ns | 42.8 ns |
 
 | Formatted width | One limb | Two limbs | Three limbs | Four limbs | Maximum |
 |---|---:|---:|---:|---:|---:|
-| Wide formatting kernel | 17.9 ns | 47.6 ns | 81.6 ns | 135 ns | 167 ns |
+| Wide formatting kernel | 17.9 ns | 43.8 ns | 70.1 ns | 108 ns | 129 ns |
 
 Every width-scaling parse and append row above is `0 B/op`, `0 allocs/op`.
 
@@ -603,20 +603,21 @@ For values parsed from canonical venue text, retain the representation with
 Use raw-unit formatting for constructed or mutated values, and call
 `Canonical` once when the same formatted value will be emitted repeatedly.
 
-No `unsafe` or assembly is used in production code. Profiles show the pure-Go
-implementation is already allocation-free on hot paths; adding
-architecture-specific code at this point would add maintenance and audit risk
-without a demonstrated target.
+The amd64/arm64 SWAR loader uses one narrowly scoped read-only `unsafe` load;
+other architectures use the byte-shift loader. The pointer is never retained
+or used for mutation, and release validation includes cross-builds, race, and
+`checkptr=2`. No assembly or runtime CPU-feature dispatch is used: measured
+short-token latency does not justify their call and maintenance cost.
 
 ## Algorithms and measured choices
 
 | Area | Current algorithm | Reason |
 |---|---|---|
 | Numeric model | One unsigned scaled integer | Exact comparison/arithmetic with no floating-point state |
-| Native parsing | Strict pairwise decimal accumulation | Best mixed short and common scale-5 workload |
-| Wide parsing | Eight-digit SWAR validation/conversion in dense chunks | Reduced 19-77 digit parse time by roughly 17-25% |
+| Native parsing | Pairwise accumulation plus known-point SWAR for exact 8/16-digit shapes | Keeps irregular inputs simple while bringing the common `123.31232` parse to 7.76 ns |
+| Wide parsing | One or two independent eight-digit SWAR blocks plus a scalar tail | Reduced 19-78 digit parse time by roughly 9-19% in the latest round |
 | Native formatting | Pairwise digits plus direct integer/fraction placement | Avoids a temporary decimal-point prefix copy |
-| Wide formatting | Four-limb division into base-`1e19` chunks | Fewer `bits.Div64` calls than measured `1e9` chunks |
+| Wide formatting | Base-`1e19` chunks using precomputed-reciprocal 2-by-1 division | Avoids serial hardware division and reduced two-to-four-limb formatting by roughly 9-24% |
 | Repeated output | Retain immutable canonical input or call `Canonical` once | Repeated append becomes a short string copy |
 | CBOR | Preferred unsigned integer; tag 2 only above `uint64` | Small deterministic wire with strict decoding |
 | Hot aggregate CBOR | Caller-buffer scalar append and positional prefix decode | Avoids reflection and owned per-field slices |
@@ -625,8 +626,9 @@ without a demonstrated target.
 
 Measured alternatives are not retained in production: base-`1e9` wide
 formatting was 14-56% slower, direct decimal placement across wide chunks was
-2-5% slower, a general SWAR canonical parser regressed short/scale-5 values,
-and a `0-99` cache penalized representative misses. See
+2-5% slower, base-`1e8` native formatting regressed every measured width,
+generated per-scale masks duplicated code for a narrower kernel, and a `0-99`
+cache penalized representative misses. See
 [PERFORMANCE.md](PERFORMANCE.md) for the benchmark artifacts and acceptance
 decisions.
 
