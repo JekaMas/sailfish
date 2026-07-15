@@ -7,7 +7,7 @@ per operation; rejected prototypes and replaced implementations are removed.
 Each accepted decision records:
 
 - the measured owner and workload;
-- the exact before/after benchmark artifacts;
+- the exact before/after benchmark results;
 - `ns/op`, `B/op`, and `allocs/op` changes;
 - profile, escape-analysis, and bounds-check evidence;
 - correctness gates;
@@ -34,13 +34,6 @@ comparison measured these changes:
 | `uint256`, 57 digits, string / bytes | -16.5% / -21.0% | 0 -> 0 |
 | `uint256`, 77 digits, string / bytes | -21.9% / -19.2% | 0 -> 0 |
 | Native `uint64`, 1-20 digits | within +/-1.7% | 0 -> 0 |
-
-Artifacts:
-
-- `.codex_tmp/cpu_algorithm_round/c1_wide_specialized_same_binary.txt`
-- `.codex_tmp/cpu_algorithm_round/c1_production_parse_cpu.pprof`
-- `.codex_tmp/cpu_algorithm_round/c1_production_parse_mem.pprof`
-- `.codex_tmp/cpu_algorithm_round/c1_production_escape_bce.txt`
 
 Dense parsing validates every byte, accepts the same syntax, and returns the
 same range errors. Tests cover lengths 8-19 and every invalid-byte position for
@@ -73,15 +66,6 @@ The former fixed-19 writer became the single width-aware fixed writer used by
 both native fractions and 19-digit wide chunks. Boundary tests cover native
 digit transitions and every scale from 0 through 19; randomized native and
 wide round trips remain the byte-equivalence oracle.
-
-Artifacts:
-
-- `.codex_tmp/cpu_algorithm_round/c2_c4_same_binary.txt`
-- `.codex_tmp/cpu_algorithm_round/c4_wide_same_binary.txt`
-- `.codex_tmp/cpu_algorithm_round/c4_production_format_bench.txt`
-- `.codex_tmp/cpu_algorithm_round/c4_production_format_cpu.pprof`
-- `.codex_tmp/cpu_algorithm_round/c4_production_format_mem.pprof`
-- `.codex_tmp/cpu_algorithm_round/c4_production_escape_bce.txt`
 
 Two alternatives were rejected and removed:
 
@@ -134,18 +118,6 @@ Measured alternatives were removed:
 - AVX-512 IFMA/VBMI cannot be executed or validated on the arm64 release host,
   and its call/dispatch contract is unjustified for a 7-14 ns scalar kernel.
 
-Artifacts:
-
-- `.codex_tmp/format_reverse_round/final/public_format_benchstat.txt`
-- `.codex_tmp/format_reverse_round/final/reverse_swar_benchstat.txt`
-- `.codex_tmp/format_reverse_round/final/profile_benchmark.txt`
-- `.codex_tmp/format_reverse_round/final/format_cpu_top.txt`
-- `.codex_tmp/format_reverse_round/final/format_mem_top.txt`
-- `.codex_tmp/format_reverse_round/final/escape_bce.txt`
-- `.codex_tmp/format_reverse_round/final/bce_after_focus.txt`
-- `.codex_tmp/format_reverse_round/final/format_assembly.txt`
-- `.codex_tmp/format_reverse_round/final/format_assembly_focus.txt`
-
 ## 2026-07-15: Wide Formatting Keeps Base 1e19
 
 **Decision:** retain `1e19` as the sole decimal chunk base for `uint256`
@@ -166,12 +138,6 @@ and remained substantially worse at larger widths. Both variants were
 allocation-free, so there was no ownership tradeoff to justify the extra
 division work.
 
-Artifacts:
-
-- `.codex_tmp/cpu_algorithm_round/c3_same_binary.txt`
-- `.codex_tmp/cpu_algorithm_round/c3_1e19.txt`
-- `.codex_tmp/cpu_algorithm_round/c3_1e9.txt`
-
 ## 2026-07-15: No Small-Value Formatting Fast Path
 
 **Decision:** do not add a separate 0-99 formatting branch or cache. The
@@ -183,8 +149,6 @@ scale-zero misses and 5.5% to representative scale-5 formatting. A synthetic
 hit rate. The miss regressions violate the round's gate, and retaining another
 dispatch path would make general formatting workload-dependent.
 
-Artifact: `.codex_tmp/cpu_algorithm_round/c5_same_binary.txt`.
-
 ## 2026-07-15: No General Canonical SWAR Dispatch
 
 **Decision:** keep the scalar pairwise parser for ordinary fixed-scale
@@ -195,12 +159,6 @@ Splitting canonical integer and fraction segments into SWAR candidates
 improved scale-9 and scale-18 long values by 6-10%, but regressed short and
 scale-5 values by 3.6-8.1%. Representative mixed batches changed by only
 0-1.6%, below the keep threshold. No branch-minimized alternate parser remains.
-
-Artifacts:
-
-- `.codex_tmp/cpu_algorithm_round/c6_canonical_batch_cpu.pprof`
-- `.codex_tmp/cpu_algorithm_round/c6_canonical_same_binary.txt`
-- `.codex_tmp/cpu_algorithm_round/c6_batch_same_binary.txt`
 
 The measured mixed batch is about 9 ns/value on the scalar implementation.
 That does not justify architecture-specific assembly, feature dispatch, or a
@@ -219,16 +177,6 @@ improved by about 17-25%, and native fixed-scale formatting improved by about
 10-22% on the representative scale-5/9/18 cases. Same-binary comparisons are
 the acceptance authority; the cross-build baseline contains documented host
 noise on unchanged subbenchmarks.
-
-Final artifacts:
-
-- `.codex_tmp/cpu_algorithm_round/final_bench.txt`
-- `.codex_tmp/cpu_algorithm_round/final_benchstat.txt`
-- `.codex_tmp/cpu_algorithm_round/final_cpu.pprof`
-- `.codex_tmp/cpu_algorithm_round/final_cpu_top.txt`
-- `.codex_tmp/cpu_algorithm_round/final_mem.pprof`
-- `.codex_tmp/cpu_algorithm_round/final_mem_top.txt`
-- `.codex_tmp/cpu_algorithm_round/final_escape_bce.txt`
 
 That round added no unsafe code, assembly, architecture dispatch,
 compatibility path, legacy implementation, normalization fallback, or
@@ -306,15 +254,6 @@ inputs now reach full-word validation before returning `ErrSyntax`.
 - Splitting numeric and cached decimal types changes the package's ownership
   and memory API; it is not a parser optimization and was not attempted here.
 
-Artifacts:
-
-- `.codex_tmp/algorithm_round_2/baseline.txt`
-- `.codex_tmp/algorithm_round_2/final.txt`
-- `.codex_tmp/algorithm_round_2/final_vs_baseline.txt`
-- `.codex_tmp/algorithm_round_2/canonical_final_stable.txt`
-- `.codex_tmp/algorithm_round_2/reciprocal_candidate_short.txt`
-- `.codex_tmp/algorithm_round_2/public_final.txt`
-
 ## 2026-07-15: v1 Runtime Codec Reaches Its Measured Ceilings
 
 **Decision:** store `Uint256Codec` scale directly in its single byte and omit
@@ -360,15 +299,6 @@ Rejected experiments were removed:
 - Raw formatting, retained output, and first-item CBOR decode keep their
   existing algorithms. Their residual cost is output construction, suffix
   ownership, or generic method dispatch; no second implementation is retained.
-
-Artifacts:
-
-- `.codex_tmp/v1_ceiling/baseline_ceilings.txt`
-- `.codex_tmp/v1_ceiling/final_ceilings.txt`
-- `.codex_tmp/v1_ceiling/final_vs_baseline.txt`
-- `.codex_tmp/v1_ceiling/final_escape.txt`
-- `.codex_tmp/v1_ceiling/final_cpu.pprof`
-- `.codex_tmp/v1_ceiling/final_mem.pprof`
 
 The v1 release therefore keeps pure Go, one implementation per operation,
 strict constructor-only canonicalization, and zero allocation across all
@@ -436,15 +366,6 @@ Rejected benchmark-only alternatives were removed:
 - a separate manual JSON unescaper was not introduced because it would
   duplicate standards behavior for a cold path.
 
-Artifacts:
-
-- `.codex_tmp/json_optimization/baseline_corrected.txt`
-- `.codex_tmp/json_optimization/production_after.txt`
-- `.codex_tmp/json_optimization/production_after_benchstat.txt`
-- `.codex_tmp/json_optimization/final/json_cpu.pprof`
-- `.codex_tmp/json_optimization/final/json_mem.pprof`
-- `.codex_tmp/json_optimization/final/json_escape.txt`
-
 No JSON syntax, decimal normalization, canonicalization, scale, or numeric
 semantics changed. There is one current JSON implementation, no compatibility
 codec, no legacy decoder, and no normalization fallback.
@@ -491,14 +412,6 @@ the privileged Linux Docker VM exposed only software, tracepoint, and probe
 event sources. The table is therefore working-set crossover evidence, not a
 hardware miss-rate measurement.
 
-Artifacts:
-
-- `.codex_tmp/cache_analysis/cache_locality_baseline.txt`
-- `.codex_tmp/cache_analysis/cache_random_baseline.txt`
-- `.codex_tmp/cache_analysis/raw_boundary_after.txt`
-- `.codex_tmp/cache_analysis/traces/raw.trace`
-- `.codex_tmp/cache_analysis/docker_pmu.txt`
-
 ## 2026-07-15: PGO Is Owned By The Consuming Executable
 
 **Decision:** do not commit a Sailfish `default.pgo`. Sailfish is a library,
@@ -510,8 +423,8 @@ and success/error distribution.
 The package experiment used Go 1.26.5 and a 40.42-second mixed CPU profile
 covering native and uint256 parsing, retained and formatted output, scalar
 CBOR, 900 real-market positional CBOR bar cases, and direct/generic JSON. Ten
-200 ms runs compared identical test binaries built with `-pgo=off` and
-`-pgo=.codex_tmp/pgo/representative.pprof`.
+200 ms runs compared identical test binaries built with `-pgo=off` and a
+representative benchmark profile supplied through `-pgo=<profile>`.
 
 | Protected operation | PGO off | PGO | Delta |
 |---|---:|---:|---:|
@@ -538,17 +451,6 @@ two protected narrow decode paths. A consuming executable should collect
 equal-duration production CPU profiles, merge them with `go tool pprof
 -proto`, compare `-pgo=off` with `-pgo=<profile>` under the same traffic, and
 accept only after its own latency/CPU and minority-path regression gates pass.
-
-Artifacts:
-
-- `.codex_tmp/pgo/baseline_off.txt`
-- `.codex_tmp/pgo/representative.pprof`
-- `.codex_tmp/pgo/profile_top.txt`
-- `.codex_tmp/pgo/candidate_pgo.txt`
-- `.codex_tmp/pgo/benchstat.txt`
-- `.codex_tmp/pgo/pgo_compiler.log`
-- `.codex_tmp/pgo/build_off.log`
-- `.codex_tmp/pgo/build_pgo.log`
 
 ## 2026-07-15: Branchless Decimal Width, Not Branchless Everywhere
 
@@ -610,17 +512,3 @@ taskset -c 2 perf stat -x, -r 10 \
   -test.bench '^BenchmarkDecimalDigitsDistributions$' \
   -test.benchtime=3s -test.count=1 -test.cpu=1
 ```
-
-Artifacts:
-
-- `.codex_tmp/branch_analysis/digits_candidates.txt`
-- `.codex_tmp/branch_analysis/digits_summary.txt`
-- `.codex_tmp/branch_analysis/bit_length_asm.txt`
-- `.codex_tmp/branch_analysis/decimal_digits_asm.txt`
-- `.codex_tmp/branch_analysis/interleaved_before.txt`
-- `.codex_tmp/branch_analysis/interleaved_after.txt`
-- `.codex_tmp/branch_analysis/interleaved_benchstat.txt`
-- `.codex_tmp/branch_analysis/format_native_benchstat.txt`
-- `.codex_tmp/branch_analysis/cbor_len_summary.txt`
-- `.codex_tmp/branch_analysis_segmentio.txt`
-- `.codex_tmp/cache_analysis/docker_pmu.txt`

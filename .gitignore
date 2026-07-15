@@ -1,5 +1,8 @@
 .DS_Store
 .codex_tmp/
+PLANS.md
+PLAN_*.md
+PROGRESS_*.md
 *.out
 *.pprof
 *.test
