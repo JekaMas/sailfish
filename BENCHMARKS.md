@@ -46,6 +46,14 @@ GOMAXPROCS=1 GOWORK=off go test -run '^$' \
 GOMAXPROCS=1 GOWORK=off go test -run '^$' \
   -bench 'BenchmarkJSONHotPaths/(append|marshal_direct|marshal_go_json|unmarshal_direct|unmarshal_go_json)/' \
   -benchmem -benchtime=500ms -count=10
+
+GOMAXPROCS=1 GOWORK=off go test -run '^$' \
+  -bench 'BenchmarkCBORRealMarketScalars' \
+  -benchmem -benchtime=500ms -count=10
+
+GOMAXPROCS=1 GOWORK=off go test -run '^$' \
+  -bench 'BenchmarkCBORRealMarketBars' \
+  -benchmem -benchtime=500ms -count=10
 ```
 
 ## Snapshot
@@ -141,7 +149,10 @@ an owned slice and therefore has one required result allocation. Reflective
 decimal; its allocations are library/interface ownership, not decimal parsing
 or unit conversion. Aggregate decode and direct strict decode are allocation-
 free in the measured fixed-array cases. The fourteen-field manual positional
-benchmark uses the same 93-byte wire as deterministic fxamacker `toarray`.
+oracle uses the same 93-byte wire as deterministic fxamacker `toarray`. That
+size describes one synthetic value set, not the schema's minimum or a typical
+venue record.
+
 Its one decode allocation owns the parent record's symbol string; all four
 price fields and the wide amount decode without allocation through
 `ParseCBORFirst`.
@@ -152,6 +163,75 @@ Memory profiles contain no per-operation allocation from append or decode.
 Cached `Codec` methods avoid repeated generic scale metadata work and are the
 recommended hot-loop surface. The figures above are means of ten
 `GOMAXPROCS=1`, 200 ms runs on the documented host.
+
+### Real-market CBOR records
+
+`testdata/market_cbor_samples.json` is a fixed July 15, 2026 snapshot of 300
+unique market identities:
+
+| Cohort | Selection | Official data |
+|---|---|---|
+| MEXC spot | Top 100 online USDT markets by 24h `quoteVolume` | `exchangeInfo`, `ticker/24hr` |
+| Hyperliquid spot | Top 100 main-dex markets by 24h `dayNtlVlm` | `spotMetaAndAssetCtxs`, `l2Book` |
+| Hyperliquid perps | Top 100 main-dex markets by 24h `dayNtlVlm` | `metaAndAssetCtxs`, `l2Book` |
+
+The source contracts are documented by the
+[MEXC Spot API](https://mexcdevelop.github.io/apidocs/spot_v3_en/),
+[Hyperliquid spot info API](https://hyperliquid.gitbook.io/hyperliquid-docs/for-developers/api/info-endpoint/spot),
+and [Hyperliquid perpetual info API](https://hyperliquid.gitbook.io/hyperliquid-docs/for-developers/api/info-endpoint/perpetuals).
+Hyperliquid spot metadata is joined by its canonical universe `index`, then
+queried as `@index`; array position is not treated as market identity.
+
+The fixture deduplicates by `(venue, market_type, symbol)`. Within each market,
+it removes repeated/non-positive observations and numerically orders the
+remaining values. Price cases are min, lower-third, upper-third, and max from
+context/ticker/book prices. Quantity cases are metadata quantum plus book sizes
+reduced to min, median, and max. It does not invent values for sparse markets:
+298 markets have four prices and 297 have three quantities; the remaining
+markets retain the one or two distinct observations that were available. The
+four zero-volume Hyperliquid spot tail entries are retained because only 96
+main-dex spot markets reported positive `dayNtlVlm` at snapshot time.
+
+The theoretical structural floor for this exact 14-field record is 15 bytes:
+one array header, one record-kind integer, one empty-text marker, five zero
+decimal integers, and seven zero lifecycle integers. It is not a valid market
+record because the symbol and market values are empty/zero. There is no finite
+schema maximum without a symbol-length bound. Realistic snapshot records are:
+
+| Cohort | Quantity case | Min | p50 | p95 | Max | Mean bytes |
+|---|---|---:|---:|---:|---:|---:|
+| MEXC spot | minimum | 55 | 60 | 68 | 75 | 60.96 |
+| MEXC spot | median | 59 | 63 | 71 | 78 | 63.66 |
+| MEXC spot | maximum | 62 | 64 | 74 | 78 | 65.92 |
+| Hyperliquid spot | minimum | 48 | 56 | 64 | 69 | 57.42 |
+| Hyperliquid spot | median | 48 | 60 | 66 | 71 | 60.18 |
+| Hyperliquid spot | maximum | 48 | 60 | 68 | 73 | 60.80 |
+| Hyperliquid perps | minimum | 53 | 56 | 64 | 66 | 57.86 |
+| Hyperliquid perps | median | 56 | 60 | 67 | 68 | 60.61 |
+| Hyperliquid perps | maximum | 57 | 60 | 68 | 69 | 61.52 |
+
+Ten 500 ms runs per sub-benchmark produced these arithmetic means:
+
+| Cohort | Quantity case | Encode | Decode | Encode heap | Decode heap |
+|---|---|---:|---:|---:|---:|
+| MEXC spot | minimum | 52.2 ns | 120.8 ns | 0 B / 0 allocs | 9 B / 1 alloc |
+| MEXC spot | median | 54.3 ns | 125.3 ns | 0 B / 0 allocs | 9 B / 1 alloc |
+| MEXC spot | maximum | 53.4 ns | 122.1 ns | 0 B / 0 allocs | 9 B / 1 alloc |
+| Hyperliquid spot | minimum | 54.2 ns | 108.3 ns | 0 B / 0 allocs | 4 B / 1 alloc |
+| Hyperliquid spot | median | 56.0 ns | 110.6 ns | 0 B / 0 allocs | 4 B / 1 alloc |
+| Hyperliquid spot | maximum | 54.7 ns | 107.4 ns | 0 B / 0 allocs | 4 B / 1 alloc |
+| Hyperliquid perps | minimum | 53.2 ns | 106.1 ns | 0 B / 0 allocs | 4 B / <1 alloc |
+| Hyperliquid perps | median | 55.2 ns | 111.0 ns | 0 B / 0 allocs | 4 B / <1 alloc |
+| Hyperliquid perps | maximum | 54.8 ns | 107.7 ns | 0 B / 0 allocs | 4 B / <1 alloc |
+
+The fractional Hyperliquid-perp allocation count is Go's per-operation average
+for short owned symbol strings and rounds to zero in benchmark output; the
+reported bytes remain nonzero. Decimal scalar encoding and decoding are 5.7-
+7.0 ns across the six price/quantity cohorts, with `0 B/op, 0 allocs/op`.
+Observed scalar wires range from 1 to 9 bytes. The benchmark reports sample
+count and min/p50/p95/max/mean wire size alongside timing, and the unit test
+locks all nine bar distributions so fixture drift cannot silently redefine the
+result.
 
 ## Measured implementation ceilings
 

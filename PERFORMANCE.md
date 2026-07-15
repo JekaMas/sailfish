@@ -239,6 +239,29 @@ The v1 release therefore keeps pure Go, one implementation per operation,
 strict constructor-only canonicalization, and zero allocation across all
 caller-buffer runtime codec hot paths.
 
+## 2026-07-15: Real-Market CBOR Size Uses Value Distributions
+
+**Decision:** retain the 93-byte positional bar as a byte-equivalence oracle,
+not as a storage-size estimate. Measure aggregate CBOR with deduplicated,
+positive observations from 100 MEXC spot, 100 Hyperliquid spot, and 100
+Hyperliquid perpetual markets.
+
+The fixed snapshot contains each `(venue, market_type, symbol)` once. It keeps
+distinct observed min/quantile/max prices and quantities at each market's
+venue scale. Three deliberate bar workloads select minimum, median, or maximum
+quantity; they share the same market set instead of duplicating fixture rows.
+
+The exact 14-field schema has a 15-byte empty/zero structural floor and no
+finite maximum without a symbol-length bound. The 900 realistic bar cases
+measure 48-78 bytes, with cohort/mode means from 57.42 to 65.92 bytes. Ten-run
+encoding means are 52.2-56.0 ns at zero allocations. Decode means are
+106.1-125.3 ns; its only ownership cost is the enclosing record's symbol
+string. Decimal scalar encode/decode remains allocation-free.
+
+This adds benchmark and test evidence only. No production codec, wire format,
+normalization, compatibility decoder, fallback, or alternate implementation
+was introduced.
+
 ## 2026-07-15: JSON Uses Single-Pass Wide Marshal And Parse-First Decode
 
 **Decision:** keep manual quoted-decimal `AppendJSON`, reserve the bounded

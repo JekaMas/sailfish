@@ -1,0 +1,6334 @@
+{
+  "snapshot_at": "2026-07-15T00:58:31Z",
+  "sample_policy": {
+    "market_dedup_key": "venue + market_type + symbol",
+    "price_samples": "unique positive context/book values reduced to min, lower-third, upper-third, max",
+    "quantity_samples": "unique positive metadata quantum/book values reduced to min, median, max",
+    "ranking": "descending 24h quote/notional volume",
+    "note": "zero-volume Hyperliquid spot markets fill the top-100 tail when fewer than 100 have nonzero volume"
+  },
+  "sources": [
+    {
+      "venue": "mexc",
+      "market_type": "spot",
+      "selection": "top 100 online USDT spot markets by 24h quoteVolume",
+      "endpoints": [
+        "https://api.mexc.com/api/v3/exchangeInfo",
+        "https://api.mexc.com/api/v3/ticker/24hr"
+      ],
+      "markets": [
+        {
+          "venue": "mexc",
+          "market_type": "spot",
+          "rank": 1,
+          "symbol": "BTCUSDT",
+          "display_symbol": "BTC/USDT",
+          "selection_volume": "519622621.05",
+          "price_scale": 2,
+          "quantity_scale": 8,
+          "prices": [
+            "62323.56",
+            "62384.28",
+            "64813.65",
+            "65079.9"
+          ],
+          "quantities": [
+            "0.000001",
+            "0.06649357",
+            "8149.19052576"
+          ]
+        },
+        {
+          "venue": "mexc",
+          "market_type": "spot",
+          "rank": 2,
+          "symbol": "ETHUSDT",
+          "display_symbol": "ETH/USDT",
+          "selection_volume": "313197373.8",
+          "price_scale": 2,
+          "quantity_scale": 5,
+          "prices": [
+            "1774.6",
+            "1780.85",
+            "1880.4",
+            "1896.13"
+          ],
+          "quantities": [
+            "0.0001",
+            "2.17594",
+            "169720.29765"
+          ]
+        },
+        {
+          "venue": "mexc",
+          "market_type": "spot",
+          "rank": 3,
+          "symbol": "USDCUSDT",
+          "display_symbol": "USDC/USDT",
+          "selection_volume": "73968936.74613",
+          "price_scale": 5,
+          "quantity_scale": 2,
+          "prices": [
+            "1",
+            "1.00055",
+            "1.00056",
+            "1.00589"
+          ],
+          "quantities": [
+            "1",
+            "2472797.76",
+            "73909147.82"
+          ]
+        },
+        {
+          "venue": "mexc",
+          "market_type": "spot",
+          "rank": 4,
+          "symbol": "SOLUSDT",
+          "display_symbol": "SOL/USDT",
+          "selection_volume": "42227144.48",
+          "price_scale": 2,
+          "quantity_scale": 3,
+          "prices": [
+            "74.57",
+            "75.19",
+            "77.58",
+            "77.93"
+          ],
+          "quantities": [
+            "0.01",
+            "0.322",
+            "551631.602"
+          ]
+        },
+        {
+          "venue": "mexc",
+          "market_type": "spot",
+          "rank": 5,
+          "symbol": "XRPUSDT",
+          "display_symbol": "XRP/USDT",
+          "selection_volume": "19098989.3516",
+          "price_scale": 4,
+          "quantity_scale": 2,
+          "prices": [
+            "1.061",
+            "1.0668",
+            "1.1072",
+            "1.1206"
+          ],
+          "quantities": [
+            "0.1",
+            "8.63",
+            "17490473.35"
+          ]
+        },
+        {
+          "venue": "mexc",
+          "market_type": "spot",
+          "rank": 6,
+          "symbol": "BNBUSDT",
+          "display_symbol": "BNB/USDT",
+          "selection_volume": "14725511.05",
+          "price_scale": 2,
+          "quantity_scale": 4,
+          "prices": [
+            "567.5",
+            "568.33",
+            "582.01",
+            "584.45"
+          ],
+          "quantities": [
+            "0.001",
+            "0.5889",
+            "25516.9886"
+          ]
+        },
+        {
+          "venue": "mexc",
+          "market_type": "spot",
+          "rank": 7,
+          "symbol": "DOGEUSDT",
+          "display_symbol": "DOGE/USDT",
+          "selection_volume": "7824829.30132",
+          "price_scale": 5,
+          "quantity_scale": 2,
+          "prices": [
+            "0.07143",
+            "0.07215",
+            "0.07402",
+            "0.07537"
+          ],
+          "quantities": [
+            "1",
+            "172473.86",
+            "106097447.02"
+          ]
+        },
+        {
+          "venue": "mexc",
+          "market_type": "spot",
+          "rank": 8,
+          "symbol": "ZECUSDT",
+          "display_symbol": "ZEC/USDT",
+          "selection_volume": "7087369.33",
+          "price_scale": 2,
+          "quantity_scale": 6,
+          "prices": [
+            "497.1",
+            "498.7",
+            "556.67",
+            "569.14"
+          ],
+          "quantities": [
+            "0.001",
+            "0.173546",
+            "13159.412566"
+          ]
+        },
+        {
+          "venue": "mexc",
+          "market_type": "spot",
+          "rank": 9,
+          "symbol": "TRXUSDT",
+          "display_symbol": "TRX/USDT",
+          "selection_volume": "6037518.5522",
+          "price_scale": 4,
+          "quantity_scale": 2,
+          "prices": [
+            "0.3241",
+            "0.3244",
+            "0.3259",
+            "0.3265"
+          ],
+          "quantities": [
+            "1",
+            "135375.65",
+            "18559052.75"
+          ]
+        },
+        {
+          "venue": "mexc",
+          "market_type": "spot",
+          "rank": 10,
+          "symbol": "UPCUSDT",
+          "display_symbol": "UPC/USDT",
+          "selection_volume": "4837635.1225",
+          "price_scale": 4,
+          "quantity_scale": 2,
+          "prices": [
+            "0.2271",
+            "0.2299",
+            "0.23",
+            "0.2448"
+          ],
+          "quantities": [
+            "0.01",
+            "25",
+            "20762802.53"
+          ]
+        },
+        {
+          "venue": "mexc",
+          "market_type": "spot",
+          "rank": 11,
+          "symbol": "WXTUSDT",
+          "display_symbol": "WXT/USDT",
+          "selection_volume": "4553434.846662",
+          "price_scale": 6,
+          "quantity_scale": 2,
+          "prices": [
+            "0.015757",
+            "0.015839",
+            "0.016153",
+            "0.016197"
+          ],
+          "quantities": [
+            "0.01",
+            "20548",
+            "284665224.2"
+          ]
+        },
+        {
+          "venue": "mexc",
+          "market_type": "spot",
+          "rank": 12,
+          "symbol": "ANTFUNUSDT",
+          "display_symbol": "ANTFUN/USDT",
+          "selection_volume": "4342930.086262",
+          "price_scale": 6,
+          "quantity_scale": 2,
+          "prices": [
+            "0.035332",
+            "0.035666",
+            "0.03678",
+            "0.037202"
+          ],
+          "quantities": [
+            "0.01",
+            "135.84",
+            "119635045.13"
+          ]
+        },
+        {
+          "venue": "mexc",
+          "market_type": "spot",
+          "rank": 13,
+          "symbol": "ADAUSDT",
+          "display_symbol": "ADA/USDT",
+          "selection_volume": "4265469.4936",
+          "price_scale": 4,
+          "quantity_scale": 2,
+          "prices": [
+            "0.1561",
+            "0.1578",
+            "0.1645",
+            "0.168"
+          ],
+          "quantities": [
+            "0.1",
+            "86380.92",
+            "26212392.06"
+          ]
+        },
+        {
+          "venue": "mexc",
+          "market_type": "spot",
+          "rank": 14,
+          "symbol": "LTCUSDT",
+          "display_symbol": "LTC/USDT",
+          "selection_volume": "4150724.07",
+          "price_scale": 2,
+          "quantity_scale": 4,
+          "prices": [
+            "43.42",
+            "43.69",
+            "45.15",
+            "45.5"
+          ],
+          "quantities": [
+            "0.001",
+            "80.812",
+            "93358.5728"
+          ]
+        },
+        {
+          "venue": "mexc",
+          "market_type": "spot",
+          "rank": 15,
+          "symbol": "LABUSDT",
+          "display_symbol": "LAB/USDT",
+          "selection_volume": "3518983.00356",
+          "price_scale": 5,
+          "quantity_scale": 2,
+          "prices": [
+            "0.23932",
+            "0.2596",
+            "0.2641",
+            "0.4554"
+          ],
+          "quantities": [
+            "0.01",
+            "65.53",
+            "11183009.89"
+          ]
+        },
+        {
+          "venue": "mexc",
+          "market_type": "spot",
+          "rank": 16,
+          "symbol": "USD1USDT",
+          "display_symbol": "USD1/USDT",
+          "selection_volume": "3281532.04288",
+          "price_scale": 5,
+          "quantity_scale": 2,
+          "prices": [
+            "0.99939",
+            "0.99954",
+            "0.99956",
+            "1.00462"
+          ],
+          "quantities": [
+            "0.01",
+            "126115.2",
+            "3282623.25"
+          ]
+        },
+        {
+          "venue": "mexc",
+          "market_type": "spot",
+          "rank": 17,
+          "symbol": "GOLD(PAXG)USDT",
+          "display_symbol": "GOLD(PAXG)/USDT",
+          "selection_volume": "2957302.42",
+          "price_scale": 2,
+          "quantity_scale": 6,
+          "prices": [
+            "3991.35",
+            "4001.66",
+            "4051.58",
+            "4094.57"
+          ],
+          "quantities": [
+            "0.000001",
+            "0.5718",
+            "729.91499"
+          ]
+        },
+        {
+          "venue": "mexc",
+          "market_type": "spot",
+          "rank": 18,
+          "symbol": "XMRUSDT",
+          "display_symbol": "XMR/USDT",
+          "selection_volume": "2847889.03",
+          "price_scale": 2,
+          "quantity_scale": 3,
+          "prices": [
+            "320.11",
+            "320.27",
+            "331.68",
+            "332.33"
+          ],
+          "quantities": [
+            "0.001",
+            "0.007",
+            "8735.797"
+          ]
+        },
+        {
+          "venue": "mexc",
+          "market_type": "spot",
+          "rank": 19,
+          "symbol": "EVAAUSDT",
+          "display_symbol": "EVAA/USDT",
+          "selection_volume": "2544913.0193",
+          "price_scale": 4,
+          "quantity_scale": 2,
+          "prices": [
+            "0.7455",
+            "0.8554",
+            "1.0461",
+            "1.2716"
+          ],
+          "quantities": [
+            "0.01",
+            "4.51",
+            "2630688.34"
+          ]
+        },
+        {
+          "venue": "mexc",
+          "market_type": "spot",
+          "rank": 20,
+          "symbol": "CASHCATUSDT",
+          "display_symbol": "CASHCAT/USDT",
+          "selection_volume": "2478864.04161",
+          "price_scale": 5,
+          "quantity_scale": 2,
+          "prices": [
+            "0.14839",
+            "0.1539",
+            "0.15431",
+            "0.20646"
+          ],
+          "quantities": [
+            "0.01",
+            "72.94",
+            "14456793.31"
+          ]
+        },
+        {
+          "venue": "mexc",
+          "market_type": "spot",
+          "rank": 21,
+          "symbol": "SUIUSDT",
+          "display_symbol": "SUI/USDT",
+          "selection_volume": "2330162.9447",
+          "price_scale": 4,
+          "quantity_scale": 2,
+          "prices": [
+            "0.7191",
+            "0.7218",
+            "0.7616",
+            "0.7674"
+          ],
+          "quantities": [
+            "0.01",
+            "1531",
+            "3105187.22"
+          ]
+        },
+        {
+          "venue": "mexc",
+          "market_type": "spot",
+          "rank": 22,
+          "symbol": "DOTUSDT",
+          "display_symbol": "DOT/USDT",
+          "selection_volume": "2094062.0349",
+          "price_scale": 4,
+          "quantity_scale": 3,
+          "prices": [
+            "0.8276",
+            "0.8387",
+            "0.8544",
+            "0.8596"
+          ],
+          "quantities": [
+            "0.001",
+            "58.86",
+            "2474376.94"
+          ]
+        },
+        {
+          "venue": "mexc",
+          "market_type": "spot",
+          "rank": 23,
+          "symbol": "ETHFIUSDT",
+          "display_symbol": "ETHFI/USDT",
+          "selection_volume": "2066089.4354",
+          "price_scale": 4,
+          "quantity_scale": 2,
+          "prices": [
+            "0.3811",
+            "0.3812",
+            "0.3936",
+            "0.4072"
+          ],
+          "quantities": [
+            "0.01",
+            "13.37",
+            "5243279.87"
+          ]
+        },
+        {
+          "venue": "mexc",
+          "market_type": "spot",
+          "rank": 24,
+          "symbol": "INJUSDT",
+          "display_symbol": "INJ/USDT",
+          "selection_volume": "2058805.34",
+          "price_scale": 3,
+          "quantity_scale": 2,
+          "prices": [
+            "4.667",
+            "4.675",
+            "5.044",
+            "5.126"
+          ],
+          "quantities": [
+            "0.01",
+            "18.11",
+            "412077.25"
+          ]
+        },
+        {
+          "venue": "mexc",
+          "market_type": "spot",
+          "rank": 25,
+          "symbol": "TAOUSDT",
+          "display_symbol": "TAO/USDT",
+          "selection_volume": "2044751.14",
+          "price_scale": 2,
+          "quantity_scale": 3,
+          "prices": [
+            "196.09",
+            "200.27",
+            "200.37",
+            "204.85"
+          ],
+          "quantities": [
+            "0.01",
+            "0.282",
+            "10179.702"
+          ]
+        },
+        {
+          "venue": "mexc",
+          "market_type": "spot",
+          "rank": 26,
+          "symbol": "BDXUSDT",
+          "display_symbol": "BDX/USDT",
+          "selection_volume": "1996768.25016",
+          "price_scale": 5,
+          "quantity_scale": 4,
+          "prices": [
+            "0.08072",
+            "0.08695",
+            "0.08712",
+            "0.10396"
+          ],
+          "quantities": [
+            "0.0001",
+            "37.95",
+            "22490577.39"
+          ]
+        },
+        {
+          "venue": "mexc",
+          "market_type": "spot",
+          "rank": 27,
+          "symbol": "MXUSDT",
+          "display_symbol": "MX/USDT",
+          "selection_volume": "1893688.9782",
+          "price_scale": 4,
+          "quantity_scale": 2,
+          "prices": [
+            "1.6337",
+            "1.6393",
+            "1.6618",
+            "1.6636"
+          ],
+          "quantities": [
+            "0.01",
+            "1.22",
+            "1150147.04"
+          ]
+        },
+        {
+          "venue": "mexc",
+          "market_type": "spot",
+          "rank": 28,
+          "symbol": "PERMUSDT",
+          "display_symbol": "PERM/USDT",
+          "selection_volume": "1823123.221",
+          "price_scale": 4,
+          "quantity_scale": 2,
+          "prices": [
+            "0.0113",
+            "0.0122",
+            "0.0123",
+            "0.0358"
+          ],
+          "quantities": [
+            "0.01",
+            "1688.87",
+            "74334897.72"
+          ]
+        },
+        {
+          "venue": "mexc",
+          "market_type": "spot",
+          "rank": 29,
+          "symbol": "BCHUSDT",
+          "display_symbol": "BCH/USDT",
+          "selection_volume": "1742562.8",
+          "price_scale": 1,
+          "quantity_scale": 5,
+          "prices": [
+            "231.9",
+            "235.3",
+            "235.4",
+            "242.4"
+          ],
+          "quantities": [
+            "0.001",
+            "7.222",
+            "7360.67738"
+          ]
+        },
+        {
+          "venue": "mexc",
+          "market_type": "spot",
+          "rank": 30,
+          "symbol": "VELVETUSDT",
+          "display_symbol": "VELVET/USDT",
+          "selection_volume": "1651039.86388",
+          "price_scale": 5,
+          "quantity_scale": 2,
+          "prices": [
+            "0.48626",
+            "0.59008",
+            "0.59438",
+            "0.6725"
+          ],
+          "quantities": [
+            "0.01",
+            "20.87",
+            "2862367.52"
+          ]
+        },
+        {
+          "venue": "mexc",
+          "market_type": "spot",
+          "rank": 31,
+          "symbol": "GRAMUSDT",
+          "display_symbol": "GRAM/USDT",
+          "selection_volume": "1606674.375",
+          "price_scale": 3,
+          "quantity_scale": 3,
+          "prices": [
+            "1.56",
+            "1.597",
+            "1.615",
+            "1.654"
+          ],
+          "quantities": [
+            "0.001",
+            "0.77",
+            "999858.77"
+          ]
+        },
+        {
+          "venue": "mexc",
+          "market_type": "spot",
+          "rank": 32,
+          "symbol": "ASSETUSDT",
+          "display_symbol": "ASSET/USDT",
+          "selection_volume": "1474478.9533",
+          "price_scale": 5,
+          "quantity_scale": 2,
+          "prices": [
+            "0.26318",
+            "0.26516",
+            "0.26927",
+            "0.26985"
+          ],
+          "quantities": [
+            "0.01",
+            "18.02",
+            "5554293.66"
+          ]
+        },
+        {
+          "venue": "mexc",
+          "market_type": "spot",
+          "rank": 33,
+          "symbol": "AIXDROPUSDT",
+          "display_symbol": "AIXDROP/USDT",
+          "selection_volume": "1457733.6592764",
+          "price_scale": 8,
+          "quantity_scale": 2,
+          "prices": [
+            "0.00044977",
+            "0.00045597",
+            "0.00045645",
+            "0.00047016"
+          ],
+          "quantities": [
+            "0.01",
+            "2416.95",
+            "3198009354.81"
+          ]
+        },
+        {
+          "venue": "mexc",
+          "market_type": "spot",
+          "rank": 34,
+          "symbol": "NEARUSDT",
+          "display_symbol": "NEAR/USDT",
+          "selection_volume": "1452641.2291",
+          "price_scale": 4,
+          "quantity_scale": 4,
+          "prices": [
+            "1.9373",
+            "1.939",
+            "2.0035",
+            "2.0641"
+          ],
+          "quantities": [
+            "0.0001",
+            "902.9",
+            "724536.46"
+          ]
+        },
+        {
+          "venue": "mexc",
+          "market_type": "spot",
+          "rank": 35,
+          "symbol": "TRUMPUSDT",
+          "display_symbol": "TRUMP/USDT",
+          "selection_volume": "1394478.799",
+          "price_scale": 3,
+          "quantity_scale": 2,
+          "prices": [
+            "1.516",
+            "1.547",
+            "1.566",
+            "1.577"
+          ],
+          "quantities": [
+            "0.01",
+            "1843.83",
+            "901683.55"
+          ]
+        },
+        {
+          "venue": "mexc",
+          "market_type": "spot",
+          "rank": 36,
+          "symbol": "HYPEUSDT",
+          "display_symbol": "HYPE/USDT",
+          "selection_volume": "1251258.61",
+          "price_scale": 2,
+          "quantity_scale": 2,
+          "prices": [
+            "62.65",
+            "63.41",
+            "65.81",
+            "66.13"
+          ],
+          "quantities": [
+            "0.01",
+            "0.27",
+            "19388.39"
+          ]
+        },
+        {
+          "venue": "mexc",
+          "market_type": "spot",
+          "rank": 37,
+          "symbol": "GOLD(XAUT)USDT",
+          "display_symbol": "GOLD(XAUT)/USDT",
+          "selection_volume": "1244662.04",
+          "price_scale": 2,
+          "quantity_scale": 5,
+          "prices": [
+            "3992.83",
+            "4003.33",
+            "4053.38",
+            "4096.73"
+          ],
+          "quantities": [
+            "0.001",
+            "1.0399",
+            "306.73592"
+          ]
+        },
+        {
+          "venue": "mexc",
+          "market_type": "spot",
+          "rank": 38,
+          "symbol": "FILUSDT",
+          "display_symbol": "FIL/USDT",
+          "selection_volume": "1173015.6336",
+          "price_scale": 4,
+          "quantity_scale": 4,
+          "prices": [
+            "0.7508",
+            "0.7523",
+            "0.7856",
+            "0.7908"
+          ],
+          "quantities": [
+            "0.0001",
+            "3978.61",
+            "1522888.138"
+          ]
+        },
+        {
+          "venue": "mexc",
+          "market_type": "spot",
+          "rank": 39,
+          "symbol": "XLMUSDT",
+          "display_symbol": "XLM/USDT",
+          "selection_volume": "1152890.9372",
+          "price_scale": 4,
+          "quantity_scale": 2,
+          "prices": [
+            "0.1779",
+            "0.1806",
+            "0.184",
+            "0.1866"
+          ],
+          "quantities": [
+            "0.1",
+            "15639.83",
+            "6318092.48"
+          ]
+        },
+        {
+          "venue": "mexc",
+          "market_type": "spot",
+          "rank": 40,
+          "symbol": "TOFUUSDT",
+          "display_symbol": "TOFU/USDT",
+          "selection_volume": "1119920.6876",
+          "price_scale": 4,
+          "quantity_scale": 2,
+          "prices": [
+            "0.299",
+            "0.4671",
+            "0.5976",
+            "0.78"
+          ],
+          "quantities": [
+            "0.01",
+            "6.67",
+            "2432824.07"
+          ]
+        },
+        {
+          "venue": "mexc",
+          "market_type": "spot",
+          "rank": 41,
+          "symbol": "ANSEMUSDT",
+          "display_symbol": "ANSEM/USDT",
+          "selection_volume": "1049317.54011",
+          "price_scale": 5,
+          "quantity_scale": 2,
+          "prices": [
+            "0.21547",
+            "0.21967",
+            "0.22022",
+            "0.29196"
+          ],
+          "quantities": [
+            "0.01",
+            "7.5",
+            "4280927.3"
+          ]
+        },
+        {
+          "venue": "mexc",
+          "market_type": "spot",
+          "rank": 42,
+          "symbol": "TOYLUSDT",
+          "display_symbol": "TOYL/USDT",
+          "selection_volume": "1032340.645334",
+          "price_scale": 6,
+          "quantity_scale": 2,
+          "prices": [
+            "0.001331",
+            "0.001345",
+            "0.001392",
+            "0.003"
+          ],
+          "quantities": [
+            "0.01",
+            "5939.12",
+            "457072833.65"
+          ]
+        },
+        {
+          "venue": "mexc",
+          "market_type": "spot",
+          "rank": 43,
+          "symbol": "CRVUSDT",
+          "display_symbol": "CRV/USDT",
+          "selection_volume": "1029983.4863",
+          "price_scale": 4,
+          "quantity_scale": 3,
+          "prices": [
+            "0.211",
+            "0.2145",
+            "0.2243",
+            "0.2301"
+          ],
+          "quantities": [
+            "0.01",
+            "495",
+            "4615382.517"
+          ]
+        },
+        {
+          "venue": "mexc",
+          "market_type": "spot",
+          "rank": 44,
+          "symbol": "BRLUSDT",
+          "display_symbol": "BRL/USDT",
+          "selection_volume": "974574.5846",
+          "price_scale": 4,
+          "quantity_scale": 2,
+          "prices": [
+            "0.1896",
+            "0.191",
+            "0.1931",
+            "0.1948"
+          ],
+          "quantities": [
+            "0.01",
+            "6795.54",
+            "5069690.01"
+          ]
+        },
+        {
+          "venue": "mexc",
+          "market_type": "spot",
+          "rank": 45,
+          "symbol": "MBGUSDT",
+          "display_symbol": "MBG/USDT",
+          "selection_volume": "954563.0827",
+          "price_scale": 4,
+          "quantity_scale": 2,
+          "prices": [
+            "0.129",
+            "0.1299",
+            "0.1309",
+            "0.1358"
+          ],
+          "quantities": [
+            "0.01",
+            "169.93",
+            "7155775.54"
+          ]
+        },
+        {
+          "venue": "mexc",
+          "market_type": "spot",
+          "rank": 46,
+          "symbol": "LVRUSDT",
+          "display_symbol": "LVR/USDT",
+          "selection_volume": "825430.235",
+          "price_scale": 4,
+          "quantity_scale": 2,
+          "prices": [
+            "0.0025",
+            "0.0028",
+            "0.0029",
+            "0.0058"
+          ],
+          "quantities": [
+            "0.01",
+            "42873.16",
+            "250451995.92"
+          ]
+        },
+        {
+          "venue": "mexc",
+          "market_type": "spot",
+          "rank": 47,
+          "symbol": "9BITUSDT",
+          "display_symbol": "9BIT/USDT",
+          "selection_volume": "815698.107166",
+          "price_scale": 6,
+          "quantity_scale": 2,
+          "prices": [
+            "0.046848",
+            "0.046855",
+            "0.046888",
+            "0.047366"
+          ],
+          "quantities": [
+            "0.01",
+            "133.75",
+            "17374157.72"
+          ]
+        },
+        {
+          "venue": "mexc",
+          "market_type": "spot",
+          "rank": 48,
+          "symbol": "ASTERUSDT",
+          "display_symbol": "ASTER/USDT",
+          "selection_volume": "803452.3392",
+          "price_scale": 4,
+          "quantity_scale": 2,
+          "prices": [
+            "0.624",
+            "0.6289",
+            "0.6306",
+            "0.6405"
+          ],
+          "quantities": [
+            "0.01",
+            "47.71",
+            "1275407.81"
+          ]
+        },
+        {
+          "venue": "mexc",
+          "market_type": "spot",
+          "rank": 49,
+          "symbol": "SHOTUSDT",
+          "display_symbol": "SHOT/USDT",
+          "selection_volume": "802398.840759",
+          "price_scale": 6,
+          "quantity_scale": 2,
+          "prices": [
+            "0.00075",
+            "0.00092",
+            "0.000938",
+            "0.001092"
+          ],
+          "quantities": [
+            "0.01",
+            "18044.73",
+            "892515957.7"
+          ]
+        },
+        {
+          "venue": "mexc",
+          "market_type": "spot",
+          "rank": 50,
+          "symbol": "TIAUSDT",
+          "display_symbol": "TIA/USDT",
+          "selection_volume": "791371.9631",
+          "price_scale": 4,
+          "quantity_scale": 2,
+          "prices": [
+            "0.3951",
+            "0.4001",
+            "0.4109",
+            "0.4153"
+          ],
+          "quantities": [
+            "0.01",
+            "25.35",
+            "1953269.43"
+          ]
+        },
+        {
+          "venue": "mexc",
+          "market_type": "spot",
+          "rank": 51,
+          "symbol": "BILLUSDT",
+          "display_symbol": "BILL/USDT",
+          "selection_volume": "786929.11745",
+          "price_scale": 5,
+          "quantity_scale": 2,
+          "prices": [
+            "0.03831",
+            "0.04066",
+            "0.04073",
+            "0.06813"
+          ],
+          "quantities": [
+            "0.01",
+            "1589.37",
+            "15368921.96"
+          ]
+        },
+        {
+          "venue": "mexc",
+          "market_type": "spot",
+          "rank": 52,
+          "symbol": "AVAXUSDT",
+          "display_symbol": "AVAX/USDT",
+          "selection_volume": "761048.014",
+          "price_scale": 3,
+          "quantity_scale": 4,
+          "prices": [
+            "6.42",
+            "6.467",
+            "6.666",
+            "6.756"
+          ],
+          "quantities": [
+            "0.0001",
+            "211.19",
+            "115228.16"
+          ]
+        },
+        {
+          "venue": "mexc",
+          "market_type": "spot",
+          "rank": 53,
+          "symbol": "SHIBUSDT",
+          "display_symbol": "SHIB/USDT",
+          "selection_volume": "756960.590274433",
+          "price_scale": 9,
+          "quantity_scale": 0,
+          "prices": [
+            "0.000004117",
+            "0.00000414",
+            "0.00000422",
+            "0.000004272"
+          ],
+          "quantities": [
+            "10000",
+            "23719165",
+            "180644975343"
+          ]
+        },
+        {
+          "venue": "mexc",
+          "market_type": "spot",
+          "rank": 54,
+          "symbol": "NXTUSDT",
+          "display_symbol": "NXT/USDT",
+          "selection_volume": "756930.94051",
+          "price_scale": 5,
+          "quantity_scale": 2,
+          "prices": [
+            "0.19115",
+            "0.19285",
+            "0.19288",
+            "0.19456"
+          ],
+          "quantities": [
+            "0.01",
+            "25.01",
+            "3928490.8"
+          ]
+        },
+        {
+          "venue": "mexc",
+          "market_type": "spot",
+          "rank": 55,
+          "symbol": "SPACEX(PRE)USDT",
+          "display_symbol": "SPACEX(PRE)/USDT",
+          "selection_volume": "746126.03",
+          "price_scale": 2,
+          "quantity_scale": 3,
+          "prices": [
+            "132.6",
+            "133.44",
+            "133.59",
+            "139.53"
+          ],
+          "quantities": [
+            "0.001",
+            "0.235",
+            "5479.656"
+          ]
+        },
+        {
+          "venue": "mexc",
+          "market_type": "spot",
+          "rank": 56,
+          "symbol": "XPLUSDT",
+          "display_symbol": "XPL/USDT",
+          "selection_volume": "741845.3284",
+          "price_scale": 5,
+          "quantity_scale": 2,
+          "prices": [
+            "0.08826",
+            "0.08916",
+            "0.09317",
+            "0.09592"
+          ],
+          "quantities": [
+            "0.01",
+            "193.9",
+            "8016762.88"
+          ]
+        },
+        {
+          "venue": "mexc",
+          "market_type": "spot",
+          "rank": 57,
+          "symbol": "ATLAUSDT",
+          "display_symbol": "ATLA/USDT",
+          "selection_volume": "741006.712",
+          "price_scale": 4,
+          "quantity_scale": 2,
+          "prices": [
+            "151.3183",
+            "152.2226",
+            "152.868",
+            "155.4739"
+          ],
+          "quantities": [
+            "0.01",
+            "0.02",
+            "4856.44"
+          ]
+        },
+        {
+          "venue": "mexc",
+          "market_type": "spot",
+          "rank": 58,
+          "symbol": "KAZARUSDT",
+          "display_symbol": "KAZAR/USDT",
+          "selection_volume": "729212.5672724",
+          "price_scale": 7,
+          "quantity_scale": 2,
+          "prices": [
+            "0.00009",
+            "0.0000923",
+            "0.0000954",
+            "0.0001282"
+          ],
+          "quantities": [
+            "0.01",
+            "47325.07",
+            "6510930673.81"
+          ]
+        },
+        {
+          "venue": "mexc",
+          "market_type": "spot",
+          "rank": 59,
+          "symbol": "LINKUSDT",
+          "display_symbol": "LINK/USDT",
+          "selection_volume": "700728.777",
+          "price_scale": 3,
+          "quantity_scale": 2,
+          "prices": [
+            "7.867",
+            "7.924",
+            "8.334",
+            "8.4"
+          ],
+          "quantities": [
+            "0.01",
+            "431.04",
+            "85567.39"
+          ]
+        },
+        {
+          "venue": "mexc",
+          "market_type": "spot",
+          "rank": 60,
+          "symbol": "EURUSDT",
+          "display_symbol": "EUR/USDT",
+          "selection_volume": "692063.2556",
+          "price_scale": 4,
+          "quantity_scale": 2,
+          "prices": [
+            "1.1396",
+            "1.1399",
+            "1.1436",
+            "1.1516"
+          ],
+          "quantities": [
+            "0.01",
+            "111.4",
+            "605696.66"
+          ]
+        },
+        {
+          "venue": "mexc",
+          "market_type": "spot",
+          "rank": 61,
+          "symbol": "AAVEUSDT",
+          "display_symbol": "AAVE/USDT",
+          "selection_volume": "690156.2",
+          "price_scale": 2,
+          "quantity_scale": 4,
+          "prices": [
+            "95.22",
+            "95.29",
+            "99.32",
+            "101.07"
+          ],
+          "quantities": [
+            "0.0001",
+            "4.711",
+            "7021.145"
+          ]
+        },
+        {
+          "venue": "mexc",
+          "market_type": "spot",
+          "rank": 62,
+          "symbol": "ENAUSDT",
+          "display_symbol": "ENA/USDT",
+          "selection_volume": "689556.43074",
+          "price_scale": 5,
+          "quantity_scale": 2,
+          "prices": [
+            "0.07924",
+            "0.08375",
+            "0.08379",
+            "0.08519"
+          ],
+          "quantities": [
+            "0.01",
+            "3432.16",
+            "8282610.23"
+          ]
+        },
+        {
+          "venue": "mexc",
+          "market_type": "spot",
+          "rank": 63,
+          "symbol": "MINDHIVEUSDT",
+          "display_symbol": "MINDHIVE/USDT",
+          "selection_volume": "678100.5215514",
+          "price_scale": 7,
+          "quantity_scale": 2,
+          "prices": [
+            "0.0007901",
+            "0.0007909",
+            "0.0007929",
+            "0.0008864"
+          ],
+          "quantities": [
+            "0.01",
+            "28627.02",
+            "799605025.97"
+          ]
+        },
+        {
+          "venue": "mexc",
+          "market_type": "spot",
+          "rank": 64,
+          "symbol": "ZANOUSDT",
+          "display_symbol": "ZANO/USDT",
+          "selection_volume": "625387.825",
+          "price_scale": 3,
+          "quantity_scale": 2,
+          "prices": [
+            "9.3",
+            "9.613",
+            "9.619",
+            "10.096"
+          ],
+          "quantities": [
+            "0.01",
+            "1.92",
+            "63190.85"
+          ]
+        },
+        {
+          "venue": "mexc",
+          "market_type": "spot",
+          "rank": 65,
+          "symbol": "BSBUSDT",
+          "display_symbol": "BSB/USDT",
+          "selection_volume": "610502.60727",
+          "price_scale": 5,
+          "quantity_scale": 2,
+          "prices": [
+            "0.11804",
+            "0.11833",
+            "0.15919",
+            "0.17496"
+          ],
+          "quantities": [
+            "0.01",
+            "475.86",
+            "4067184.24"
+          ]
+        },
+        {
+          "venue": "mexc",
+          "market_type": "spot",
+          "rank": 66,
+          "symbol": "ADIUSDT",
+          "display_symbol": "ADI/USDT",
+          "selection_volume": "591607.1428",
+          "price_scale": 4,
+          "quantity_scale": 2,
+          "prices": [
+            "6.9673",
+            "7.0033",
+            "7.022",
+            "7.1116"
+          ],
+          "quantities": [
+            "0.01",
+            "1.11",
+            "84090.09"
+          ]
+        },
+        {
+          "venue": "mexc",
+          "market_type": "spot",
+          "rank": 67,
+          "symbol": "AIXUSDT",
+          "display_symbol": "AIX/USDT",
+          "selection_volume": "575977.200196",
+          "price_scale": 6,
+          "quantity_scale": 2,
+          "prices": [
+            "0.360003",
+            "0.373788",
+            "0.374049",
+            "0.396568"
+          ],
+          "quantities": [
+            "0.01",
+            "3.53",
+            "1502487.86"
+          ]
+        },
+        {
+          "venue": "mexc",
+          "market_type": "spot",
+          "rank": 68,
+          "symbol": "HANDLUSDT",
+          "display_symbol": "HANDL/USDT",
+          "selection_volume": "568566.7137514",
+          "price_scale": 7,
+          "quantity_scale": 2,
+          "prices": [
+            "0.003474",
+            "0.0035993",
+            "0.0036064",
+            "0.0039396"
+          ],
+          "quantities": [
+            "0.01",
+            "1173.37",
+            "153755416.63"
+          ]
+        },
+        {
+          "venue": "mexc",
+          "market_type": "spot",
+          "rank": 69,
+          "symbol": "DASHUSDT",
+          "display_symbol": "DASH/USDT",
+          "selection_volume": "561549.17",
+          "price_scale": 2,
+          "quantity_scale": 6,
+          "prices": [
+            "32.43",
+            "32.97",
+            "34.14",
+            "34.44"
+          ],
+          "quantities": [
+            "0.001",
+            "26.079",
+            "16684.861103"
+          ]
+        },
+        {
+          "venue": "mexc",
+          "market_type": "spot",
+          "rank": 70,
+          "symbol": "ISEKUSDT",
+          "display_symbol": "ISEK/USDT",
+          "selection_volume": "545327.1016",
+          "price_scale": 4,
+          "quantity_scale": 2,
+          "prices": [
+            "0.426",
+            "0.5076",
+            "0.5426",
+            "0.8006"
+          ],
+          "quantities": [
+            "0.01",
+            "9.6",
+            "1173026.58"
+          ]
+        },
+        {
+          "venue": "mexc",
+          "market_type": "spot",
+          "rank": 71,
+          "symbol": "GALAUSDT",
+          "display_symbol": "GALA/USDT",
+          "selection_volume": "544869.3657",
+          "price_scale": 6,
+          "quantity_scale": 3,
+          "prices": [
+            "0.002",
+            "0.002025",
+            "0.002031",
+            "0.002099"
+          ],
+          "quantities": [
+            "0.001",
+            "7885.23",
+            "265748730.89"
+          ]
+        },
+        {
+          "venue": "mexc",
+          "market_type": "spot",
+          "rank": 72,
+          "symbol": "SPCMUSDT",
+          "display_symbol": "SPCM/USDT",
+          "selection_volume": "538317.8436758",
+          "price_scale": 7,
+          "quantity_scale": 2,
+          "prices": [
+            "0.0003641",
+            "0.0003684",
+            "0.0003924",
+            "0.0004006"
+          ],
+          "quantities": [
+            "0.01",
+            "81935.28",
+            "1417438812.41"
+          ]
+        },
+        {
+          "venue": "mexc",
+          "market_type": "spot",
+          "rank": 73,
+          "symbol": "REALUSDT",
+          "display_symbol": "REAL/USDT",
+          "selection_volume": "537947.51057",
+          "price_scale": 5,
+          "quantity_scale": 2,
+          "prices": [
+            "0.06732",
+            "0.06736",
+            "0.07116",
+            "0.07155"
+          ],
+          "quantities": [
+            "0.01",
+            "103.48",
+            "7788344.97"
+          ]
+        },
+        {
+          "venue": "mexc",
+          "market_type": "spot",
+          "rank": 74,
+          "symbol": "STARUSDT",
+          "display_symbol": "STAR/USDT",
+          "selection_volume": "526347.0892",
+          "price_scale": 4,
+          "quantity_scale": 2,
+          "prices": [
+            "0.1574",
+            "0.1615",
+            "0.1663",
+            "0.1664"
+          ],
+          "quantities": [
+            "0.01",
+            "33",
+            "3281522.11"
+          ]
+        },
+        {
+          "venue": "mexc",
+          "market_type": "spot",
+          "rank": 75,
+          "symbol": "ZIGUSDT",
+          "display_symbol": "ZIG/USDT",
+          "selection_volume": "517294.627135",
+          "price_scale": 6,
+          "quantity_scale": 3,
+          "prices": [
+            "0.040726",
+            "0.041314",
+            "0.043648",
+            "0.044058"
+          ],
+          "quantities": [
+            "0.001",
+            "37.73",
+            "12197218.32"
+          ]
+        },
+        {
+          "venue": "mexc",
+          "market_type": "spot",
+          "rank": 76,
+          "symbol": "SYRTUSDT",
+          "display_symbol": "SYRT/USDT",
+          "selection_volume": "499819.69473",
+          "price_scale": 5,
+          "quantity_scale": 2,
+          "prices": [
+            "0.0246",
+            "0.02677",
+            "0.02699",
+            "0.05353"
+          ],
+          "quantities": [
+            "0.01",
+            "362.49",
+            "13075432.86"
+          ]
+        },
+        {
+          "venue": "mexc",
+          "market_type": "spot",
+          "rank": 77,
+          "symbol": "PIUSDT",
+          "display_symbol": "PI/USDT",
+          "selection_volume": "481486.89363",
+          "price_scale": 5,
+          "quantity_scale": 2,
+          "prices": [
+            "0.07044",
+            "0.07282",
+            "0.07783",
+            "0.0831"
+          ],
+          "quantities": [
+            "0.01",
+            "174.55",
+            "6367318.6"
+          ]
+        },
+        {
+          "venue": "mexc",
+          "market_type": "spot",
+          "rank": 78,
+          "symbol": "PENDLEUSDT",
+          "display_symbol": "PENDLE/USDT",
+          "selection_volume": "475774.928",
+          "price_scale": 3,
+          "quantity_scale": 4,
+          "prices": [
+            "1.45",
+            "1.467",
+            "1.557",
+            "1.595"
+          ],
+          "quantities": [
+            "0.0001",
+            "535.9",
+            "312830.81"
+          ]
+        },
+        {
+          "venue": "mexc",
+          "market_type": "spot",
+          "rank": 79,
+          "symbol": "DNUSDT",
+          "display_symbol": "DN/USDT",
+          "selection_volume": "463420.06362",
+          "price_scale": 5,
+          "quantity_scale": 2,
+          "prices": [
+            "0.06347",
+            "0.0662",
+            "0.06639",
+            "0.0815"
+          ],
+          "quantities": [
+            "0.01",
+            "54.74",
+            "6598809.4"
+          ]
+        },
+        {
+          "venue": "mexc",
+          "market_type": "spot",
+          "rank": 80,
+          "symbol": "BONKUSDT",
+          "display_symbol": "BONK/USDT",
+          "selection_volume": "458645.703569583",
+          "price_scale": 9,
+          "quantity_scale": 0,
+          "prices": [
+            "0.000003667",
+            "0.000003689",
+            "0.000003756",
+            "0.000003942"
+          ],
+          "quantities": [
+            "1",
+            "2000000",
+            "120276106317"
+          ]
+        },
+        {
+          "venue": "mexc",
+          "market_type": "spot",
+          "rank": 81,
+          "symbol": "SYNUSDT",
+          "display_symbol": "SYN/USDT",
+          "selection_volume": "450263.18931",
+          "price_scale": 5,
+          "quantity_scale": 3,
+          "prices": [
+            "0.21787",
+            "0.24776",
+            "0.27716",
+            "0.31779"
+          ],
+          "quantities": [
+            "0.001",
+            "1230.89",
+            "1643703.71"
+          ]
+        },
+        {
+          "venue": "mexc",
+          "market_type": "spot",
+          "rank": 82,
+          "symbol": "ATOMUSDT",
+          "display_symbol": "ATOM/USDT",
+          "selection_volume": "446366.582",
+          "price_scale": 3,
+          "quantity_scale": 3,
+          "prices": [
+            "1.517",
+            "1.536",
+            "1.558",
+            "1.574"
+          ],
+          "quantities": [
+            "0.001",
+            "163.01",
+            "289465.35"
+          ]
+        },
+        {
+          "venue": "mexc",
+          "market_type": "spot",
+          "rank": 83,
+          "symbol": "BIT1USDT",
+          "display_symbol": "BIT1/USDT",
+          "selection_volume": "440564.2074408",
+          "price_scale": 9,
+          "quantity_scale": 4,
+          "prices": [
+            "0.00000115",
+            "0.000001177",
+            "0.000001223",
+            "0.000001227"
+          ],
+          "quantities": [
+            "0.0001",
+            "193347620.19",
+            "363531448425.17"
+          ]
+        },
+        {
+          "venue": "mexc",
+          "market_type": "spot",
+          "rank": 84,
+          "symbol": "ULTIMAUSDT",
+          "display_symbol": "ULTIMA/USDT",
+          "selection_volume": "436667.31",
+          "price_scale": 2,
+          "quantity_scale": 4,
+          "prices": [
+            "2236.5",
+            "2280.07",
+            "2282.86",
+            "2499.4"
+          ],
+          "quantities": [
+            "0.0001",
+            "0.0012",
+            "182.7741"
+          ]
+        },
+        {
+          "venue": "mexc",
+          "market_type": "spot",
+          "rank": 85,
+          "symbol": "ALLOUSDT",
+          "display_symbol": "ALLO/USDT",
+          "selection_volume": "428549.38044",
+          "price_scale": 5,
+          "quantity_scale": 2,
+          "prices": [
+            "0.35762",
+            "0.36277",
+            "0.36361",
+            "0.47548"
+          ],
+          "quantities": [
+            "0.01",
+            "64",
+            "1096986.86"
+          ]
+        },
+        {
+          "venue": "mexc",
+          "market_type": "spot",
+          "rank": 86,
+          "symbol": "SEDAUSDT",
+          "display_symbol": "SEDA/USDT",
+          "selection_volume": "427539.4808",
+          "price_scale": 5,
+          "quantity_scale": 2,
+          "prices": [
+            "0.02262",
+            "0.02265",
+            "0.02318",
+            "0.02383"
+          ],
+          "quantities": [
+            "0.01",
+            "2611.98",
+            "18273437.38"
+          ]
+        },
+        {
+          "venue": "mexc",
+          "market_type": "spot",
+          "rank": 87,
+          "symbol": "KASUSDT",
+          "display_symbol": "KAS/USDT",
+          "selection_volume": "413136.970548",
+          "price_scale": 6,
+          "quantity_scale": 3,
+          "prices": [
+            "0.0281",
+            "0.028486",
+            "0.028786",
+            "0.029055"
+          ],
+          "quantities": [
+            "0.001",
+            "1735.29",
+            "14512211.96"
+          ]
+        },
+        {
+          "venue": "mexc",
+          "market_type": "spot",
+          "rank": 88,
+          "symbol": "TTNUSDT",
+          "display_symbol": "TTN/USDT",
+          "selection_volume": "406063.98889",
+          "price_scale": 5,
+          "quantity_scale": 2,
+          "prices": [
+            "0.06381",
+            "0.06397",
+            "0.06673",
+            "0.06763"
+          ],
+          "quantities": [
+            "0.01",
+            "115.46",
+            "6155231.4"
+          ]
+        },
+        {
+          "venue": "mexc",
+          "market_type": "spot",
+          "rank": 89,
+          "symbol": "CAKEUSDT",
+          "display_symbol": "CAKE/USDT",
+          "selection_volume": "400959.528",
+          "price_scale": 3,
+          "quantity_scale": 3,
+          "prices": [
+            "1.395",
+            "1.415",
+            "1.448",
+            "1.452"
+          ],
+          "quantities": [
+            "0.001",
+            "898.8",
+            "282725.88"
+          ]
+        },
+        {
+          "venue": "mexc",
+          "market_type": "spot",
+          "rank": 90,
+          "symbol": "WLDUSDT",
+          "display_symbol": "WLD/USDT",
+          "selection_volume": "390419.8494",
+          "price_scale": 4,
+          "quantity_scale": 2,
+          "prices": [
+            "0.3826",
+            "0.3919",
+            "0.4128",
+            "0.4182"
+          ],
+          "quantities": [
+            "0.01",
+            "290.9",
+            "960486.8"
+          ]
+        },
+        {
+          "venue": "mexc",
+          "market_type": "spot",
+          "rank": 91,
+          "symbol": "FOLKSUSDT",
+          "display_symbol": "FOLKS/USDT",
+          "selection_volume": "388027.1757",
+          "price_scale": 4,
+          "quantity_scale": 2,
+          "prices": [
+            "1.9926",
+            "2.0645",
+            "2.0671",
+            "2.2789"
+          ],
+          "quantities": [
+            "0.01",
+            "6",
+            "180382.92"
+          ]
+        },
+        {
+          "venue": "mexc",
+          "market_type": "spot",
+          "rank": 92,
+          "symbol": "ZROUSDT",
+          "display_symbol": "ZRO/USDT",
+          "selection_volume": "379351.9634",
+          "price_scale": 4,
+          "quantity_scale": 2,
+          "prices": [
+            "0.8393",
+            "0.8641",
+            "0.8649",
+            "0.8908"
+          ],
+          "quantities": [
+            "0.01",
+            "23.14",
+            "440511.85"
+          ]
+        },
+        {
+          "venue": "mexc",
+          "market_type": "spot",
+          "rank": 93,
+          "symbol": "MUSDT",
+          "display_symbol": "M/USDT",
+          "selection_volume": "374493.89446",
+          "price_scale": 5,
+          "quantity_scale": 2,
+          "prices": [
+            "1.18",
+            "1.21461",
+            "1.22472",
+            "1.58357"
+          ],
+          "quantities": [
+            "0.01",
+            "509.88",
+            "283957.94"
+          ]
+        },
+        {
+          "venue": "mexc",
+          "market_type": "spot",
+          "rank": 94,
+          "symbol": "UMXMUSDT",
+          "display_symbol": "UMXM/USDT",
+          "selection_volume": "370605.243",
+          "price_scale": 3,
+          "quantity_scale": 2,
+          "prices": [
+            "2.264",
+            "2.285",
+            "2.294",
+            "2.305"
+          ],
+          "quantities": [
+            "0.01",
+            "2.18",
+            "161610.5"
+          ]
+        },
+        {
+          "venue": "mexc",
+          "market_type": "spot",
+          "rank": 95,
+          "symbol": "BEATUSDT",
+          "display_symbol": "BEAT/USDT",
+          "selection_volume": "363943.87462",
+          "price_scale": 5,
+          "quantity_scale": 2,
+          "prices": [
+            "2.48707",
+            "2.55997",
+            "2.56292",
+            "2.68509"
+          ],
+          "quantities": [
+            "0.01",
+            "33.01",
+            "139555.13"
+          ]
+        },
+        {
+          "venue": "mexc",
+          "market_type": "spot",
+          "rank": 96,
+          "symbol": "JUPUSDT",
+          "display_symbol": "JUP/USDT",
+          "selection_volume": "352722.859",
+          "price_scale": 4,
+          "quantity_scale": 2,
+          "prices": [
+            "0.1997",
+            "0.2059",
+            "0.2101",
+            "0.2142"
+          ],
+          "quantities": [
+            "0.01",
+            "992.9",
+            "1700447.54"
+          ]
+        },
+        {
+          "venue": "mexc",
+          "market_type": "spot",
+          "rank": 97,
+          "symbol": "PYTHUSDT",
+          "display_symbol": "PYTH/USDT",
+          "selection_volume": "349300.4297",
+          "price_scale": 5,
+          "quantity_scale": 2,
+          "prices": [
+            "0.0455",
+            "0.04698",
+            "0.04815",
+            "0.04824"
+          ],
+          "quantities": [
+            "0.01",
+            "105.7",
+            "7508990.18"
+          ]
+        },
+        {
+          "venue": "mexc",
+          "market_type": "spot",
+          "rank": 98,
+          "symbol": "HEIUSDT",
+          "display_symbol": "HEI/USDT",
+          "selection_volume": "349027.47361",
+          "price_scale": 5,
+          "quantity_scale": 2,
+          "prices": [
+            "0.10288",
+            "0.10355",
+            "0.10366",
+            "0.12623"
+          ],
+          "quantities": [
+            "0.01",
+            "32.97",
+            "3090938.38"
+          ]
+        },
+        {
+          "venue": "mexc",
+          "market_type": "spot",
+          "rank": 99,
+          "symbol": "ZBTUSDT",
+          "display_symbol": "ZBT/USDT",
+          "selection_volume": "334145.70942",
+          "price_scale": 5,
+          "quantity_scale": 2,
+          "prices": [
+            "0.10228",
+            "0.10239",
+            "0.1024",
+            "0.14864"
+          ],
+          "quantities": [
+            "0.01",
+            "125",
+            "2568622.02"
+          ]
+        },
+        {
+          "venue": "mexc",
+          "market_type": "spot",
+          "rank": 100,
+          "symbol": "BTWUSDT",
+          "display_symbol": "BTW/USDT",
+          "selection_volume": "333809.32491",
+          "price_scale": 6,
+          "quantity_scale": 2,
+          "prices": [
+            "0.057915",
+            "0.05808",
+            "0.05823",
+            "0.060831"
+          ],
+          "quantities": [
+            "0.01",
+            "232.75",
+            "5590640.99"
+          ]
+        }
+      ]
+    },
+    {
+      "venue": "hyperliquid",
+      "market_type": "spot",
+      "selection": "top 100 main-dex spot markets by 24h dayNtlVlm",
+      "endpoints": [
+        "https://api.hyperliquid.xyz/info: spotMetaAndAssetCtxs",
+        "https://api.hyperliquid.xyz/info: l2Book"
+      ],
+      "markets": [
+        {
+          "venue": "hyperliquid",
+          "market_type": "spot",
+          "rank": 1,
+          "symbol": "@107",
+          "display_symbol": "HYPE/USDC",
+          "selection_volume": "49036634.0052999929",
+          "price_scale": 4,
+          "quantity_scale": 2,
+          "prices": [
+            "63.519",
+            "65.688",
+            "65.73",
+            "65.7665"
+          ],
+          "quantities": [
+            "0.01",
+            "48.18",
+            "1462.58"
+          ]
+        },
+        {
+          "venue": "hyperliquid",
+          "market_type": "spot",
+          "rank": 2,
+          "symbol": "@142",
+          "display_symbol": "UBTC/USDC",
+          "selection_volume": "29531510.2189299949",
+          "price_scale": 1,
+          "quantity_scale": 5,
+          "prices": [
+            "62499.0",
+            "64779.0",
+            "64800.0",
+            "64816.0"
+          ],
+          "quantities": [
+            "0.00001",
+            "0.22837",
+            "8.87295"
+          ]
+        },
+        {
+          "venue": "hyperliquid",
+          "market_type": "spot",
+          "rank": 3,
+          "symbol": "@151",
+          "display_symbol": "UETH/USDC",
+          "selection_volume": "12115474.7604600023",
+          "price_scale": 1,
+          "quantity_scale": 4,
+          "prices": [
+            "1784.1",
+            "1879.6",
+            "1881.0",
+            "1882.4"
+          ],
+          "quantities": [
+            "0.0001",
+            "8.3043",
+            "70.2217"
+          ]
+        },
+        {
+          "venue": "hyperliquid",
+          "market_type": "spot",
+          "rank": 4,
+          "symbol": "@272",
+          "display_symbol": "UZEC/USDC",
+          "selection_volume": "5345949.9109289991",
+          "price_scale": 2,
+          "quantity_scale": 4,
+          "prices": [
+            "499.87",
+            "555.9",
+            "557.03",
+            "558.23"
+          ],
+          "quantities": [
+            "0.0001",
+            "1.188",
+            "34.2469"
+          ]
+        },
+        {
+          "venue": "hyperliquid",
+          "market_type": "spot",
+          "rank": 5,
+          "symbol": "@156",
+          "display_symbol": "USOL/USDC",
+          "selection_volume": "2855931.9879459995",
+          "price_scale": 3,
+          "quantity_scale": 3,
+          "prices": [
+            "75.36",
+            "77.58",
+            "77.619",
+            "77.658"
+          ],
+          "quantities": [
+            "0.001",
+            "25.996",
+            "263.93"
+          ]
+        },
+        {
+          "venue": "hyperliquid",
+          "market_type": "spot",
+          "rank": 6,
+          "symbol": "@700",
+          "display_symbol": "DRV/USDC",
+          "selection_volume": "991247.6416474001",
+          "price_scale": 5,
+          "quantity_scale": 2,
+          "prices": [
+            "0.11636",
+            "0.14751",
+            "0.15095",
+            "0.15383"
+          ],
+          "quantities": [
+            "0.01",
+            "2880.44",
+            "27116.79"
+          ]
+        },
+        {
+          "venue": "hyperliquid",
+          "market_type": "spot",
+          "rank": 7,
+          "symbol": "@188",
+          "display_symbol": "UPUMP/USDC",
+          "selection_volume": "899264.7403494003",
+          "price_scale": 7,
+          "quantity_scale": 1,
+          "prices": [
+            "0.0014809",
+            "0.0015101",
+            "0.0015168",
+            "0.0015233"
+          ],
+          "quantities": [
+            "1",
+            "825927.0",
+            "5890383.0"
+          ]
+        },
+        {
+          "venue": "hyperliquid",
+          "market_type": "spot",
+          "rank": 8,
+          "symbol": "@166",
+          "display_symbol": "USDT0/USDC",
+          "selection_volume": "883468.6135291001",
+          "price_scale": 5,
+          "quantity_scale": 2,
+          "prices": [
+            "0.99828",
+            "0.99893",
+            "0.99967",
+            "0.99999"
+          ],
+          "quantities": [
+            "0.01",
+            "6688.5",
+            "109081.55"
+          ]
+        },
+        {
+          "venue": "hyperliquid",
+          "market_type": "spot",
+          "rank": 9,
+          "symbol": "@699",
+          "display_symbol": "UANSEM/USDC",
+          "selection_volume": "763605.0184099994",
+          "price_scale": 5,
+          "quantity_scale": 1,
+          "prices": [
+            "0.21318",
+            "0.2197",
+            "0.22268",
+            "0.27909"
+          ],
+          "quantities": [
+            "1",
+            "3556.0",
+            "27865.0"
+          ]
+        },
+        {
+          "venue": "hyperliquid",
+          "market_type": "spot",
+          "rank": 10,
+          "symbol": "@260",
+          "display_symbol": "XMR1/USDC",
+          "selection_volume": "704942.2349999999",
+          "price_scale": 2,
+          "quantity_scale": 2,
+          "prices": [
+            "320.99",
+            "331.23",
+            "332.97",
+            "333.72"
+          ],
+          "quantities": [
+            "0.01",
+            "1.22",
+            "60.0"
+          ]
+        },
+        {
+          "venue": "hyperliquid",
+          "market_type": "spot",
+          "rank": 11,
+          "symbol": "PURR/USDC",
+          "display_symbol": "PURR/USDC",
+          "selection_volume": "635262.766593",
+          "price_scale": 6,
+          "quantity_scale": 1,
+          "prices": [
+            "0.075887",
+            "0.083194",
+            "0.08398",
+            "0.085021"
+          ],
+          "quantities": [
+            "1",
+            "1240.0",
+            "100000.0"
+          ]
+        },
+        {
+          "venue": "hyperliquid",
+          "market_type": "spot",
+          "rank": 12,
+          "symbol": "@230",
+          "display_symbol": "USDH/USDC",
+          "selection_volume": "455477.4178375002",
+          "price_scale": 4,
+          "quantity_scale": 2,
+          "prices": [
+            "0.555",
+            "0.9997",
+            "1.0004",
+            "1.05"
+          ],
+          "quantities": [
+            "0.01",
+            "149210.01",
+            "1500000.0"
+          ]
+        },
+        {
+          "venue": "hyperliquid",
+          "market_type": "spot",
+          "rank": 13,
+          "symbol": "@210",
+          "display_symbol": "UXPL/USDC",
+          "selection_volume": "241145.9220188999",
+          "price_scale": 6,
+          "quantity_scale": 1,
+          "prices": [
+            "0.088959",
+            "0.093227",
+            "0.093474",
+            "0.093836"
+          ],
+          "quantities": [
+            "0.1",
+            "10489.8",
+            "123088.5"
+          ]
+        },
+        {
+          "venue": "hyperliquid",
+          "market_type": "spot",
+          "rank": 14,
+          "symbol": "@162",
+          "display_symbol": "UFART/USDC",
+          "selection_volume": "229590.692467",
+          "price_scale": 5,
+          "quantity_scale": 1,
+          "prices": [
+            "0.13891",
+            "0.14724",
+            "0.14763",
+            "0.14828"
+          ],
+          "quantities": [
+            "0.1",
+            "3198.1",
+            "45551.0"
+          ]
+        },
+        {
+          "venue": "hyperliquid",
+          "market_type": "spot",
+          "rank": 15,
+          "symbol": "@256",
+          "display_symbol": "SEDA/USDC",
+          "selection_volume": "198161.90383878",
+          "price_scale": 6,
+          "quantity_scale": 2,
+          "prices": [
+            "0.022641",
+            "0.02319",
+            "0.023401",
+            "0.023781"
+          ],
+          "quantities": [
+            "0.01",
+            "5284.24",
+            "158000.0"
+          ]
+        },
+        {
+          "venue": "hyperliquid",
+          "market_type": "spot",
+          "rank": 16,
+          "symbol": "@150",
+          "display_symbol": "USDE/USDC",
+          "selection_volume": "144224.2699493",
+          "price_scale": 5,
+          "quantity_scale": 2,
+          "prices": [
+            "0.99695",
+            "0.9993",
+            "1.0001",
+            "1.0194"
+          ],
+          "quantities": [
+            "0.01",
+            "23793.7",
+            "998003.99"
+          ]
+        },
+        {
+          "venue": "hyperliquid",
+          "market_type": "spot",
+          "rank": 17,
+          "symbol": "@243",
+          "display_symbol": "UMON/USDC",
+          "selection_volume": "131094.0999938",
+          "price_scale": 6,
+          "quantity_scale": 1,
+          "prices": [
+            "0.019972",
+            "0.022548",
+            "0.023031",
+            "0.039022"
+          ],
+          "quantities": [
+            "0.1",
+            "14847.1",
+            "1000000.0"
+          ]
+        },
+        {
+          "venue": "hyperliquid",
+          "market_type": "spot",
+          "rank": 18,
+          "symbol": "@182",
+          "display_symbol": "XAUT0/USDC",
+          "selection_volume": "107167.567",
+          "price_scale": 1,
+          "quantity_scale": 2,
+          "prices": [
+            "3993.9",
+            "4037.5",
+            "4056.0",
+            "4084.1"
+          ],
+          "quantities": [
+            "0.01",
+            "0.5",
+            "25.64"
+          ]
+        },
+        {
+          "venue": "hyperliquid",
+          "market_type": "spot",
+          "rank": 19,
+          "symbol": "@334",
+          "display_symbol": "KNTQ/USDC",
+          "selection_volume": "99349.6080413",
+          "price_scale": 5,
+          "quantity_scale": 2,
+          "prices": [
+            "0.11988",
+            "0.12074",
+            "0.1216",
+            "0.12543"
+          ],
+          "quantities": [
+            "0.01",
+            "15800.0",
+            "190093.61"
+          ]
+        },
+        {
+          "venue": "hyperliquid",
+          "market_type": "spot",
+          "rank": 20,
+          "symbol": "@304",
+          "display_symbol": "LAMA/USDC",
+          "selection_volume": "77156.2086617",
+          "price_scale": 6,
+          "quantity_scale": 2,
+          "prices": [
+            "0.00451",
+            "0.004752",
+            "0.004829",
+            "0.004907"
+          ],
+          "quantities": [
+            "0.01",
+            "2778.0",
+            "13228.92"
+          ]
+        },
+        {
+          "venue": "hyperliquid",
+          "market_type": "spot",
+          "rank": 21,
+          "symbol": "@1",
+          "display_symbol": "HFUN/USDC",
+          "selection_volume": "71853.82297",
+          "price_scale": 3,
+          "quantity_scale": 2,
+          "prices": [
+            "12.944",
+            "13.411",
+            "13.814",
+            "14.314"
+          ],
+          "quantities": [
+            "0.01",
+            "95.9",
+            "129.0"
+          ]
+        },
+        {
+          "venue": "hyperliquid",
+          "market_type": "spot",
+          "rank": 22,
+          "symbol": "@305",
+          "display_symbol": "BASED/USDC",
+          "selection_volume": "54357.6068633",
+          "price_scale": 6,
+          "quantity_scale": 1,
+          "prices": [
+            "0.088955",
+            "0.089382",
+            "0.090474",
+            "0.094933"
+          ],
+          "quantities": [
+            "0.1",
+            "775.5",
+            "2453.0"
+          ]
+        },
+        {
+          "venue": "hyperliquid",
+          "market_type": "spot",
+          "rank": 23,
+          "symbol": "@207",
+          "display_symbol": "HYPE/USDT0",
+          "selection_volume": "38181.33448",
+          "price_scale": 3,
+          "quantity_scale": 2,
+          "prices": [
+            "62.796",
+            "65.351",
+            "66.004",
+            "67.063"
+          ],
+          "quantities": [
+            "0.01",
+            "98.72",
+            "245.21"
+          ]
+        },
+        {
+          "venue": "hyperliquid",
+          "market_type": "spot",
+          "rank": 24,
+          "symbol": "@284",
+          "display_symbol": "QONE/USDC",
+          "selection_volume": "37132.35472418",
+          "price_scale": 6,
+          "quantity_scale": 2,
+          "prices": [
+            "0.004935",
+            "0.005072",
+            "0.005192",
+            "0.005337"
+          ],
+          "quantities": [
+            "0.01",
+            "2774.68",
+            "15891.03"
+          ]
+        },
+        {
+          "venue": "hyperliquid",
+          "market_type": "spot",
+          "rank": 25,
+          "symbol": "@310",
+          "display_symbol": "KITE/USDC",
+          "selection_volume": "32656.887663",
+          "price_scale": 5,
+          "quantity_scale": 1,
+          "prices": [
+            "0.1164",
+            "0.11874",
+            "0.12151",
+            "0.13343"
+          ],
+          "quantities": [
+            "0.1",
+            "835.8",
+            "1078.6"
+          ]
+        },
+        {
+          "venue": "hyperliquid",
+          "market_type": "spot",
+          "rank": 26,
+          "symbol": "@296",
+          "display_symbol": "LMTS/USDC",
+          "selection_volume": "24124.83939544",
+          "price_scale": 6,
+          "quantity_scale": 2,
+          "prices": [
+            "0.033",
+            "0.07059",
+            "0.071909",
+            "0.079152"
+          ],
+          "quantities": [
+            "0.01",
+            "1460.55",
+            "9090.9"
+          ]
+        },
+        {
+          "venue": "hyperliquid",
+          "market_type": "spot",
+          "rank": 27,
+          "symbol": "@184",
+          "display_symbol": "HPENGU/USDC",
+          "selection_volume": "23292.11092831",
+          "price_scale": 6,
+          "quantity_scale": 2,
+          "prices": [
+            "0.005837",
+            "0.005942",
+            "0.005976",
+            "0.006026"
+          ],
+          "quantities": [
+            "0.01",
+            "10549.99",
+            "1733345.23"
+          ]
+        },
+        {
+          "venue": "hyperliquid",
+          "market_type": "spot",
+          "rank": 28,
+          "symbol": "@174",
+          "display_symbol": "ANON/USDC",
+          "selection_volume": "14573.705816",
+          "price_scale": 5,
+          "quantity_scale": 2,
+          "prices": [
+            "0.037",
+            "0.27007",
+            "0.74",
+            "3.0"
+          ],
+          "quantities": [
+            "0.01",
+            "75.56",
+            "1162.59"
+          ]
+        },
+        {
+          "venue": "hyperliquid",
+          "market_type": "spot",
+          "rank": 29,
+          "symbol": "@336",
+          "display_symbol": "KHYPE/USDC",
+          "selection_volume": "10759.67458",
+          "price_scale": 3,
+          "quantity_scale": 2,
+          "prices": [
+            "64.65",
+            "66.45",
+            "67.894",
+            "69.017"
+          ],
+          "quantities": [
+            "0.01",
+            "2.2",
+            "14.94"
+          ]
+        },
+        {
+          "venue": "hyperliquid",
+          "market_type": "spot",
+          "rank": 30,
+          "symbol": "@465",
+          "display_symbol": "SPCXD/USDC",
+          "selection_volume": "10551.9338",
+          "price_scale": 2,
+          "quantity_scale": 2,
+          "prices": [
+            "136.0",
+            "136.92",
+            "137.4",
+            "154.23"
+          ],
+          "quantities": [
+            "0.01",
+            "36.42",
+            "1461.45"
+          ]
+        },
+        {
+          "venue": "hyperliquid",
+          "market_type": "spot",
+          "rank": 31,
+          "symbol": "@333",
+          "display_symbol": "MU/USDC",
+          "selection_volume": "10472.218276",
+          "price_scale": 2,
+          "quantity_scale": 4,
+          "prices": [
+            "905.96",
+            "953.55",
+            "1004.2",
+            "1065.6"
+          ],
+          "quantities": [
+            "0.0001",
+            "0.1096",
+            "0.2188"
+          ]
+        },
+        {
+          "venue": "hyperliquid",
+          "market_type": "spot",
+          "rank": 32,
+          "symbol": "@335",
+          "display_symbol": "HPL/USDC",
+          "selection_volume": "8522.80739406",
+          "price_scale": 6,
+          "quantity_scale": 2,
+          "prices": [
+            "0.0125",
+            "0.013865",
+            "0.014997",
+            "0.016737"
+          ],
+          "quantities": [
+            "0.01",
+            "10556.33",
+            "322286.33"
+          ]
+        },
+        {
+          "venue": "hyperliquid",
+          "market_type": "spot",
+          "rank": 33,
+          "symbol": "@193",
+          "display_symbol": "UUUSPX/USDC",
+          "selection_volume": "8239.576108",
+          "price_scale": 5,
+          "quantity_scale": 1,
+          "prices": [
+            "0.28105",
+            "0.368",
+            "0.39777",
+            "0.8489"
+          ],
+          "quantities": [
+            "0.1",
+            "2847.0",
+            "70365.4"
+          ]
+        },
+        {
+          "venue": "hyperliquid",
+          "market_type": "spot",
+          "rank": 34,
+          "symbol": "@206",
+          "display_symbol": "UENA/USDC",
+          "selection_volume": "6860.5987978",
+          "price_scale": 6,
+          "quantity_scale": 1,
+          "prices": [
+            "0.071",
+            "0.082783",
+            "0.093",
+            "0.128"
+          ],
+          "quantities": [
+            "0.1",
+            "1974.1",
+            "142130.8"
+          ]
+        },
+        {
+          "venue": "hyperliquid",
+          "market_type": "spot",
+          "rank": 35,
+          "symbol": "@227",
+          "display_symbol": "AAVE0/USDC",
+          "selection_volume": "6138.0895",
+          "price_scale": 3,
+          "quantity_scale": 2,
+          "prices": [
+            "64.483",
+            "76.897",
+            "102.62",
+            "117.35"
+          ],
+          "quantities": [
+            "0.01",
+            "0.39",
+            "9.79"
+          ]
+        },
+        {
+          "venue": "hyperliquid",
+          "market_type": "spot",
+          "rank": 36,
+          "symbol": "@213",
+          "display_symbol": "LINK0/USDC",
+          "selection_volume": "5519.992113",
+          "price_scale": 4,
+          "quantity_scale": 2,
+          "prices": [
+            "6.4444",
+            "8.2536",
+            "8.5536",
+            "14.367"
+          ],
+          "quantities": [
+            "0.01",
+            "12.49",
+            "2396.2"
+          ]
+        },
+        {
+          "venue": "hyperliquid",
+          "market_type": "spot",
+          "rank": 37,
+          "symbol": "@225",
+          "display_symbol": "FLR/USDC",
+          "selection_volume": "5496.00887181",
+          "price_scale": 6,
+          "quantity_scale": 2,
+          "prices": [
+            "0.006467",
+            "0.006575",
+            "0.00671",
+            "0.006836"
+          ],
+          "quantities": [
+            "0.01",
+            "7290.2",
+            "60307.0"
+          ]
+        },
+        {
+          "venue": "hyperliquid",
+          "market_type": "spot",
+          "rank": 38,
+          "symbol": "@258",
+          "display_symbol": "STABLE/USDC",
+          "selection_volume": "4694.67763",
+          "price_scale": 6,
+          "quantity_scale": 2,
+          "prices": [
+            "0.001326",
+            "0.037567",
+            "0.037966",
+            "0.48522"
+          ],
+          "quantities": [
+            "0.01",
+            "7026.35",
+            "100000.0"
+          ]
+        },
+        {
+          "venue": "hyperliquid",
+          "market_type": "spot",
+          "rank": 39,
+          "symbol": "@153",
+          "display_symbol": "FEUSD/USDC",
+          "selection_volume": "4077.41654",
+          "price_scale": 5,
+          "quantity_scale": 2,
+          "prices": [
+            "0.98211",
+            "0.99",
+            "1.0131",
+            "1.0279"
+          ],
+          "quantities": [
+            "0.01",
+            "18.22",
+            "220044.43"
+          ]
+        },
+        {
+          "venue": "hyperliquid",
+          "market_type": "spot",
+          "rank": 40,
+          "symbol": "@8",
+          "display_symbol": "POINTS/USDC",
+          "selection_volume": "3802.4606881",
+          "price_scale": 7,
+          "quantity_scale": 1,
+          "prices": [
+            "0.0029957",
+            "0.0031111",
+            "0.0032179",
+            "0.0037243"
+          ],
+          "quantities": [
+            "1",
+            "446.0",
+            "303441.0"
+          ]
+        },
+        {
+          "venue": "hyperliquid",
+          "market_type": "spot",
+          "rank": 41,
+          "symbol": "@4",
+          "display_symbol": "JEFF/USDC",
+          "selection_volume": "3180.533",
+          "price_scale": 4,
+          "quantity_scale": 1,
+          "prices": [
+            "2.6356",
+            "2.67",
+            "2.7105",
+            "2.7487"
+          ],
+          "quantities": [
+            "1",
+            "22.0"
+          ]
+        },
+        {
+          "venue": "hyperliquid",
+          "market_type": "spot",
+          "rank": 42,
+          "symbol": "@307",
+          "display_symbol": "HTAO/USDC",
+          "selection_volume": "3154.5254",
+          "price_scale": 2,
+          "quantity_scale": 2,
+          "prices": [
+            "125.0",
+            "197.16",
+            "200.88",
+            "500.0"
+          ],
+          "quantities": [
+            "0.01",
+            "10.0",
+            "40.0"
+          ]
+        },
+        {
+          "venue": "hyperliquid",
+          "market_type": "spot",
+          "rank": 43,
+          "symbol": "@198",
+          "display_symbol": "WOULD/USDC",
+          "selection_volume": "2914.18635",
+          "price_scale": 5,
+          "quantity_scale": 1,
+          "prices": [
+            "0.07853",
+            "0.08008",
+            "0.0814",
+            "0.0825"
+          ],
+          "quantities": [
+            "0.1",
+            "173.1",
+            "396.9"
+          ]
+        },
+        {
+          "venue": "hyperliquid",
+          "market_type": "spot",
+          "rank": 44,
+          "symbol": "@51",
+          "display_symbol": "ATEHUN/USDC",
+          "selection_volume": "2815.2568586",
+          "price_scale": 5,
+          "quantity_scale": 2,
+          "prices": [
+            "0.97781",
+            "1.0224",
+            "1.0623",
+            "1.1038"
+          ],
+          "quantities": [
+            "0.01",
+            "63.47",
+            "846.11"
+          ]
+        },
+        {
+          "venue": "hyperliquid",
+          "market_type": "spot",
+          "rank": 45,
+          "symbol": "@306",
+          "display_symbol": "UAVAX/USDC",
+          "selection_volume": "2800.2288037",
+          "price_scale": 4,
+          "quantity_scale": 3,
+          "prices": [
+            "5.697",
+            "6.2269",
+            "7.2791",
+            "17.0"
+          ],
+          "quantities": [
+            "0.001",
+            "8.0",
+            "2500.0"
+          ]
+        },
+        {
+          "venue": "hyperliquid",
+          "market_type": "spot",
+          "rank": 46,
+          "symbol": "@290",
+          "display_symbol": "UVIRT/USDC",
+          "selection_volume": "1929.141448",
+          "price_scale": 5,
+          "quantity_scale": 1,
+          "prices": [
+            "0.5524",
+            "0.58598",
+            "0.59128",
+            "0.61238"
+          ],
+          "quantities": [
+            "0.1",
+            "63.0",
+            "13600.0"
+          ]
+        },
+        {
+          "venue": "hyperliquid",
+          "market_type": "spot",
+          "rank": 47,
+          "symbol": "@255",
+          "display_symbol": "HYPE/USDE",
+          "selection_volume": "1860.86772",
+          "price_scale": 4,
+          "quantity_scale": 2,
+          "prices": [
+            "25.0",
+            "45.0",
+            "65.7895",
+            "90.0"
+          ],
+          "quantities": [
+            "0.01",
+            "2.1",
+            "760.2"
+          ]
+        },
+        {
+          "venue": "hyperliquid",
+          "market_type": "spot",
+          "rank": 48,
+          "symbol": "@263",
+          "display_symbol": "CRCL/USDC",
+          "selection_volume": "1803.83177",
+          "price_scale": 3,
+          "quantity_scale": 2,
+          "prices": [
+            "1.23",
+            "61.615",
+            "63.53",
+            "66.73"
+          ],
+          "quantities": [
+            "0.01",
+            "0.36",
+            "10.91"
+          ]
+        },
+        {
+          "venue": "hyperliquid",
+          "market_type": "spot",
+          "rank": 49,
+          "symbol": "@136",
+          "display_symbol": "SOLV/USDC",
+          "selection_volume": "1635.9516006",
+          "price_scale": 6,
+          "quantity_scale": 2,
+          "prices": [
+            "0.000212",
+            "0.00357",
+            "0.023641",
+            "0.02436"
+          ],
+          "quantities": [
+            "0.01",
+            "21450.04",
+            "625000.0"
+          ]
+        },
+        {
+          "venue": "hyperliquid",
+          "market_type": "spot",
+          "rank": 50,
+          "symbol": "@194",
+          "display_symbol": "UBONK/USDC",
+          "selection_volume": "1589.11954666",
+          "price_scale": 8,
+          "quantity_scale": 1,
+          "prices": [
+            "0.000001",
+            "0.0000036",
+            "0.00000382",
+            "0.000011"
+          ],
+          "quantities": [
+            "1",
+            "70862754.0",
+            "9031843385.0"
+          ]
+        },
+        {
+          "venue": "hyperliquid",
+          "market_type": "spot",
+          "rank": 51,
+          "symbol": "@590",
+          "display_symbol": "SPCX/USDC",
+          "selection_volume": "1419.576029",
+          "price_scale": 2,
+          "quantity_scale": 4,
+          "prices": [
+            "124.75",
+            "135.96",
+            "147.11",
+            "159.01"
+          ],
+          "quantities": [
+            "0.0001",
+            "0.2569",
+            "4.3876"
+          ]
+        },
+        {
+          "venue": "hyperliquid",
+          "market_type": "spot",
+          "rank": 52,
+          "symbol": "@269",
+          "display_symbol": "BNB1/USDC",
+          "selection_volume": "1360.352262",
+          "price_scale": 2,
+          "quantity_scale": 4,
+          "prices": [
+            "525.1",
+            "566.81",
+            "597.16",
+            "644.79"
+          ],
+          "quantities": [
+            "0.0001",
+            "0.467",
+            "1.0"
+          ]
+        },
+        {
+          "venue": "hyperliquid",
+          "market_type": "spot",
+          "rank": 53,
+          "symbol": "@591",
+          "display_symbol": "MAX/USDC",
+          "selection_volume": "1263.8043624",
+          "price_scale": 7,
+          "quantity_scale": 1,
+          "prices": [
+            "0.0000001",
+            "0.0000008",
+            "0.0000015",
+            "0.0000024"
+          ],
+          "quantities": [
+            "0.1",
+            "151490748.5",
+            "118138976817.0"
+          ]
+        },
+        {
+          "venue": "hyperliquid",
+          "market_type": "spot",
+          "rank": 54,
+          "symbol": "@265",
+          "display_symbol": "SLV/USDC",
+          "selection_volume": "1173.50589",
+          "price_scale": 3,
+          "quantity_scale": 2,
+          "prices": [
+            "49.563",
+            "52.114",
+            "53.708",
+            "55.834"
+          ],
+          "quantities": [
+            "0.01",
+            "0.4",
+            "1.53"
+          ]
+        },
+        {
+          "venue": "hyperliquid",
+          "market_type": "spot",
+          "rank": 55,
+          "symbol": "@59",
+          "display_symbol": "CATBAL/USDC",
+          "selection_volume": "1044.9333955",
+          "price_scale": 5,
+          "quantity_scale": 2,
+          "prices": [
+            "0.74165",
+            "0.77103",
+            "0.7992",
+            "0.83336"
+          ],
+          "quantities": [
+            "0.01",
+            "24.09",
+            "110.0"
+          ]
+        },
+        {
+          "venue": "hyperliquid",
+          "market_type": "spot",
+          "rank": 56,
+          "symbol": "@240",
+          "display_symbol": "KITTEN/USDC",
+          "selection_volume": "1040.97337514",
+          "price_scale": 6,
+          "quantity_scale": 2,
+          "prices": [
+            "0.003437",
+            "0.003573",
+            "0.003705",
+            "0.003861"
+          ],
+          "quantities": [
+            "0.01",
+            "3581.87",
+            "20000.0"
+          ]
+        },
+        {
+          "venue": "hyperliquid",
+          "market_type": "spot",
+          "rank": 57,
+          "symbol": "@68",
+          "display_symbol": "CHINA/USDC",
+          "selection_volume": "869.0760549",
+          "price_scale": 5,
+          "quantity_scale": 2,
+          "prices": [
+            "0.10462",
+            "0.10871",
+            "0.11263",
+            "0.11739"
+          ],
+          "quantities": [
+            "0.01",
+            "44.08",
+            "110.0"
+          ]
+        },
+        {
+          "venue": "hyperliquid",
+          "market_type": "spot",
+          "rank": 58,
+          "symbol": "@85",
+          "display_symbol": "PIP/USDC",
+          "selection_volume": "742.381888",
+          "price_scale": 4,
+          "quantity_scale": 2,
+          "prices": [
+            "2.0017",
+            "2.0806",
+            "2.1561",
+            "2.2478"
+          ],
+          "quantities": [
+            "0.01",
+            "38.6",
+            "46.06"
+          ]
+        },
+        {
+          "venue": "hyperliquid",
+          "market_type": "spot",
+          "rank": 59,
+          "symbol": "@292",
+          "display_symbol": "ZAMA/USDC",
+          "selection_volume": "693.472304",
+          "price_scale": 6,
+          "quantity_scale": 2,
+          "prices": [
+            "0.026111",
+            "0.03417",
+            "0.034847",
+            "0.069"
+          ],
+          "quantities": [
+            "0.01",
+            "66941.16",
+            "1065197.45"
+          ]
+        },
+        {
+          "venue": "hyperliquid",
+          "market_type": "spot",
+          "rank": 60,
+          "symbol": "@287",
+          "display_symbol": "META/USDC",
+          "selection_volume": "680.064768",
+          "price_scale": 2,
+          "quantity_scale": 4,
+          "prices": [
+            "604.8",
+            "638.45",
+            "674.56",
+            "714.83"
+          ],
+          "quantities": [
+            "0.0001",
+            "0.0365",
+            "0.0446"
+          ]
+        },
+        {
+          "venue": "hyperliquid",
+          "market_type": "spot",
+          "rank": 61,
+          "symbol": "@280",
+          "display_symbol": "AMZN/USDC",
+          "selection_volume": "624.442496",
+          "price_scale": 2,
+          "quantity_scale": 4,
+          "prices": [
+            "228.88",
+            "241.59",
+            "253.95",
+            "269.27"
+          ],
+          "quantities": [
+            "0.0001",
+            "0.0547",
+            "0.369"
+          ]
+        },
+        {
+          "venue": "hyperliquid",
+          "market_type": "spot",
+          "rank": 62,
+          "symbol": "@15",
+          "display_symbol": "FUCKY/USDC",
+          "selection_volume": "446.45075608",
+          "price_scale": 6,
+          "quantity_scale": 10,
+          "prices": [
+            "0.000004",
+            "0.000075",
+            "0.000319",
+            "0.00086"
+          ],
+          "quantities": [
+            "0.01",
+            "133333.33",
+            "2800924.3199999998"
+          ]
+        },
+        {
+          "venue": "hyperliquid",
+          "market_type": "spot",
+          "rank": 63,
+          "symbol": "@228",
+          "display_symbol": "UDZ/USDC",
+          "selection_volume": "439.33565773",
+          "price_scale": 6,
+          "quantity_scale": 2,
+          "prices": [
+            "0.069376",
+            "0.070746",
+            "0.07173",
+            "0.19337"
+          ],
+          "quantities": [
+            "0.01",
+            "34334.76",
+            "51328.94"
+          ]
+        },
+        {
+          "venue": "hyperliquid",
+          "market_type": "spot",
+          "rank": 64,
+          "symbol": "@251",
+          "display_symbol": "MMOVE/USDC",
+          "selection_volume": "371.402946",
+          "price_scale": 6,
+          "quantity_scale": 2,
+          "prices": [
+            "0.000973",
+            "0.010801",
+            "0.038",
+            "0.15"
+          ],
+          "quantities": [
+            "0.01",
+            "2911.42",
+            "3130419.0"
+          ]
+        },
+        {
+          "venue": "hyperliquid",
+          "market_type": "spot",
+          "rank": 65,
+          "symbol": "@261",
+          "display_symbol": "HAR/USDC",
+          "selection_volume": "254.21853631",
+          "price_scale": 6,
+          "quantity_scale": 10,
+          "prices": [
+            "0.000104",
+            "0.001965",
+            "0.002082",
+            "0.003432"
+          ],
+          "quantities": [
+            "0.01",
+            "14388.02",
+            "1184834.1200000001"
+          ]
+        },
+        {
+          "venue": "hyperliquid",
+          "market_type": "spot",
+          "rank": 66,
+          "symbol": "@73",
+          "display_symbol": "RANK/USDC",
+          "selection_volume": "206.25265276",
+          "price_scale": 6,
+          "quantity_scale": 2,
+          "prices": [
+            "0.058545",
+            "0.06087",
+            "0.063287",
+            "0.067396"
+          ],
+          "quantities": [
+            "0.01",
+            "100.44",
+            "110.0"
+          ]
+        },
+        {
+          "venue": "hyperliquid",
+          "market_type": "spot",
+          "rank": 67,
+          "symbol": "@285",
+          "display_symbol": "AZTEC/USDC",
+          "selection_volume": "185.940771",
+          "price_scale": 6,
+          "quantity_scale": 1,
+          "prices": [
+            "0.0084",
+            "0.013975",
+            "0.01414",
+            "0.03"
+          ],
+          "quantities": [
+            "1",
+            "11069.0",
+            "92000.0"
+          ]
+        },
+        {
+          "venue": "hyperliquid",
+          "market_type": "spot",
+          "rank": 68,
+          "symbol": "@127",
+          "display_symbol": "HYENA/USDC",
+          "selection_volume": "153.74901408",
+          "price_scale": 6,
+          "quantity_scale": 2,
+          "prices": [
+            "0.022873",
+            "0.023781",
+            "0.024726",
+            "0.028209"
+          ],
+          "quantities": [
+            "0.01",
+            "16.56",
+            "58.53"
+          ]
+        },
+        {
+          "venue": "hyperliquid",
+          "market_type": "spot",
+          "rank": 69,
+          "symbol": "@72",
+          "display_symbol": "NOCEX/USDC",
+          "selection_volume": "148.9411344",
+          "price_scale": 5,
+          "quantity_scale": 2,
+          "prices": [
+            "0.7992",
+            "0.83087",
+            "0.85866",
+            "0.89537"
+          ],
+          "quantities": [
+            "0.01",
+            "49.78",
+            "3987.61"
+          ]
+        },
+        {
+          "venue": "hyperliquid",
+          "market_type": "spot",
+          "rank": 70,
+          "symbol": "@286",
+          "display_symbol": "HSEI/USDC",
+          "selection_volume": "106.85987577",
+          "price_scale": 6,
+          "quantity_scale": 2,
+          "prices": [
+            "0.005",
+            "0.048796",
+            "0.05699",
+            "0.06599"
+          ],
+          "quantities": [
+            "0.01",
+            "7788.0",
+            "1000000.0"
+          ]
+        },
+        {
+          "venue": "hyperliquid",
+          "market_type": "spot",
+          "rank": 71,
+          "symbol": "@245",
+          "display_symbol": "NBT/USDC",
+          "selection_volume": "96.70124965",
+          "price_scale": 5,
+          "quantity_scale": 2,
+          "prices": [
+            "0.0008",
+            "0.00108",
+            "0.00123",
+            "0.00134"
+          ],
+          "quantities": [
+            "0.01",
+            "9333.33",
+            "22747.82"
+          ]
+        },
+        {
+          "venue": "hyperliquid",
+          "market_type": "spot",
+          "rank": 72,
+          "symbol": "@109",
+          "display_symbol": "WOW/USDC",
+          "selection_volume": "94.5090645",
+          "price_scale": 8,
+          "quantity_scale": 1,
+          "prices": [
+            "0.00000803",
+            "0.00007",
+            "0.001006",
+            "0.0010485"
+          ],
+          "quantities": [
+            "1",
+            "155055.0",
+            "1009812.0"
+          ]
+        },
+        {
+          "venue": "hyperliquid",
+          "market_type": "spot",
+          "rank": 73,
+          "symbol": "@266",
+          "display_symbol": "GOOGL/USDC",
+          "selection_volume": "92.8244",
+          "price_scale": 2,
+          "quantity_scale": 2,
+          "prices": [
+            "322.48",
+            "345.77",
+            "364.03",
+            "391.48"
+          ],
+          "quantities": [
+            "0.01",
+            "0.06",
+            "1.54"
+          ]
+        },
+        {
+          "venue": "hyperliquid",
+          "market_type": "spot",
+          "rank": 74,
+          "symbol": "@295",
+          "display_symbol": "SIGN/USDC",
+          "selection_volume": "89.84224594",
+          "price_scale": 6,
+          "quantity_scale": 2,
+          "prices": [
+            "0.002277",
+            "0.008575",
+            "0.008683",
+            "0.032"
+          ],
+          "quantities": [
+            "0.01",
+            "4848.61",
+            "295124.54"
+          ]
+        },
+        {
+          "venue": "hyperliquid",
+          "market_type": "spot",
+          "rank": 75,
+          "symbol": "@331",
+          "display_symbol": "ORCL/USDC",
+          "selection_volume": "83.906748",
+          "price_scale": 2,
+          "quantity_scale": 4,
+          "prices": [
+            "10.0",
+            "135.85",
+            "152.23",
+            "163.65"
+          ],
+          "quantities": [
+            "0.0001",
+            "0.1106",
+            "2.0"
+          ]
+        },
+        {
+          "venue": "hyperliquid",
+          "market_type": "spot",
+          "rank": 76,
+          "symbol": "@219",
+          "display_symbol": "BRIDGE/USDC",
+          "selection_volume": "40.463424",
+          "price_scale": 6,
+          "quantity_scale": 2,
+          "prices": [
+            "0.012023",
+            "0.019301",
+            "0.037054",
+            "0.044203"
+          ],
+          "quantities": [
+            "0.01",
+            "2000.0",
+            "51322.97"
+          ]
+        },
+        {
+          "venue": "hyperliquid",
+          "market_type": "spot",
+          "rank": 77,
+          "symbol": "@242",
+          "display_symbol": "SWAP/USDC",
+          "selection_volume": "38.5978299",
+          "price_scale": 6,
+          "quantity_scale": 2,
+          "prices": [
+            "0.001176",
+            "0.025112",
+            "0.0426",
+            "0.051059"
+          ],
+          "quantities": [
+            "0.01",
+            "6093.46",
+            "194358.36"
+          ]
+        },
+        {
+          "venue": "hyperliquid",
+          "market_type": "spot",
+          "rank": 78,
+          "symbol": "@43",
+          "display_symbol": "MOG/USDC",
+          "selection_volume": "36.08999992",
+          "price_scale": 6,
+          "quantity_scale": 2,
+          "prices": [
+            "0.000001",
+            "0.000013",
+            "0.000146",
+            "0.00033"
+          ],
+          "quantities": [
+            "0.01",
+            "875590.95",
+            "31778000.0"
+          ]
+        },
+        {
+          "venue": "hyperliquid",
+          "market_type": "spot",
+          "rank": 79,
+          "symbol": "@19",
+          "display_symbol": "TATE/USDC",
+          "selection_volume": "35.078142",
+          "price_scale": 6,
+          "quantity_scale": 1,
+          "prices": [
+            "0.010702",
+            "0.011121",
+            "0.011522",
+            "0.012007"
+          ],
+          "quantities": [
+            "1",
+            "14889.0",
+            "34290.0"
+          ]
+        },
+        {
+          "venue": "hyperliquid",
+          "market_type": "spot",
+          "rank": 80,
+          "symbol": "@288",
+          "display_symbol": "QQQ/USDC",
+          "selection_volume": "26.61928",
+          "price_scale": 2,
+          "quantity_scale": 4,
+          "prices": [
+            "660.72",
+            "698.42",
+            "734.61",
+            "779.26"
+          ],
+          "quantities": [
+            "0.0001",
+            "0.0387",
+            "0.137"
+          ]
+        },
+        {
+          "venue": "hyperliquid",
+          "market_type": "spot",
+          "rank": 81,
+          "symbol": "@267",
+          "display_symbol": "FXRP/USDC",
+          "selection_volume": "24.6376",
+          "price_scale": 4,
+          "quantity_scale": 1,
+          "prices": [
+            "0.6342",
+            "1.1036",
+            "1.24",
+            "2.9"
+          ],
+          "quantities": [
+            "0.1",
+            "220.0",
+            "369222.2"
+          ]
+        },
+        {
+          "venue": "hyperliquid",
+          "market_type": "spot",
+          "rank": 82,
+          "symbol": "@133",
+          "display_symbol": "H/USDC",
+          "selection_volume": "24.0",
+          "price_scale": 6,
+          "quantity_scale": 2,
+          "prices": [
+            "0.000002",
+            "0.000033",
+            "0.00026",
+            "0.00148"
+          ],
+          "quantities": [
+            "0.01",
+            "199950.0",
+            "12500000.0"
+          ]
+        },
+        {
+          "venue": "hyperliquid",
+          "market_type": "spot",
+          "rank": 83,
+          "symbol": "@28",
+          "display_symbol": "SUCKY/USDC",
+          "selection_volume": "23.92174765",
+          "price_scale": 8,
+          "quantity_scale": 1,
+          "prices": [
+            "0.0001382",
+            "0.00014369",
+            "0.00014894",
+            "0.00015531"
+          ],
+          "quantities": [
+            "1",
+            "118700.0",
+            "285520.0"
+          ]
+        },
+        {
+          "venue": "hyperliquid",
+          "market_type": "spot",
+          "rank": 84,
+          "symbol": "@268",
+          "display_symbol": "AAPL/USDC",
+          "selection_volume": "18.8688",
+          "price_scale": 2,
+          "quantity_scale": 2,
+          "prices": [
+            "283.01",
+            "302.36",
+            "320.23",
+            "345.7"
+          ],
+          "quantities": [
+            "0.01",
+            "0.14",
+            "1.0"
+          ]
+        },
+        {
+          "venue": "hyperliquid",
+          "market_type": "spot",
+          "rank": 85,
+          "symbol": "@123",
+          "display_symbol": "FARM/USDC",
+          "selection_volume": "16.05951285",
+          "price_scale": 6,
+          "quantity_scale": 2,
+          "prices": [
+            "0.035376",
+            "0.03678",
+            "0.038126",
+            "0.039759"
+          ],
+          "quantities": [
+            "0.01",
+            "47.49",
+            "109.09"
+          ]
+        },
+        {
+          "venue": "hyperliquid",
+          "market_type": "spot",
+          "rank": 86,
+          "symbol": "@9",
+          "display_symbol": "TRUMP/USDC",
+          "selection_volume": "10.08",
+          "price_scale": 6,
+          "quantity_scale": 2,
+          "prices": [
+            "0.000005",
+            "0.00006",
+            "0.000859",
+            "0.005"
+          ],
+          "quantities": [
+            "0.01",
+            "121593.0",
+            "1730769.23"
+          ]
+        },
+        {
+          "venue": "hyperliquid",
+          "market_type": "spot",
+          "rank": 87,
+          "symbol": "@178",
+          "display_symbol": "USR/USDC",
+          "selection_volume": "9.1240254",
+          "price_scale": 5,
+          "quantity_scale": 2,
+          "prices": [
+            "0.00517",
+            "0.1679",
+            "0.86",
+            "1.1751"
+          ],
+          "quantities": [
+            "0.01",
+            "116.03",
+            "1706.02"
+          ]
+        },
+        {
+          "venue": "hyperliquid",
+          "market_type": "spot",
+          "rank": 88,
+          "symbol": "@41",
+          "display_symbol": "FUN/USDC",
+          "selection_volume": "7.3014436",
+          "price_scale": 7,
+          "quantity_scale": 1,
+          "prices": [
+            "0.0000693",
+            "0.00137",
+            "0.0168",
+            "0.1003"
+          ],
+          "quantities": [
+            "0.1",
+            "6240.0",
+            "506312.9"
+          ]
+        },
+        {
+          "venue": "hyperliquid",
+          "market_type": "spot",
+          "rank": 89,
+          "symbol": "@137",
+          "display_symbol": "FLY/USDC",
+          "selection_volume": "6.12054989",
+          "price_scale": 6,
+          "quantity_scale": 10,
+          "prices": [
+            "0.000002",
+            "0.000013",
+            "0.000043",
+            "0.000179"
+          ],
+          "quantities": [
+            "0.01",
+            "1301642.5600000001",
+            "8930000.0"
+          ]
+        },
+        {
+          "venue": "hyperliquid",
+          "market_type": "spot",
+          "rank": 90,
+          "symbol": "@93",
+          "display_symbol": "STRICT/USDC",
+          "selection_volume": "5.64731184",
+          "price_scale": 8,
+          "quantity_scale": 1,
+          "prices": [
+            "0.00000064",
+            "0.00001263",
+            "0.0001012",
+            "0.00010459"
+          ],
+          "quantities": [
+            "1",
+            "455000.0",
+            "18750000.0"
+          ]
+        },
+        {
+          "venue": "hyperliquid",
+          "market_type": "spot",
+          "rank": 91,
+          "symbol": "@114",
+          "display_symbol": "PEAR/USDC",
+          "selection_volume": "5.55784659",
+          "price_scale": 7,
+          "quantity_scale": 10,
+          "prices": [
+            "0.0000028",
+            "0.000086",
+            "0.00051",
+            "0.0006105"
+          ],
+          "quantities": [
+            "0.1",
+            "127200.0",
+            "1516587.6000000001"
+          ]
+        },
+        {
+          "venue": "hyperliquid",
+          "market_type": "spot",
+          "rank": 92,
+          "symbol": "@30",
+          "display_symbol": "FARMED/USDC",
+          "selection_volume": "5.53207644",
+          "price_scale": 6,
+          "quantity_scale": 2,
+          "prices": [
+            "0.000009",
+            "0.000116",
+            "0.00139",
+            "0.01012"
+          ],
+          "quantities": [
+            "0.01",
+            "57000.0",
+            "999999.99"
+          ]
+        },
+        {
+          "venue": "hyperliquid",
+          "market_type": "spot",
+          "rank": 93,
+          "symbol": "@110",
+          "display_symbol": "STEEL/USDC",
+          "selection_volume": "3.681662",
+          "price_scale": 6,
+          "quantity_scale": 2,
+          "prices": [
+            "0.000957",
+            "0.008889",
+            "0.025075",
+            "0.026149"
+          ],
+          "quantities": [
+            "0.01",
+            "1025.64",
+            "31347.96"
+          ]
+        },
+        {
+          "venue": "hyperliquid",
+          "market_type": "spot",
+          "rank": 94,
+          "symbol": "@112",
+          "display_symbol": "MEOW/USDC",
+          "selection_volume": "0.163998",
+          "price_scale": 7,
+          "quantity_scale": 1,
+          "prices": [
+            "0.0005101",
+            "0.0005304",
+            "0.0005488",
+            "0.0005716"
+          ],
+          "quantities": [
+            "0.1",
+            "180.4",
+            "21700.0"
+          ]
+        },
+        {
+          "venue": "hyperliquid",
+          "market_type": "spot",
+          "rank": 95,
+          "symbol": "@74",
+          "display_symbol": "OMNIX/USDC",
+          "selection_volume": "0.02785104",
+          "price_scale": 7,
+          "quantity_scale": 1,
+          "prices": [
+            "0.0000013",
+            "0.0000071",
+            "0.000061",
+            "0.0001467"
+          ],
+          "quantities": [
+            "0.1",
+            "1249500.0",
+            "52038500.0"
+          ]
+        },
+        {
+          "venue": "hyperliquid",
+          "market_type": "spot",
+          "rank": 96,
+          "symbol": "@80",
+          "display_symbol": "MONAD/USDC",
+          "selection_volume": "0.0076128",
+          "price_scale": 7,
+          "quantity_scale": 1,
+          "prices": [
+            "0.0002363",
+            "0.0002454",
+            "0.0002543",
+            "0.0002655"
+          ],
+          "quantities": [
+            "0.1",
+            "24256.5",
+            "47250.0"
+          ]
+        },
+        {
+          "venue": "hyperliquid",
+          "market_type": "spot",
+          "rank": 97,
+          "symbol": "@701",
+          "display_symbol": "WBRL/USDC",
+          "selection_volume": "0.0",
+          "price_scale": 5,
+          "quantity_scale": 2,
+          "prices": [
+            "0.01",
+            "0.011",
+            "0.013",
+            "0.10523"
+          ],
+          "quantities": [
+            "0.01",
+            "3500.0",
+            "22476.31"
+          ]
+        },
+        {
+          "venue": "hyperliquid",
+          "market_type": "spot",
+          "rank": 98,
+          "symbol": "@698",
+          "display_symbol": "HNIL/USDC",
+          "selection_volume": "0.0",
+          "price_scale": 1,
+          "quantity_scale": 1,
+          "prices": [
+            "1.0"
+          ],
+          "quantities": [
+            "0.1"
+          ]
+        },
+        {
+          "venue": "hyperliquid",
+          "market_type": "spot",
+          "rank": 99,
+          "symbol": "@497",
+          "display_symbol": "MGW/USDC",
+          "selection_volume": "0.0",
+          "price_scale": 6,
+          "quantity_scale": 1,
+          "prices": [
+            "0.010959",
+            "0.011389",
+            "0.011766",
+            "0.012263"
+          ],
+          "quantities": [
+            "0.1",
+            "998.6",
+            "2500.0"
+          ]
+        },
+        {
+          "venue": "hyperliquid",
+          "market_type": "spot",
+          "rank": 100,
+          "symbol": "@496",
+          "display_symbol": "ONEAR/USDC",
+          "selection_volume": "0.0",
+          "price_scale": 1,
+          "quantity_scale": 2,
+          "prices": [
+            "2.0"
+          ],
+          "quantities": [
+            "0.01"
+          ]
+        }
+      ]
+    },
+    {
+      "venue": "hyperliquid",
+      "market_type": "perp",
+      "selection": "top 100 main-dex perpetual markets by 24h dayNtlVlm",
+      "endpoints": [
+        "https://api.hyperliquid.xyz/info: metaAndAssetCtxs",
+        "https://api.hyperliquid.xyz/info: l2Book"
+      ],
+      "markets": [
+        {
+          "venue": "hyperliquid",
+          "market_type": "perp",
+          "rank": 1,
+          "symbol": "BTC",
+          "display_symbol": "BTC",
+          "selection_volume": "2755085381.4815721512",
+          "price_scale": 1,
+          "quantity_scale": 5,
+          "prices": [
+            "62539.0",
+            "64809.0",
+            "64830.0",
+            "64844.0"
+          ],
+          "quantities": [
+            "0.00001",
+            "1.37729",
+            "25.7328"
+          ]
+        },
+        {
+          "venue": "hyperliquid",
+          "market_type": "perp",
+          "rank": 2,
+          "symbol": "ETH",
+          "display_symbol": "ETH",
+          "selection_volume": "931523529.4569616318",
+          "price_scale": 1,
+          "quantity_scale": 4,
+          "prices": [
+            "1786.0",
+            "1880.9",
+            "1882.4",
+            "1883.8"
+          ],
+          "quantities": [
+            "0.0001",
+            "197.7183",
+            "906.755"
+          ]
+        },
+        {
+          "venue": "hyperliquid",
+          "market_type": "perp",
+          "rank": 3,
+          "symbol": "HYPE",
+          "display_symbol": "HYPE",
+          "selection_volume": "295816683.119329989",
+          "price_scale": 3,
+          "quantity_scale": 2,
+          "prices": [
+            "63.52",
+            "65.714",
+            "65.751",
+            "65.788"
+          ],
+          "quantities": [
+            "0.01",
+            "45.63",
+            "1425.32"
+          ]
+        },
+        {
+          "venue": "hyperliquid",
+          "market_type": "perp",
+          "rank": 4,
+          "symbol": "SOL",
+          "display_symbol": "SOL",
+          "selection_volume": "171067264.9944700599",
+          "price_scale": 3,
+          "quantity_scale": 2,
+          "prices": [
+            "75.399",
+            "77.6",
+            "77.626",
+            "77.647"
+          ],
+          "quantities": [
+            "0.01",
+            "85.98",
+            "2355.88"
+          ]
+        },
+        {
+          "venue": "hyperliquid",
+          "market_type": "perp",
+          "rank": 5,
+          "symbol": "ZEC",
+          "display_symbol": "ZEC",
+          "selection_volume": "167586645.9559997916",
+          "price_scale": 2,
+          "quantity_scale": 2,
+          "prices": [
+            "500.58",
+            "557.6",
+            "557.92",
+            "558.11"
+          ],
+          "quantities": [
+            "0.01",
+            "2.08",
+            "57.78"
+          ]
+        },
+        {
+          "venue": "hyperliquid",
+          "market_type": "perp",
+          "rank": 6,
+          "symbol": "CASHCAT",
+          "display_symbol": "CASHCAT",
+          "selection_volume": "38386374.5754200369",
+          "price_scale": 5,
+          "quantity_scale": 1,
+          "prices": [
+            "0.15408",
+            "0.15624",
+            "0.15809",
+            "0.16"
+          ],
+          "quantities": [
+            "1",
+            "5033.0",
+            "284861.0"
+          ]
+        },
+        {
+          "venue": "hyperliquid",
+          "market_type": "perp",
+          "rank": 7,
+          "symbol": "LIT",
+          "display_symbol": "LIT",
+          "selection_volume": "33991212.6475000083",
+          "price_scale": 6,
+          "quantity_scale": 1,
+          "prices": [
+            "2.3829",
+            "2.601",
+            "2.6041",
+            "2.607171"
+          ],
+          "quantities": [
+            "1",
+            "737.0",
+            "5366.0"
+          ]
+        },
+        {
+          "venue": "hyperliquid",
+          "market_type": "perp",
+          "rank": 8,
+          "symbol": "PUMP",
+          "display_symbol": "PUMP",
+          "selection_volume": "25084641.7090740018",
+          "price_scale": 6,
+          "quantity_scale": 1,
+          "prices": [
+            "0.001492",
+            "0.001509",
+            "0.001522",
+            "0.001536"
+          ],
+          "quantities": [
+            "1",
+            "22221181.0",
+            "333548973.0"
+          ]
+        },
+        {
+          "venue": "hyperliquid",
+          "market_type": "perp",
+          "rank": 9,
+          "symbol": "XRP",
+          "display_symbol": "XRP",
+          "selection_volume": "20575548.0034999996",
+          "price_scale": 4,
+          "quantity_scale": 1,
+          "prices": [
+            "1.0688",
+            "1.1068",
+            "1.1081",
+            "1.1095"
+          ],
+          "quantities": [
+            "1",
+            "52343.0",
+            "388630.0"
+          ]
+        },
+        {
+          "venue": "hyperliquid",
+          "market_type": "perp",
+          "rank": 10,
+          "symbol": "WLD",
+          "display_symbol": "WLD",
+          "selection_volume": "20144038.1496339925",
+          "price_scale": 5,
+          "quantity_scale": 1,
+          "prices": [
+            "0.39331",
+            "0.41353",
+            "0.41383",
+            "0.41409"
+          ],
+          "quantities": [
+            "0.1",
+            "1927.4",
+            "27585.5"
+          ]
+        },
+        {
+          "venue": "hyperliquid",
+          "market_type": "perp",
+          "rank": 11,
+          "symbol": "NEAR",
+          "display_symbol": "NEAR",
+          "selection_volume": "18769814.2744299844",
+          "price_scale": 4,
+          "quantity_scale": 1,
+          "prices": [
+            "1.9464",
+            "2.0082",
+            "2.0103",
+            "2.012"
+          ],
+          "quantities": [
+            "0.1",
+            "1593.2",
+            "16666.3"
+          ]
+        },
+        {
+          "venue": "hyperliquid",
+          "market_type": "perp",
+          "rank": 12,
+          "symbol": "AAVE",
+          "display_symbol": "AAVE",
+          "selection_volume": "11932439.9025500007",
+          "price_scale": 3,
+          "quantity_scale": 2,
+          "prices": [
+            "95.759",
+            "99.254",
+            "99.311",
+            "99.351"
+          ],
+          "quantities": [
+            "0.01",
+            "7.96",
+            "105.87"
+          ]
+        },
+        {
+          "venue": "hyperliquid",
+          "market_type": "perp",
+          "rank": 13,
+          "symbol": "XPL",
+          "display_symbol": "XPL",
+          "selection_volume": "11313266.1577009968",
+          "price_scale": 6,
+          "quantity_scale": 1,
+          "prices": [
+            "0.08938",
+            "0.093247",
+            "0.093354",
+            "0.093423"
+          ],
+          "quantities": [
+            "1",
+            "6406.0",
+            "41817.0"
+          ]
+        },
+        {
+          "venue": "hyperliquid",
+          "market_type": "perp",
+          "rank": 14,
+          "symbol": "UNI",
+          "display_symbol": "UNI",
+          "selection_volume": "11065719.2598600034",
+          "price_scale": 4,
+          "quantity_scale": 1,
+          "prices": [
+            "3.6089",
+            "3.6775",
+            "3.6806",
+            "3.6834"
+          ],
+          "quantities": [
+            "0.1",
+            "271.8",
+            "3928.8"
+          ]
+        },
+        {
+          "venue": "hyperliquid",
+          "market_type": "perp",
+          "rank": 15,
+          "symbol": "SUI",
+          "display_symbol": "SUI",
+          "selection_volume": "10968554.0291209985",
+          "price_scale": 5,
+          "quantity_scale": 1,
+          "prices": [
+            "0.72546",
+            "0.76214",
+            "0.76245",
+            "0.76268"
+          ],
+          "quantities": [
+            "0.1",
+            "2228.4",
+            "42723.1"
+          ]
+        },
+        {
+          "venue": "hyperliquid",
+          "market_type": "perp",
+          "rank": 16,
+          "symbol": "FARTCOIN",
+          "display_symbol": "FARTCOIN",
+          "selection_volume": "9392183.2806890048",
+          "price_scale": 5,
+          "quantity_scale": 1,
+          "prices": [
+            "0.1392",
+            "0.14739",
+            "0.14764",
+            "0.14785"
+          ],
+          "quantities": [
+            "0.1",
+            "10332.7",
+            "70445.4"
+          ]
+        },
+        {
+          "venue": "hyperliquid",
+          "market_type": "perp",
+          "rank": 17,
+          "symbol": "TAO",
+          "display_symbol": "TAO",
+          "selection_volume": "7447456.3471799986",
+          "price_scale": 3,
+          "quantity_scale": 3,
+          "prices": [
+            "200.22",
+            "200.338",
+            "200.51",
+            "201.3"
+          ],
+          "quantities": [
+            "0.001",
+            "9.284",
+            "72.228"
+          ]
+        },
+        {
+          "venue": "hyperliquid",
+          "market_type": "perp",
+          "rank": 18,
+          "symbol": "kPEPE",
+          "display_symbol": "kPEPE",
+          "selection_volume": "7160209.5978459977",
+          "price_scale": 6,
+          "quantity_scale": 1,
+          "prices": [
+            "0.002755",
+            "0.00279",
+            "0.002803",
+            "0.002817"
+          ],
+          "quantities": [
+            "1",
+            "15408176.0",
+            "40821831.0"
+          ]
+        },
+        {
+          "venue": "hyperliquid",
+          "market_type": "perp",
+          "rank": 19,
+          "symbol": "ENA",
+          "display_symbol": "ENA",
+          "selection_volume": "7158745.7428010004",
+          "price_scale": 6,
+          "quantity_scale": 1,
+          "prices": [
+            "0.079551",
+            "0.083779",
+            "0.083845",
+            "0.083879"
+          ],
+          "quantities": [
+            "1",
+            "8350.0",
+            "129531.0"
+          ]
+        },
+        {
+          "venue": "hyperliquid",
+          "market_type": "perp",
+          "rank": 20,
+          "symbol": "ARB",
+          "display_symbol": "ARB",
+          "selection_volume": "6489023.4320249977",
+          "price_scale": 5,
+          "quantity_scale": 1,
+          "prices": [
+            "0.09065",
+            "0.09296",
+            "0.09311",
+            "0.09327"
+          ],
+          "quantities": [
+            "0.1",
+            "45471.1",
+            "315949.9"
+          ]
+        },
+        {
+          "venue": "hyperliquid",
+          "market_type": "perp",
+          "rank": 21,
+          "symbol": "AVAX",
+          "display_symbol": "AVAX",
+          "selection_volume": "6230611.4875500044",
+          "price_scale": 4,
+          "quantity_scale": 2,
+          "prices": [
+            "6.4786",
+            "6.6689",
+            "6.672",
+            "6.6744"
+          ],
+          "quantities": [
+            "0.01",
+            "208.86",
+            "2245.29"
+          ]
+        },
+        {
+          "venue": "hyperliquid",
+          "market_type": "perp",
+          "rank": 22,
+          "symbol": "CRV",
+          "display_symbol": "CRV",
+          "selection_volume": "6145818.9930390008",
+          "price_scale": 5,
+          "quantity_scale": 1,
+          "prices": [
+            "0.2149",
+            "0.22396",
+            "0.22422",
+            "0.22446"
+          ],
+          "quantities": [
+            "0.1",
+            "3142.0",
+            "48156.5"
+          ]
+        },
+        {
+          "venue": "hyperliquid",
+          "market_type": "perp",
+          "rank": 23,
+          "symbol": "kBONK",
+          "display_symbol": "kBONK",
+          "selection_volume": "5214231.7734090015",
+          "price_scale": 6,
+          "quantity_scale": 1,
+          "prices": [
+            "0.003692",
+            "0.003746",
+            "0.003759",
+            "0.003773"
+          ],
+          "quantities": [
+            "1",
+            "1447397.0",
+            "10869665.0"
+          ]
+        },
+        {
+          "venue": "hyperliquid",
+          "market_type": "perp",
+          "rank": 24,
+          "symbol": "BNB",
+          "display_symbol": "BNB",
+          "selection_volume": "5206321.0256600007",
+          "price_scale": 2,
+          "quantity_scale": 3,
+          "prices": [
+            "569.0",
+            "582.34",
+            "582.58",
+            "582.84"
+          ],
+          "quantities": [
+            "0.001",
+            "4.293",
+            "70.504"
+          ]
+        },
+        {
+          "venue": "hyperliquid",
+          "market_type": "perp",
+          "rank": 25,
+          "symbol": "TIA",
+          "display_symbol": "TIA",
+          "selection_volume": "5069527.3548750076",
+          "price_scale": 5,
+          "quantity_scale": 1,
+          "prices": [
+            "0.4008",
+            "0.41129",
+            "0.41171",
+            "0.41213"
+          ],
+          "quantities": [
+            "0.1",
+            "1214.3",
+            "49664.8"
+          ]
+        },
+        {
+          "venue": "hyperliquid",
+          "market_type": "perp",
+          "rank": 26,
+          "symbol": "ADA",
+          "display_symbol": "ADA",
+          "selection_volume": "4982465.9096999979",
+          "price_scale": 5,
+          "quantity_scale": 1,
+          "prices": [
+            "0.15826",
+            "0.16464",
+            "0.16479",
+            "0.16497"
+          ],
+          "quantities": [
+            "1",
+            "18361.0",
+            "224275.0"
+          ]
+        },
+        {
+          "venue": "hyperliquid",
+          "market_type": "perp",
+          "rank": 27,
+          "symbol": "DOGE",
+          "display_symbol": "DOGE",
+          "selection_volume": "4783321.9406890012",
+          "price_scale": 6,
+          "quantity_scale": 1,
+          "prices": [
+            "0.072325",
+            "0.074041",
+            "0.074065",
+            "0.074087"
+          ],
+          "quantities": [
+            "1",
+            "67516.0",
+            "711814.0"
+          ]
+        },
+        {
+          "venue": "hyperliquid",
+          "market_type": "perp",
+          "rank": 28,
+          "symbol": "JUP",
+          "display_symbol": "JUP",
+          "selection_volume": "3991865.5993999992",
+          "price_scale": 5,
+          "quantity_scale": 1,
+          "prices": [
+            "0.20662",
+            "0.20995",
+            "0.21017",
+            "0.21046"
+          ],
+          "quantities": [
+            "1",
+            "4761.0",
+            "21445.0"
+          ]
+        },
+        {
+          "venue": "hyperliquid",
+          "market_type": "perp",
+          "rank": 29,
+          "symbol": "JTO",
+          "display_symbol": "JTO",
+          "selection_volume": "3631894.6089399992",
+          "price_scale": 6,
+          "quantity_scale": 1,
+          "prices": [
+            "0.64413",
+            "0.64505",
+            "0.646162",
+            "0.647033"
+          ],
+          "quantities": [
+            "1",
+            "1178.0",
+            "12415.0"
+          ]
+        },
+        {
+          "venue": "hyperliquid",
+          "market_type": "perp",
+          "rank": 30,
+          "symbol": "LINK",
+          "display_symbol": "LINK",
+          "selection_volume": "3612996.2949600019",
+          "price_scale": 4,
+          "quantity_scale": 1,
+          "prices": [
+            "7.9548",
+            "8.3466",
+            "8.3524",
+            "8.3566"
+          ],
+          "quantities": [
+            "0.1",
+            "238.7",
+            "3596.8"
+          ]
+        },
+        {
+          "venue": "hyperliquid",
+          "market_type": "perp",
+          "rank": 31,
+          "symbol": "XMR",
+          "display_symbol": "XMR",
+          "selection_volume": "3395525.7446699995",
+          "price_scale": 2,
+          "quantity_scale": 3,
+          "prices": [
+            "321.22",
+            "332.04",
+            "332.41",
+            "332.72"
+          ],
+          "quantities": [
+            "0.001",
+            "2.708",
+            "27.482"
+          ]
+        },
+        {
+          "venue": "hyperliquid",
+          "market_type": "perp",
+          "rank": 32,
+          "symbol": "MON",
+          "display_symbol": "MON",
+          "selection_volume": "2884599.4995080004",
+          "price_scale": 6,
+          "quantity_scale": 1,
+          "prices": [
+            "0.022297",
+            "0.02275",
+            "0.022787",
+            "0.02281"
+          ],
+          "quantities": [
+            "1",
+            "40844.0",
+            "483999.0"
+          ]
+        },
+        {
+          "venue": "hyperliquid",
+          "market_type": "perp",
+          "rank": 33,
+          "symbol": "SPX",
+          "display_symbol": "SPX",
+          "selection_volume": "2791424.231497",
+          "price_scale": 5,
+          "quantity_scale": 1,
+          "prices": [
+            "0.34431",
+            "0.38007",
+            "0.38092",
+            "0.38142"
+          ],
+          "quantities": [
+            "0.1",
+            "1976.7",
+            "24747.0"
+          ]
+        },
+        {
+          "venue": "hyperliquid",
+          "market_type": "perp",
+          "rank": 34,
+          "symbol": "TRUMP",
+          "display_symbol": "TRUMP",
+          "selection_volume": "2745070.7367000002",
+          "price_scale": 4,
+          "quantity_scale": 1,
+          "prices": [
+            "1.5471",
+            "1.5689",
+            "1.5711",
+            "1.5727"
+          ],
+          "quantities": [
+            "0.1",
+            "1144.2",
+            "19688.4"
+          ]
+        },
+        {
+          "venue": "hyperliquid",
+          "market_type": "perp",
+          "rank": 35,
+          "symbol": "KAITO",
+          "display_symbol": "KAITO",
+          "selection_volume": "2730094.5417799996",
+          "price_scale": 5,
+          "quantity_scale": 1,
+          "prices": [
+            "0.66167",
+            "0.77997",
+            "0.7817",
+            "0.7837"
+          ],
+          "quantities": [
+            "1",
+            "639.0",
+            "25156.0"
+          ]
+        },
+        {
+          "venue": "hyperliquid",
+          "market_type": "perp",
+          "rank": 36,
+          "symbol": "PAXG",
+          "display_symbol": "PAXG",
+          "selection_volume": "2666370.6327999993",
+          "price_scale": 1,
+          "quantity_scale": 3,
+          "prices": [
+            "3999.9",
+            "4050.7",
+            "4052.6",
+            "4054.6"
+          ],
+          "quantities": [
+            "0.001",
+            "3.063",
+            "24.266"
+          ]
+        },
+        {
+          "venue": "hyperliquid",
+          "market_type": "perp",
+          "rank": 37,
+          "symbol": "ONDO",
+          "display_symbol": "ONDO",
+          "selection_volume": "2557154.3744699992",
+          "price_scale": 5,
+          "quantity_scale": 1,
+          "prices": [
+            "0.31146",
+            "0.31823",
+            "0.31858",
+            "0.31889"
+          ],
+          "quantities": [
+            "1",
+            "9418.0",
+            "42002.0"
+          ]
+        },
+        {
+          "venue": "hyperliquid",
+          "market_type": "perp",
+          "rank": 38,
+          "symbol": "VVV",
+          "display_symbol": "VVV",
+          "selection_volume": "2509001.8903599996",
+          "price_scale": 3,
+          "quantity_scale": 2,
+          "prices": [
+            "10.766",
+            "11.049",
+            "11.067",
+            "11.087"
+          ],
+          "quantities": [
+            "0.01",
+            "81.27",
+            "336.75"
+          ]
+        },
+        {
+          "venue": "hyperliquid",
+          "market_type": "perp",
+          "rank": 39,
+          "symbol": "INJ",
+          "display_symbol": "INJ",
+          "selection_volume": "2468396.8215199998",
+          "price_scale": 4,
+          "quantity_scale": 1,
+          "prices": [
+            "4.6914",
+            "5.0369",
+            "5.0423",
+            "5.0459"
+          ],
+          "quantities": [
+            "0.1",
+            "99.1",
+            "2036.5"
+          ]
+        },
+        {
+          "venue": "hyperliquid",
+          "market_type": "perp",
+          "rank": 40,
+          "symbol": "PENGU",
+          "display_symbol": "PENGU",
+          "selection_volume": "2263901.2053449983",
+          "price_scale": 6,
+          "quantity_scale": 1,
+          "prices": [
+            "0.005833",
+            "0.005947",
+            "0.00596",
+            "0.005975"
+          ],
+          "quantities": [
+            "1",
+            "798296.0",
+            "3916267.0"
+          ]
+        },
+        {
+          "venue": "hyperliquid",
+          "market_type": "perp",
+          "rank": 41,
+          "symbol": "VIRTUAL",
+          "display_symbol": "VIRTUAL",
+          "selection_volume": "2217817.1261640005",
+          "price_scale": 5,
+          "quantity_scale": 1,
+          "prices": [
+            "0.55155",
+            "0.58835",
+            "0.58884",
+            "0.58942"
+          ],
+          "quantities": [
+            "0.1",
+            "1198.7",
+            "17157.1"
+          ]
+        },
+        {
+          "venue": "hyperliquid",
+          "market_type": "perp",
+          "rank": 42,
+          "symbol": "LTC",
+          "display_symbol": "LTC",
+          "selection_volume": "2125631.3300699987",
+          "price_scale": 3,
+          "quantity_scale": 2,
+          "prices": [
+            "43.785",
+            "45.203",
+            "45.226",
+            "45.25"
+          ],
+          "quantities": [
+            "0.01",
+            "35.32",
+            "383.75"
+          ]
+        },
+        {
+          "venue": "hyperliquid",
+          "market_type": "perp",
+          "rank": 43,
+          "symbol": "APT",
+          "display_symbol": "APT",
+          "selection_volume": "1952062.9688990002",
+          "price_scale": 4,
+          "quantity_scale": 2,
+          "prices": [
+            "0.5928",
+            "0.62",
+            "0.6214",
+            "0.6233"
+          ],
+          "quantities": [
+            "0.01",
+            "4958.54",
+            "41659.87"
+          ]
+        },
+        {
+          "venue": "hyperliquid",
+          "market_type": "perp",
+          "rank": 44,
+          "symbol": "GRAM",
+          "display_symbol": "GRAM",
+          "selection_volume": "1876832.1678999995",
+          "price_scale": 4,
+          "quantity_scale": 1,
+          "prices": [
+            "1.5963",
+            "1.617",
+            "1.6193",
+            "1.6211"
+          ],
+          "quantities": [
+            "1",
+            "684.0",
+            "9789.0"
+          ]
+        },
+        {
+          "venue": "hyperliquid",
+          "market_type": "perp",
+          "rank": 45,
+          "symbol": "LDO",
+          "display_symbol": "LDO",
+          "selection_volume": "1873980.264522",
+          "price_scale": 5,
+          "quantity_scale": 1,
+          "prices": [
+            "0.31549",
+            "0.33229",
+            "0.3326",
+            "0.33303"
+          ],
+          "quantities": [
+            "0.1",
+            "1917.1",
+            "51605.9"
+          ]
+        },
+        {
+          "venue": "hyperliquid",
+          "market_type": "perp",
+          "rank": 46,
+          "symbol": "ETHFI",
+          "display_symbol": "ETHFI",
+          "selection_volume": "1695003.3844669999",
+          "price_scale": 5,
+          "quantity_scale": 1,
+          "prices": [
+            "0.38332",
+            "0.39342",
+            "0.39381",
+            "0.39467"
+          ],
+          "quantities": [
+            "0.1",
+            "2652.7",
+            "24873.2"
+          ]
+        },
+        {
+          "venue": "hyperliquid",
+          "market_type": "perp",
+          "rank": 47,
+          "symbol": "BCH",
+          "display_symbol": "BCH",
+          "selection_volume": "1578565.5491199992",
+          "price_scale": 3,
+          "quantity_scale": 3,
+          "prices": [
+            "234.77",
+            "234.98",
+            "235.167",
+            "237.02"
+          ],
+          "quantities": [
+            "0.001",
+            "9.936",
+            "52.053"
+          ]
+        },
+        {
+          "venue": "hyperliquid",
+          "market_type": "perp",
+          "rank": 48,
+          "symbol": "ZRO",
+          "display_symbol": "ZRO",
+          "selection_volume": "1539237.1714369992",
+          "price_scale": 5,
+          "quantity_scale": 1,
+          "prices": [
+            "0.86374",
+            "0.86426",
+            "0.86539",
+            "0.8696"
+          ],
+          "quantities": [
+            "0.1",
+            "569.9",
+            "9265.4"
+          ]
+        },
+        {
+          "venue": "hyperliquid",
+          "market_type": "perp",
+          "rank": 49,
+          "symbol": "TRX",
+          "display_symbol": "TRX",
+          "selection_volume": "1513502.1212900002",
+          "price_scale": 5,
+          "quantity_scale": 1,
+          "prices": [
+            "0.32389",
+            "0.3255",
+            "0.32568",
+            "0.32595"
+          ],
+          "quantities": [
+            "1",
+            "4957.0",
+            "30727.0"
+          ]
+        },
+        {
+          "venue": "hyperliquid",
+          "market_type": "perp",
+          "rank": 50,
+          "symbol": "ASTER",
+          "display_symbol": "ASTER",
+          "selection_volume": "1507047.57296",
+          "price_scale": 5,
+          "quantity_scale": 1,
+          "prices": [
+            "0.6297",
+            "0.63103",
+            "0.63161",
+            "0.63204"
+          ],
+          "quantities": [
+            "1",
+            "2516.0",
+            "12947.0"
+          ]
+        },
+        {
+          "venue": "hyperliquid",
+          "market_type": "perp",
+          "rank": 51,
+          "symbol": "GRASS",
+          "display_symbol": "GRASS",
+          "selection_volume": "1498592.0336110003",
+          "price_scale": 5,
+          "quantity_scale": 1,
+          "prices": [
+            "0.36317",
+            "0.39276",
+            "0.39331",
+            "0.39439"
+          ],
+          "quantities": [
+            "0.1",
+            "1566.7",
+            "9483.7"
+          ]
+        },
+        {
+          "venue": "hyperliquid",
+          "market_type": "perp",
+          "rank": 52,
+          "symbol": "MORPHO",
+          "display_symbol": "MORPHO",
+          "selection_volume": "1483250.7596199994",
+          "price_scale": 4,
+          "quantity_scale": 1,
+          "prices": [
+            "1.993",
+            "2.0371",
+            "2.0399",
+            "2.0435"
+          ],
+          "quantities": [
+            "0.1",
+            "455.3",
+            "2701.8"
+          ]
+        },
+        {
+          "venue": "hyperliquid",
+          "market_type": "perp",
+          "rank": 53,
+          "symbol": "HBAR",
+          "display_symbol": "HBAR",
+          "selection_volume": "1429103.9747869996",
+          "price_scale": 6,
+          "quantity_scale": 1,
+          "prices": [
+            "0.066602",
+            "0.06721",
+            "0.06729",
+            "0.067379"
+          ],
+          "quantities": [
+            "1",
+            "14574.0",
+            "4256846.0"
+          ]
+        },
+        {
+          "venue": "hyperliquid",
+          "market_type": "perp",
+          "rank": 54,
+          "symbol": "SYRUP",
+          "display_symbol": "SYRUP",
+          "selection_volume": "1427426.5712500007",
+          "price_scale": 6,
+          "quantity_scale": 1,
+          "prices": [
+            "0.18969",
+            "0.19037",
+            "0.19086",
+            "0.192185"
+          ],
+          "quantities": [
+            "1",
+            "3878.0",
+            "92201.0"
+          ]
+        },
+        {
+          "venue": "hyperliquid",
+          "market_type": "perp",
+          "rank": 55,
+          "symbol": "EIGEN",
+          "display_symbol": "EIGEN",
+          "selection_volume": "1419669.7537759999",
+          "price_scale": 4,
+          "quantity_scale": 2,
+          "prices": [
+            "0.2348",
+            "0.2367",
+            "0.238",
+            "0.2433"
+          ],
+          "quantities": [
+            "0.01",
+            "7325.47",
+            "55510.31"
+          ]
+        },
+        {
+          "venue": "hyperliquid",
+          "market_type": "perp",
+          "rank": 56,
+          "symbol": "XLM",
+          "display_symbol": "XLM",
+          "selection_volume": "1281774.5384500003",
+          "price_scale": 5,
+          "quantity_scale": 1,
+          "prices": [
+            "0.18094",
+            "0.18398",
+            "0.18414",
+            "0.18431"
+          ],
+          "quantities": [
+            "1",
+            "8553.0",
+            "94168.0"
+          ]
+        },
+        {
+          "venue": "hyperliquid",
+          "market_type": "perp",
+          "rank": 57,
+          "symbol": "DOT",
+          "display_symbol": "DOT",
+          "selection_volume": "1200897.0707850005",
+          "price_scale": 5,
+          "quantity_scale": 1,
+          "prices": [
+            "0.84067",
+            "0.85333",
+            "0.8541",
+            "0.85461"
+          ],
+          "quantities": [
+            "0.1",
+            "995.6",
+            "27513.2"
+          ]
+        },
+        {
+          "venue": "hyperliquid",
+          "market_type": "perp",
+          "rank": 58,
+          "symbol": "AERO",
+          "display_symbol": "AERO",
+          "selection_volume": "1103146.8468900002",
+          "price_scale": 6,
+          "quantity_scale": 1,
+          "prices": [
+            "0.48522",
+            "0.505645",
+            "0.50662",
+            "0.50779"
+          ],
+          "quantities": [
+            "1",
+            "1414.0",
+            "11597.0"
+          ]
+        },
+        {
+          "venue": "hyperliquid",
+          "market_type": "perp",
+          "rank": 59,
+          "symbol": "WLFI",
+          "display_symbol": "WLFI",
+          "selection_volume": "1030518.0941239999",
+          "price_scale": 6,
+          "quantity_scale": 1,
+          "prices": [
+            "0.057414",
+            "0.057437",
+            "0.057479",
+            "0.058046"
+          ],
+          "quantities": [
+            "1",
+            "16183.0",
+            "447830.0"
+          ]
+        },
+        {
+          "venue": "hyperliquid",
+          "market_type": "perp",
+          "rank": 60,
+          "symbol": "PENDLE",
+          "display_symbol": "PENDLE",
+          "selection_volume": "904589.6488999999",
+          "price_scale": 4,
+          "quantity_scale": 1,
+          "prices": [
+            "1.4704",
+            "1.556",
+            "1.5587",
+            "1.5613"
+          ],
+          "quantities": [
+            "1",
+            "469.0",
+            "13960.0"
+          ]
+        },
+        {
+          "venue": "hyperliquid",
+          "market_type": "perp",
+          "rank": 61,
+          "symbol": "OP",
+          "display_symbol": "OP",
+          "selection_volume": "890739.4471970003",
+          "price_scale": 5,
+          "quantity_scale": 1,
+          "prices": [
+            "0.09899",
+            "0.10157",
+            "0.10183",
+            "0.10223"
+          ],
+          "quantities": [
+            "0.1",
+            "15519.3",
+            "432026.4"
+          ]
+        },
+        {
+          "venue": "hyperliquid",
+          "market_type": "perp",
+          "rank": 62,
+          "symbol": "FIL",
+          "display_symbol": "FIL",
+          "selection_volume": "845341.437879",
+          "price_scale": 5,
+          "quantity_scale": 1,
+          "prices": [
+            "0.75313",
+            "0.78484",
+            "0.78558",
+            "0.78617"
+          ],
+          "quantities": [
+            "0.1",
+            "978.9",
+            "19866.4"
+          ]
+        },
+        {
+          "venue": "hyperliquid",
+          "market_type": "perp",
+          "rank": 63,
+          "symbol": "MET",
+          "display_symbol": "MET",
+          "selection_volume": "790529.6579100001",
+          "price_scale": 5,
+          "quantity_scale": 1,
+          "prices": [
+            "0.14836",
+            "0.14869",
+            "0.14919",
+            "0.15003"
+          ],
+          "quantities": [
+            "1",
+            "3777.0",
+            "29346.0"
+          ]
+        },
+        {
+          "venue": "hyperliquid",
+          "market_type": "perp",
+          "rank": 64,
+          "symbol": "SAND",
+          "display_symbol": "SAND",
+          "selection_volume": "749804.3252669998",
+          "price_scale": 6,
+          "quantity_scale": 1,
+          "prices": [
+            "0.047347",
+            "0.04873",
+            "0.048808",
+            "0.049877"
+          ],
+          "quantities": [
+            "1",
+            "17034.0",
+            "88342.0"
+          ]
+        },
+        {
+          "venue": "hyperliquid",
+          "market_type": "perp",
+          "rank": 65,
+          "symbol": "VINE",
+          "display_symbol": "VINE",
+          "selection_volume": "723277.5953350004",
+          "price_scale": 6,
+          "quantity_scale": 1,
+          "prices": [
+            "0.008741",
+            "0.009055",
+            "0.009149",
+            "0.009402"
+          ],
+          "quantities": [
+            "1",
+            "76462.0",
+            "458134.0"
+          ]
+        },
+        {
+          "venue": "hyperliquid",
+          "market_type": "perp",
+          "rank": 66,
+          "symbol": "WIF",
+          "display_symbol": "WIF",
+          "selection_volume": "692498.1267499999",
+          "price_scale": 6,
+          "quantity_scale": 1,
+          "prices": [
+            "0.15303",
+            "0.154155",
+            "0.15434",
+            "0.15454"
+          ],
+          "quantities": [
+            "1",
+            "9227.0",
+            "105049.0"
+          ]
+        },
+        {
+          "venue": "hyperliquid",
+          "market_type": "perp",
+          "rank": 67,
+          "symbol": "PYTH",
+          "display_symbol": "PYTH",
+          "selection_volume": "691371.6042129995",
+          "price_scale": 6,
+          "quantity_scale": 1,
+          "prices": [
+            "0.047108",
+            "0.048108",
+            "0.04824",
+            "0.048362"
+          ],
+          "quantities": [
+            "1",
+            "15449.0",
+            "213677.0"
+          ]
+        },
+        {
+          "venue": "hyperliquid",
+          "market_type": "perp",
+          "rank": 68,
+          "symbol": "MEGA",
+          "display_symbol": "MEGA",
+          "selection_volume": "663431.352912",
+          "price_scale": 6,
+          "quantity_scale": 1,
+          "prices": [
+            "0.04854",
+            "0.048687",
+            "0.048756",
+            "0.048867"
+          ],
+          "quantities": [
+            "1",
+            "10273.0",
+            "164449.0"
+          ]
+        },
+        {
+          "venue": "hyperliquid",
+          "market_type": "perp",
+          "rank": 69,
+          "symbol": "CHIP",
+          "display_symbol": "CHIP",
+          "selection_volume": "653584.5419769997",
+          "price_scale": 6,
+          "quantity_scale": 1,
+          "prices": [
+            "0.029912",
+            "0.030378",
+            "0.030434",
+            "0.030485"
+          ],
+          "quantities": [
+            "1",
+            "16459.0",
+            "133777.0"
+          ]
+        },
+        {
+          "venue": "hyperliquid",
+          "market_type": "perp",
+          "rank": 70,
+          "symbol": "DYDX",
+          "display_symbol": "DYDX",
+          "selection_volume": "648603.0950419998",
+          "price_scale": 5,
+          "quantity_scale": 1,
+          "prices": [
+            "0.11933",
+            "0.12016",
+            "0.12046",
+            "0.12313"
+          ],
+          "quantities": [
+            "0.1",
+            "7276.5",
+            "189665.6"
+          ]
+        },
+        {
+          "venue": "hyperliquid",
+          "market_type": "perp",
+          "rank": 71,
+          "symbol": "ETC",
+          "display_symbol": "ETC",
+          "selection_volume": "632401.8895050001",
+          "price_scale": 4,
+          "quantity_scale": 2,
+          "prices": [
+            "6.9098",
+            "7.0851",
+            "7.0924",
+            "7.1143"
+          ],
+          "quantities": [
+            "0.01",
+            "105.86",
+            "531.35"
+          ]
+        },
+        {
+          "venue": "hyperliquid",
+          "market_type": "perp",
+          "rank": 72,
+          "symbol": "POL",
+          "display_symbol": "POL",
+          "selection_volume": "613965.6770800002",
+          "price_scale": 6,
+          "quantity_scale": 1,
+          "prices": [
+            "0.082843",
+            "0.084999",
+            "0.0851",
+            "0.085276"
+          ],
+          "quantities": [
+            "1",
+            "5882.0",
+            "81762.0"
+          ]
+        },
+        {
+          "venue": "hyperliquid",
+          "market_type": "perp",
+          "rank": 73,
+          "symbol": "FET",
+          "display_symbol": "FET",
+          "selection_volume": "572401.3676500003",
+          "price_scale": 5,
+          "quantity_scale": 1,
+          "prices": [
+            "0.15987",
+            "0.16193",
+            "0.16209",
+            "0.1623"
+          ],
+          "quantities": [
+            "1",
+            "8409.0",
+            "58602.0"
+          ]
+        },
+        {
+          "venue": "hyperliquid",
+          "market_type": "perp",
+          "rank": 74,
+          "symbol": "APE",
+          "display_symbol": "APE",
+          "selection_volume": "563033.5119689998",
+          "price_scale": 5,
+          "quantity_scale": 1,
+          "prices": [
+            "0.14578",
+            "0.14606",
+            "0.14639",
+            "0.14828"
+          ],
+          "quantities": [
+            "0.1",
+            "6193.1",
+            "139188.3"
+          ]
+        },
+        {
+          "venue": "hyperliquid",
+          "market_type": "perp",
+          "rank": 75,
+          "symbol": "HEMI",
+          "display_symbol": "HEMI",
+          "selection_volume": "542365.3986080001",
+          "price_scale": 6,
+          "quantity_scale": 1,
+          "prices": [
+            "0.004265",
+            "0.004714",
+            "0.004733",
+            "0.00479"
+          ],
+          "quantities": [
+            "1",
+            "217145.0",
+            "643797.0"
+          ]
+        },
+        {
+          "venue": "hyperliquid",
+          "market_type": "perp",
+          "rank": 76,
+          "symbol": "DASH",
+          "display_symbol": "DASH",
+          "selection_volume": "508006.6496199999",
+          "price_scale": 3,
+          "quantity_scale": 2,
+          "prices": [
+            "33.114",
+            "34.162",
+            "34.21",
+            "34.262"
+          ],
+          "quantities": [
+            "0.01",
+            "39.95",
+            "163.32"
+          ]
+        },
+        {
+          "venue": "hyperliquid",
+          "market_type": "perp",
+          "rank": 77,
+          "symbol": "kSHIB",
+          "display_symbol": "kSHIB",
+          "selection_volume": "502467.60971",
+          "price_scale": 6,
+          "quantity_scale": 1,
+          "prices": [
+            "0.004149",
+            "0.004209",
+            "0.004223",
+            "0.004244"
+          ],
+          "quantities": [
+            "1",
+            "922391.0",
+            "13565271.0"
+          ]
+        },
+        {
+          "venue": "hyperliquid",
+          "market_type": "perp",
+          "rank": 78,
+          "symbol": "CC",
+          "display_symbol": "CC",
+          "selection_volume": "500168.35597",
+          "price_scale": 5,
+          "quantity_scale": 1,
+          "prices": [
+            "0.13017",
+            "0.13931",
+            "0.13952",
+            "0.13988"
+          ],
+          "quantities": [
+            "1",
+            "2442.0",
+            "27589.0"
+          ]
+        },
+        {
+          "venue": "hyperliquid",
+          "market_type": "perp",
+          "rank": 79,
+          "symbol": "STRK",
+          "display_symbol": "STRK",
+          "selection_volume": "492729.479516",
+          "price_scale": 5,
+          "quantity_scale": 10,
+          "prices": [
+            "0.02879",
+            "0.02902",
+            "0.02916",
+            "0.02954"
+          ],
+          "quantities": [
+            "0.1",
+            "134469.6",
+            "2104839.7000000002"
+          ]
+        },
+        {
+          "venue": "hyperliquid",
+          "market_type": "perp",
+          "rank": 80,
+          "symbol": "PURR",
+          "display_symbol": "PURR",
+          "selection_volume": "475648.347476",
+          "price_scale": 6,
+          "quantity_scale": 1,
+          "prices": [
+            "0.075969",
+            "0.083483",
+            "0.084343",
+            "0.084545"
+          ],
+          "quantities": [
+            "1",
+            "1000.0",
+            "237054.0"
+          ]
+        },
+        {
+          "venue": "hyperliquid",
+          "market_type": "perp",
+          "rank": 81,
+          "symbol": "SNX",
+          "display_symbol": "SNX",
+          "selection_volume": "462343.750472",
+          "price_scale": 5,
+          "quantity_scale": 1,
+          "prices": [
+            "0.22908",
+            "0.23593",
+            "0.23626",
+            "0.23722"
+          ],
+          "quantities": [
+            "0.1",
+            "2118.7",
+            "43007.9"
+          ]
+        },
+        {
+          "venue": "hyperliquid",
+          "market_type": "perp",
+          "rank": 82,
+          "symbol": "ATOM",
+          "display_symbol": "ATOM",
+          "selection_volume": "454682.2449499999",
+          "price_scale": 4,
+          "quantity_scale": 2,
+          "prices": [
+            "1.5378",
+            "1.555",
+            "1.5579",
+            "1.5638"
+          ],
+          "quantities": [
+            "0.01",
+            "430.46",
+            "1913.75"
+          ]
+        },
+        {
+          "venue": "hyperliquid",
+          "market_type": "perp",
+          "rank": 83,
+          "symbol": "SEI",
+          "display_symbol": "SEI",
+          "selection_volume": "448828.7783840002",
+          "price_scale": 6,
+          "quantity_scale": 1,
+          "prices": [
+            "0.047338",
+            "0.048492",
+            "0.048532",
+            "0.048572"
+          ],
+          "quantities": [
+            "1",
+            "10717.0",
+            "180996.0"
+          ]
+        },
+        {
+          "venue": "hyperliquid",
+          "market_type": "perp",
+          "rank": 84,
+          "symbol": "SKY",
+          "display_symbol": "SKY",
+          "selection_volume": "447241.252535",
+          "price_scale": 6,
+          "quantity_scale": 1,
+          "prices": [
+            "0.05977",
+            "0.061202",
+            "0.061335",
+            "0.061623"
+          ],
+          "quantities": [
+            "1",
+            "11276.0",
+            "32120.0"
+          ]
+        },
+        {
+          "venue": "hyperliquid",
+          "market_type": "perp",
+          "rank": 85,
+          "symbol": "BSV",
+          "display_symbol": "BSV",
+          "selection_volume": "446749.9689",
+          "price_scale": 3,
+          "quantity_scale": 2,
+          "prices": [
+            "13.735",
+            "13.787",
+            "13.827",
+            "14.224"
+          ],
+          "quantities": [
+            "0.01",
+            "98.73",
+            "713.53"
+          ]
+        },
+        {
+          "venue": "hyperliquid",
+          "market_type": "perp",
+          "rank": 86,
+          "symbol": "CFX",
+          "display_symbol": "CFX",
+          "selection_volume": "404796.3402950002",
+          "price_scale": 6,
+          "quantity_scale": 1,
+          "prices": [
+            "0.042823",
+            "0.045041",
+            "0.045208",
+            "0.046245"
+          ],
+          "quantities": [
+            "1",
+            "11074.0",
+            "223961.0"
+          ]
+        },
+        {
+          "venue": "hyperliquid",
+          "market_type": "perp",
+          "rank": 87,
+          "symbol": "ALGO",
+          "display_symbol": "ALGO",
+          "selection_volume": "393699.2997099999",
+          "price_scale": 6,
+          "quantity_scale": 1,
+          "prices": [
+            "0.083744",
+            "0.084699",
+            "0.084806",
+            "0.085088"
+          ],
+          "quantities": [
+            "1",
+            "5903.0",
+            "56682.0"
+          ]
+        },
+        {
+          "venue": "hyperliquid",
+          "market_type": "perp",
+          "rank": 88,
+          "symbol": "LINEA",
+          "display_symbol": "LINEA",
+          "selection_volume": "388760.2413420001",
+          "price_scale": 6,
+          "quantity_scale": 1,
+          "prices": [
+            "0.002476",
+            "0.00249",
+            "0.002505",
+            "0.002525"
+          ],
+          "quantities": [
+            "1",
+            "558090.0",
+            "2146307.0"
+          ]
+        },
+        {
+          "venue": "hyperliquid",
+          "market_type": "perp",
+          "rank": 89,
+          "symbol": "ICP",
+          "display_symbol": "ICP",
+          "selection_volume": "388219.6096300001",
+          "price_scale": 4,
+          "quantity_scale": 1,
+          "prices": [
+            "2.1886",
+            "2.2188",
+            "2.2209",
+            "2.2242"
+          ],
+          "quantities": [
+            "0.1",
+            "694.3",
+            "3401.1"
+          ]
+        },
+        {
+          "venue": "hyperliquid",
+          "market_type": "perp",
+          "rank": 90,
+          "symbol": "BERA",
+          "display_symbol": "BERA",
+          "selection_volume": "365532.8097330001",
+          "price_scale": 5,
+          "quantity_scale": 1,
+          "prices": [
+            "0.18555",
+            "0.18595",
+            "0.18622",
+            "0.18836"
+          ],
+          "quantities": [
+            "0.1",
+            "4017.0",
+            "43022.5"
+          ]
+        },
+        {
+          "venue": "hyperliquid",
+          "market_type": "perp",
+          "rank": 91,
+          "symbol": "AR",
+          "display_symbol": "AR",
+          "selection_volume": "339903.611356",
+          "price_scale": 4,
+          "quantity_scale": 2,
+          "prices": [
+            "1.9137",
+            "2.0074",
+            "2.0118",
+            "2.0198"
+          ],
+          "quantities": [
+            "0.01",
+            "248.97",
+            "1106.48"
+          ]
+        },
+        {
+          "venue": "hyperliquid",
+          "market_type": "perp",
+          "rank": 92,
+          "symbol": "W",
+          "display_symbol": "W",
+          "selection_volume": "337562.463483",
+          "price_scale": 5,
+          "quantity_scale": 1,
+          "prices": [
+            "0.00923",
+            "0.00955",
+            "0.00968",
+            "0.01"
+          ],
+          "quantities": [
+            "0.1",
+            "209332.3",
+            "868497.4"
+          ]
+        },
+        {
+          "venue": "hyperliquid",
+          "market_type": "perp",
+          "rank": 93,
+          "symbol": "RUNE",
+          "display_symbol": "RUNE",
+          "selection_volume": "329043.600364",
+          "price_scale": 5,
+          "quantity_scale": 1,
+          "prices": [
+            "0.40467",
+            "0.41983",
+            "0.42028",
+            "0.42198"
+          ],
+          "quantities": [
+            "0.1",
+            "1583.7",
+            "48877.0"
+          ]
+        },
+        {
+          "venue": "hyperliquid",
+          "market_type": "perp",
+          "rank": 94,
+          "symbol": "RENDER",
+          "display_symbol": "RENDER",
+          "selection_volume": "324637.58248",
+          "price_scale": 5,
+          "quantity_scale": 1,
+          "prices": [
+            "1.4893",
+            "1.51971",
+            "1.5227",
+            "1.5273"
+          ],
+          "quantities": [
+            "0.1",
+            "328.8",
+            "3751.3"
+          ]
+        },
+        {
+          "venue": "hyperliquid",
+          "market_type": "perp",
+          "rank": 95,
+          "symbol": "TRB",
+          "display_symbol": "TRB",
+          "selection_volume": "315987.2721900001",
+          "price_scale": 3,
+          "quantity_scale": 2,
+          "prices": [
+            "14.889",
+            "14.985",
+            "15.022",
+            "15.13"
+          ],
+          "quantities": [
+            "0.01",
+            "45.33",
+            "675.33"
+          ]
+        },
+        {
+          "venue": "hyperliquid",
+          "market_type": "perp",
+          "rank": 96,
+          "symbol": "BLUR",
+          "display_symbol": "BLUR",
+          "selection_volume": "305973.113699",
+          "price_scale": 6,
+          "quantity_scale": 1,
+          "prices": [
+            "0.016111",
+            "0.016238",
+            "0.016262",
+            "0.016812"
+          ],
+          "quantities": [
+            "1",
+            "52823.0",
+            "1284213.0"
+          ]
+        },
+        {
+          "venue": "hyperliquid",
+          "market_type": "perp",
+          "rank": 97,
+          "symbol": "STBL",
+          "display_symbol": "STBL",
+          "selection_volume": "297360.2891999999",
+          "price_scale": 6,
+          "quantity_scale": 1,
+          "prices": [
+            "0.022392",
+            "0.022907",
+            "0.022959",
+            "0.023209"
+          ],
+          "quantities": [
+            "1",
+            "29261.0",
+            "124894.0"
+          ]
+        },
+        {
+          "venue": "hyperliquid",
+          "market_type": "perp",
+          "rank": 98,
+          "symbol": "MNT",
+          "display_symbol": "MNT",
+          "selection_volume": "295308.898719",
+          "price_scale": 5,
+          "quantity_scale": 1,
+          "prices": [
+            "0.42026",
+            "0.42072",
+            "0.42139",
+            "0.42229"
+          ],
+          "quantities": [
+            "0.1",
+            "2801.2",
+            "23388.8"
+          ]
+        },
+        {
+          "venue": "hyperliquid",
+          "market_type": "perp",
+          "rank": 99,
+          "symbol": "STX",
+          "display_symbol": "STX",
+          "selection_volume": "285195.330198",
+          "price_scale": 5,
+          "quantity_scale": 1,
+          "prices": [
+            "0.16603",
+            "0.16804",
+            "0.16839",
+            "0.16879"
+          ],
+          "quantities": [
+            "0.1",
+            "4510.8",
+            "60218.2"
+          ]
+        },
+        {
+          "venue": "hyperliquid",
+          "market_type": "perp",
+          "rank": 100,
+          "symbol": "ZEN",
+          "display_symbol": "ZEN",
+          "selection_volume": "281341.3155210001",
+          "price_scale": 4,
+          "quantity_scale": 2,
+          "prices": [
+            "4.0713",
+            "4.2081",
+            "4.2171",
+            "4.2448"
+          ],
+          "quantities": [
+            "0.01",
+            "160.54",
+            "534.57"
+          ]
+        }
+      ]
+    }
+  ]
+}

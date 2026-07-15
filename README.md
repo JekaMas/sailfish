@@ -447,9 +447,31 @@ tested fixed quote shape.
 
 A permanent fourteen-field oracle test builds a 93-byte positional record with
 cached Sailfish codecs and verifies byte-for-byte equality with deterministic
-fxamacker `cbor:",toarray"`. Its direct encode path is allocation-free; decode
-allocates only the owned string field in the parent record. Sailfish numeric
-field decode remains allocation-free.
+fxamacker `cbor:",toarray"`. The 93-byte result belongs to that synthetic value
+set; it is neither a fixed record size nor a theoretical minimum. The same
+schema has a 15-byte structural floor when its symbol is empty and every
+numeric value is zero. It has no finite format-wide maximum until the enclosing
+record bounds symbol length.
+
+A separate July 15, 2026 snapshot covers 100 MEXC spot, 100 Hyperliquid spot,
+and 100 Hyperliquid perpetual markets, ranked by reported 24-hour volume. It
+uses distinct positive price and quantity observations from venue metadata,
+context, ticker, and L2 book responses. Each market identity appears once in
+the fixture; observed values are deduplicated before min/quantile/max selection.
+For realistic nonzero records, the resulting 14-field wires are 48-78 bytes:
+
+| Cohort | Quantity case | Min | p50 | p95 | Max | Mean |
+|---|---|---:|---:|---:|---:|---:|
+| MEXC spot | min / median / max | 55 / 59 / 62 | 60 / 63 / 64 | 68 / 71 / 74 | 75 / 78 / 78 | 60.96 / 63.66 / 65.92 |
+| Hyperliquid spot | min / median / max | 48 / 48 / 48 | 56 / 60 / 60 | 64 / 66 / 68 | 69 / 71 / 73 | 57.42 / 60.18 / 60.80 |
+| Hyperliquid perps | min / median / max | 53 / 56 / 57 | 56 / 60 / 60 | 64 / 67 / 68 | 66 / 68 / 69 | 57.86 / 60.61 / 61.52 |
+
+The snapshot and its invariant checks live in
+`testdata/market_cbor_samples.json` and `market_cbor_benchmark_test.go`. Its
+direct encode path is allocation-free; decode allocates only when the parent
+record must own a symbol string. Sailfish numeric field decode remains
+allocation-free. See [BENCHMARKS.md](BENCHMARKS.md#real-market-cbor-records)
+for source policy and repeated timing results.
 
 ## Errors
 
