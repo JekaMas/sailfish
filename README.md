@@ -142,6 +142,31 @@ if err := codec.ParseInto("1.250000000000000000", &units); err != "" {
 }
 ```
 
+For large numeric batches, keep the raw scaled units contiguous and use the
+same typed codec at the text boundary. This avoids carrying each `Decimal`'s
+optional retained-string header through a price or amount kernel:
+
+```go
+type PriceFormat = sailfish.PriceUint64[sailfish.Fraction5]
+
+codec, err := sailfish.NewCodec[PriceFormat]()
+if err != nil {
+	return err
+}
+units, parseErr := codec.ParseUnits("123.31232")
+if parseErr != "" {
+	return parseErr
+}
+prices := []uint64{units}
+
+var wire [32]byte
+encoded := codec.AppendUnits(wire[:0], prices[0])
+```
+
+Use `Decimal` where retained canonical text and typed value methods are useful;
+use `[]uint64` or `[]uint256.Int` for large numeric-only working sets. Both
+forms use the same strict parser and canonical formatter.
+
 ## Scale and storage range
 
 Fractional scale and integer capacity are independent. A scale-1 price can be
@@ -281,6 +306,7 @@ There is no mutable lazy cache, so concurrent reads do not race.
 | Parse retained canonical text | `New`, `Codec.Parse` |
 | Parse without retaining input | `NewCompact`, `NewBytes`, codec equivalents |
 | Construct/read scaled units | `NewFromUnits`, `Codec.FromUnits`, `Units` |
+| Parse/format compact unit batches | `Codec.ParseUnits`, `Codec.ParseUnitsBytes`, `Codec.AppendUnits`, `Codec.UnitsLen` |
 | Validate and cache a static format | `NewCodec`, `Codec.Scale`, `Codec.MaxIntegerDigits` |
 | Replace or inspect value state | `SetUnits`, `IsZero`, `HasRepresentation` |
 | Exact encoded lengths | `Len`, `CBORLen`, codec equivalents |
@@ -635,6 +661,8 @@ short-token latency does not justify their call and maintenance cost.
 | Hot aggregate CBOR | Caller-buffer scalar append and positional prefix decode | Avoids reflection and owned per-field slices |
 | Type dispatch | Concrete backend embedded in each format; cached scale in `Codec` | Avoids generic backend type switches and repeated metadata work |
 | Errors | Pre-boxed typed string constants | Comparable errors with zero per-call failure allocation |
+| Numeric batch locality | Contiguous raw units with `ParseUnits` / `AppendUnits` | Avoids scanning optional text-cache state when only numeric units are used |
+| Profile-guided optimization | Production CPU profile owned by the consuming `main` package | PGO optimizes the whole executable; Sailfish does not ship a benchmark-trained library profile |
 
 Measured alternatives are not retained in production: base-`1e9` wide
 formatting was 14-56% slower, direct decimal placement across wide chunks was
@@ -643,6 +671,37 @@ generated per-scale masks duplicated code for a narrower kernel, and a `0-99`
 cache penalized representative misses. See
 [PERFORMANCE.md](PERFORMANCE.md) for the benchmark artifacts and acceptance
 decisions.
+
+Cache-locality crossover benchmarks on an Apple M1 Max found no meaningful
+representation difference for sequential scans, but random numeric scans above
+the measured L2 were 1.6x faster with `[]uint64` than native `Decimal` values
+and 3.7x faster with `[]uint256.Int` than wide `Decimal` values. These are
+working-set measurements, not claimed hardware miss rates; the local CLI CPU
+counter tools exposed no configured cache-miss event. The package therefore
+keeps the existing minimum `Decimal` layout and exposes raw-unit boundary
+methods instead of adding padding, indirection, or another decimal type.
+
+### Profile-guided application builds
+
+Sailfish does not ship `default.pgo`. Go PGO is a whole-program optimization,
+so a profile captured from this library's benchmarks cannot represent a
+consumer's market mix, request frequencies, dependencies, or error paths.
+
+Collect CPU profiles from the deployed executable, merge equal-duration
+samples when needed, then compare the same revision with and without PGO:
+
+```sh
+go tool pprof -proto profile-a.pprof profile-b.pprof > default.pgo
+go build -pgo=off -o app-no-pgo ./cmd/app
+go build -pgo=default.pgo -o app-pgo ./cmd/app
+```
+
+A local mixed Sailfish experiment found 5-23% gains on several parse and wide
+decode paths, but 8-9% regressions on native CBOR and JSON decode. That profile
+is deliberately not part of the package. See [PERFORMANCE.md](PERFORMANCE.md)
+for the matrix and compiler diagnostics. Consumers should gate PGO on their
+whole-application CPU/latency, protected minority paths, binary size, build
+time, and normal correctness suites.
 
 ## Validation
 

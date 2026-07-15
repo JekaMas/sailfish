@@ -393,3 +393,104 @@ Artifacts:
 No JSON syntax, decimal normalization, canonicalization, scale, or numeric
 semantics changed. There is one current JSON implementation, no compatibility
 codec, no legacy decoder, and no normalization fallback.
+
+## 2026-07-15: Cache Locality And Raw Unit Batches
+
+**Decision:** keep the minimum 24-byte native and 48-byte uint256 `Decimal`
+layouts, and use contiguous raw unit arrays for numeric-only batch kernels.
+Add `Codec.ParseUnits`, `ParseUnitsBytes`, `AppendUnits`, and `UnitsLen` so the
+cache-efficient representation uses the same strict typed codec at its text
+boundary. Do not add padding, pointer-indirected cold state, or a second decimal
+value type.
+
+The release host is an Apple M1 Max with a 128-byte cache line. macOS reports
+128 KiB performance-core L1 data caches and 12 MiB L2 caches shared by four
+performance cores. Eight `GOMAXPROCS=1`, 300 ms runs measured:
+
+| 699,050-value random scan | Raw units | `Decimal` | Raw-unit gain | Heap |
+|---|---:|---:|---:|---:|
+| `uint64` | 1.77 ms | 2.84 ms | 1.60x | 0 B / 0 allocs |
+| `uint256.Int` | 3.15 ms | 11.7 ms | 3.71x | 0 B / 0 allocs |
+
+Sequential scans from 2,048 through 699,050 values remained approximately
+2.1 ns/value for both representations, because hardware prefetch and the
+simple summation loop hide the larger stride. Random access removes that
+advantage and makes the 3x native and 1.5x wide working-set expansion visible.
+
+Fifteen `GOMAXPROCS=1`, 500 ms runs measured the raw boundary methods against
+the former public composition and the same internal kernels:
+
+| Operation | Former public composition | Raw-unit method | Kernel | Heap |
+|---|---:|---:|---:|---:|
+| Parse native units | 7.51 ns | 7.29 ns | 4.88 ns | 0 B / 0 allocs |
+| Append native units | 13.6 ns | 12.3 ns | 10.0 ns | 0 B / 0 allocs |
+
+The remaining public-to-kernel difference is generic scale/backend dispatch,
+not allocation or representation copying. A specialized second native codec
+was rejected because the measured append gain does not justify duplicating the
+typed `Codec` API, and raw batch locality is already achieved by the unit array.
+
+Hardware cache hit/miss totals are deliberately not claimed. The local
+`xctrace` CPU Counters template exported an empty `pmc-events` selection, and
+the privileged Linux Docker VM exposed only software, tracepoint, and probe
+event sources. The table is therefore working-set crossover evidence, not a
+hardware miss-rate measurement.
+
+Artifacts:
+
+- `.codex_tmp/cache_analysis/cache_locality_baseline.txt`
+- `.codex_tmp/cache_analysis/cache_random_baseline.txt`
+- `.codex_tmp/cache_analysis/raw_boundary_after.txt`
+- `.codex_tmp/cache_analysis/traces/raw.trace`
+- `.codex_tmp/cache_analysis/docker_pmu.txt`
+
+## 2026-07-15: PGO Is Owned By The Consuming Executable
+
+**Decision:** do not commit a Sailfish `default.pgo`. Sailfish is a library,
+while Go PGO optimizes the complete executable and selects `default.pgo` from
+the main package. A useful profile must therefore come from the consuming
+trading application and include its actual call frequencies, dependencies,
+and success/error distribution.
+
+The package experiment used Go 1.26.5 and a 40.42-second mixed CPU profile
+covering native and uint256 parsing, retained and formatted output, scalar
+CBOR, 900 real-market positional CBOR bar cases, and direct/generic JSON. Ten
+200 ms runs compared identical test binaries built with `-pgo=off` and
+`-pgo=.codex_tmp/pgo/representative.pprof`.
+
+| Protected operation | PGO off | PGO | Delta |
+|---|---:|---:|---:|
+| Canonical native parse | 7.76 ns | 6.60 ns | -14.9% |
+| Canonical uint256 parse | 49.2 ns | 38.8 ns | -21.2% |
+| Runtime-codec one-limb uint256 parse | 8.73 ns | 8.29 ns | -5.1% |
+| Four-limb uint256 append | 113 ns | 109 ns | -3.1% |
+| Uint256 CBOR decode | 12.8 ns | 9.8 ns | -23.4% |
+| Native CBOR decode | 8.06 ns | 8.70 ns | +7.9% |
+| Canonical native JSON decode | 14.2 ns | 15.5 ns | +9.1% |
+| Canonical wide JSON decode | 78.1 ns | 67.4 ns | -13.7% |
+
+Allocations and wire sizes were unchanged. Compiler PGO diagnostics show the
+mechanism rather than an inferred explanation: hot budgets permitted inlining
+of the native and uint256 parse chains, CBOR append/decode helpers, fixed-digit
+writers, and wide division/formatting helpers. The generated test binary grew
+from 9,118,978 to 9,218,722 bytes (+1.09%). A warm-cache local build measured
+0.29 seconds without PGO and 0.64 seconds with PGO; those single build timings
+are orientation only, not a release gate.
+
+This profile is rejected as a package default despite broad wins because it is
+benchmark-trained, does not represent a deployed application, and regresses
+two protected narrow decode paths. A consuming executable should collect
+equal-duration production CPU profiles, merge them with `go tool pprof
+-proto`, compare `-pgo=off` with `-pgo=<profile>` under the same traffic, and
+accept only after its own latency/CPU and minority-path regression gates pass.
+
+Artifacts:
+
+- `.codex_tmp/pgo/baseline_off.txt`
+- `.codex_tmp/pgo/representative.pprof`
+- `.codex_tmp/pgo/profile_top.txt`
+- `.codex_tmp/pgo/candidate_pgo.txt`
+- `.codex_tmp/pgo/benchstat.txt`
+- `.codex_tmp/pgo/pgo_compiler.log`
+- `.codex_tmp/pgo/build_off.log`
+- `.codex_tmp/pgo/build_pgo.log`

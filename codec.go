@@ -70,9 +70,40 @@ func (c Codec[V, U]) ParseBytes(b []byte) (Decimal[V, U], error) {
 	return Decimal[V, U]{units: units}, nil
 }
 
+// ParseUnits parses strict fixed-scale text directly into the selected unit
+// backend. Use it when a numeric batch stores raw units for the smallest cache
+// footprint and does not need Decimal's optional retained representation.
+// Successful and rejected parses allocate no memory.
+func (c Codec[V, U]) ParseUnits(s string) (U, Error) {
+	var venue V
+	units, _, err := venue.unitParseString(s, c.scale())
+	return units, err
+}
+
+// ParseUnitsBytes is ParseUnits for byte input. It neither converts nor
+// retains b.
+func (c Codec[V, U]) ParseUnitsBytes(b []byte) (U, Error) {
+	var venue V
+	units, _, err := venue.unitParseBytes(b, c.scale())
+	return units, err
+}
+
 func (c Codec[V, U]) FromUnits(units U) Decimal[V, U] {
 	_ = c.scale()
 	return Decimal[V, U]{units: units}
+}
+
+// UnitsLen returns the exact canonical text length of raw scaled units.
+func (c Codec[V, U]) UnitsLen(units U) int {
+	var venue V
+	return venue.unitLen(units, c.scale())
+}
+
+// AppendUnits appends canonical fixed-scale text directly from raw scaled
+// units. It allocates only when dst has insufficient capacity.
+func (c Codec[V, U]) AppendUnits(dst []byte, units U) []byte {
+	var venue V
+	return venue.unitAppend(dst, units, c.scale())
 }
 
 func (c Codec[V, U]) Len(d Decimal[V, U]) int {
