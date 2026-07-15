@@ -1,6 +1,7 @@
 package sailfish
 
 import (
+	"math/big"
 	"testing"
 
 	"github.com/goccy/go-json"
@@ -98,6 +99,38 @@ func FuzzUint256UnitsRoundTrip(f *testing.F) {
 		round, err := codec.ParseCompact(value.String())
 		if err != nil || round.Units() != units {
 			t.Fatalf("%#v -> %q -> %#v, %v", units, value.String(), round.Units(), err)
+		}
+	})
+}
+
+func FuzzIntegerUnitConversions(f *testing.F) {
+	seeds := []uint256.Int{
+		{},
+		{1},
+		{^uint64(0)},
+		{1, 2, 3, 4},
+		{^uint64(0), ^uint64(0), ^uint64(0), ^uint64(0)},
+	}
+	for _, seed := range seeds {
+		f.Add(seed[0], seed[1], seed[2], seed[3])
+	}
+
+	codec := testFixedDecimalCodec[AmountInUint256Units[DecimalPlaces18]]()
+	f.Fuzz(func(t *testing.T, limb0, limb1, limb2, limb3 uint64) {
+		units := uint256.Int{limb0, limb1, limb2, limb3}
+		fromU256, err := codec.FromU256(units)
+		if err != nil || fromU256.ToU256() != units {
+			t.Fatalf("U256 round trip: %#v, %v", fromU256.ToU256(), err)
+		}
+
+		source := units.ToBig()
+		fromBig, err := codec.FromBigInt(source)
+		if err != nil || fromBig.ToU256() != units {
+			t.Fatalf("BigInt input: %#v, %v", fromBig.ToU256(), err)
+		}
+		var destination big.Int
+		if err = fromBig.ToBigInt(&destination); err != nil || destination.Cmp(source) != 0 {
+			t.Fatalf("BigInt output: %s, %v", destination.String(), err)
 		}
 	})
 }

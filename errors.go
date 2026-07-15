@@ -15,6 +15,7 @@ const (
 	ErrUnsupportedFractionalDecimalPlaces Error = "sailfish: fractional decimal places are unsupported by unit type"
 	ErrOverflow                           Error = "sailfish: addition overflow"
 	ErrUnderflow                          Error = "sailfish: subtraction underflow"
+	ErrNilSource                          Error = "sailfish: nil source"
 	ErrNilDestination                     Error = "sailfish: nil destination"
 	ErrCBORSyntax                         Error = "sailfish: invalid CBOR"
 	ErrCBORNonDeterministic               Error = "sailfish: non-deterministic CBOR"
@@ -30,6 +31,7 @@ var (
 	boxedErrUnsupportedFractionalDecimalPlaces error = ErrUnsupportedFractionalDecimalPlaces
 	boxedErrOverflow                           error = ErrOverflow
 	boxedErrUnderflow                          error = ErrUnderflow
+	boxedErrNilSource                          error = ErrNilSource
 	boxedErrNilDestination                     error = ErrNilDestination
 	boxedErrCBORSyntax                         error = ErrCBORSyntax
 	boxedErrCBORNonDeterministic               error = ErrCBORNonDeterministic
@@ -51,6 +53,8 @@ func boxedError(err Error) error {
 		return boxedErrOverflow
 	case ErrUnderflow:
 		return boxedErrUnderflow
+	case ErrNilSource:
+		return boxedErrNilSource
 	case ErrNilDestination:
 		return boxedErrNilDestination
 	case ErrCBORSyntax:

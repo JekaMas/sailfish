@@ -2,6 +2,7 @@ package sailfish_test
 
 import (
 	"fmt"
+	"math/big"
 
 	"github.com/JekaMas/sailfish"
 	"github.com/fxamacker/cbor/v2"
@@ -51,6 +52,32 @@ func ExampleNewFixedDecimalFromUnits() {
 	fmt.Println(amount.String())
 	// Output:
 	// 1.234567
+}
+
+func ExampleFixedDecimal_integerConversions() {
+	codec, err := sailfish.NewFixedDecimalCodec[exampleAmountFormat]()
+	if err != nil {
+		fmt.Println(err)
+		return
+	}
+
+	// Integer conversions use already-scaled units. They do not rescale.
+	value, err := codec.FromU256(uint256.Int{1_250_000_000_000_000_000})
+	if err != nil {
+		fmt.Println(err)
+		return
+	}
+	var destination big.Int
+	if err = value.ToBigInt(&destination); err != nil {
+		fmt.Println(err)
+		return
+	}
+
+	fmt.Println(value.String())
+	fmt.Println(destination.String())
+	// Output:
+	// 1.250000000000000000
+	// 1250000000000000000
 }
 
 func ExampleUint256FixedDecimalCodec() {

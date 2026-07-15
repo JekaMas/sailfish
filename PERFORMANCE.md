@@ -513,3 +513,26 @@ taskset -c 2 perf stat -x, -r 10 \
   -test.bench '^BenchmarkDecimalDigitsDistributions$' \
   -test.benchtime=3s -test.count=1 -test.cpu=1
 ```
+
+## 2026-07-15: Integer Interop Uses Direct Closed-Set Dispatch
+
+**Decision:** expose `FromBigInt`, `FromU256`, `ToBigInt`, and `ToU256` over
+already-scaled units. Dispatch constructors directly over Sailfish's closed
+unit set; do not route them through a non-inlineable generic helper. Write
+`big.Int` output into caller-owned storage.
+
+The initial helper-based wide constructors measured approximately 12 ns for
+`big.Int` and 13 ns for `uint256.Int`. CPU profiles and ceiling benchmarks
+separated the costs: Holiman's `SetFromBig` kernel was about 2.9 ns, a wide
+value construction about 2.1 ns, and the extra public/helper boundaries owned
+the remaining time. Direct dispatch reduced the public operations to 8.30 ns
+and 7.29 ns respectively, with zero allocations. Native constructors are
+2.90-3.93 ns. Reused `ToBigInt` destinations cost 4.21-6.15 ns with zero
+allocations.
+
+A fresh four-limb `big.Int` output remains 32 B and one allocation because the
+destination must own mutable `math/big` words after the call. Sailfish does not
+hide that ownership cost or retain/alias the source. No unsafe conversion,
+assembly, pooling, compatibility path, or fallback is used: the residual wide
+constructor time is dominated by the public 48-byte value return, and the
+portable implementation is already below the target.

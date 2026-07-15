@@ -85,6 +85,15 @@ GOMAXPROCS=1 GOWORK=off go test -run '^$' \
 | `Compare/cross-scale` | 52.7 ns/op | 0 | 0 |
 | `AddAssign/uint64` | 4.48 ns/op | 0 | 0 |
 | `AddAssign/uint256` | 13.8 ns/op | 0 | 0 |
+| `IntegerConversions/from_big_int/uint64` | 3.93 ns/op | 0 | 0 |
+| `IntegerConversions/from_big_int/uint256` | 8.30 ns/op | 0 | 0 |
+| `IntegerConversions/from_u256/uint64` | 2.90 ns/op | 0 | 0 |
+| `IntegerConversions/from_u256/uint256` | 7.29 ns/op | 0 | 0 |
+| `IntegerConversions/to_u256/uint64` | 2.19 ns/op | 0 | 0 |
+| `IntegerConversions/to_u256/uint256` | 3.00 ns/op | 0 | 0 |
+| `IntegerConversions/to_big_int_reused/uint64` | 4.21 ns/op | 0 | 0 |
+| `IntegerConversions/to_big_int_reused/uint256` | 6.15 ns/op | 0 | 0 |
+| `IntegerConversions/to_big_int_fresh/uint256` | 27.1 ns/op | 32 | 1 |
 | `ReferenceStrconvSplitUint64` | 19.3 ns/op | 0 | 0 |
 
 ## Native reverse-SWAR formatting

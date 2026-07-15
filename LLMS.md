@@ -7,7 +7,7 @@ allocations or wire-format drift.
 
 Current package contract:
 
-- release: `v1.0.4`;
+- release: `v1.1.0`;
 - Go: `1.26.5` or newer;
 - numbers: unsigned, fixed scale, integer-backed;
 - numeric value: `units / 10^fractionalDecimalPlaces`;
@@ -203,6 +203,21 @@ Construct from already-scaled units without a text round-trip:
 price := priceCodec.FromUnits(uint64(12_331_232))
 ```
 
+At `math/big` and EVM boundaries, convert already-scaled units directly:
+
+```go
+price, err := priceCodec.FromBigInt(bigUnits)
+price, err = priceCodec.FromU256(evmUnits)
+evmUnits = price.ToU256()
+
+var destination big.Int
+err = price.ToBigInt(&destination)
+```
+
+These methods never rescale or normalize. The source integer must already use
+the format's scaled units. Reuse the `big.Int` destination in hot paths;
+creating fresh wide `big.Int` storage requires one ownership allocation.
+
 Read units by value:
 
 ```go
@@ -397,6 +412,7 @@ Do not:
 | Static codec construction | `NewFixedDecimalCodec` |
 | Runtime codec construction | `NewUint256FixedDecimalCodec` |
 | Numeric state | `Units`, `SetUnits`, `IsZero` |
+| Integer-package conversion | `FromBigInt`, `FromU256`, `ToBigInt`, `ToU256` |
 | Text-cache state | `HasRepresentation`, `Canonical` |
 | Lengths | `Len`, `UnitsLen`, `CBORLen`, `MaxCBORSize` |
 | Text parsing | `Parse`, `ParseCompact`, `ParseBytes`, `ParseUnits`, `ParseUnitsBytes`, runtime `ParseInto` forms |

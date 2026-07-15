@@ -1,5 +1,17 @@
 # Changelog
 
+## v1.1.0 - 2026-07-15
+
+- Added direct, range-checked conversion between `FixedDecimal` and
+  non-negative `big.Int` / `uint256.Int` already-scaled units.
+- Added caller-owned `ToBigInt` output so repeated wide conversion remains
+  allocation-free; `ToU256` returns one inline four-limb value.
+- Added cross-width, ownership, allocation, property, fuzz, external API, and
+  performance-ceiling coverage. Wide public constructors remain below 10 ns
+  on the documented Apple M1 Max baseline.
+- Documented the existing checked `Add`/`Sub` and explicit overflow/underflow
+  arithmetic API; no second arithmetic contract was introduced.
+
 ## v1.0.4 - 2026-07-15
 
 - Replaced ambiguous public decimal names with one explicit API that states

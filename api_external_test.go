@@ -2,6 +2,7 @@ package sailfish_test
 
 import (
 	"encoding/hex"
+	"math/big"
 	"testing"
 
 	"github.com/JekaMas/sailfish"
@@ -51,6 +52,26 @@ func TestPublicAPITypeNamesExposeRepresentationAndDecimalPlaces(t *testing.T) {
 	}
 	if runtimeUnits != (uint256.Int{123_456_789}) {
 		t.Fatal(runtimeUnits)
+	}
+}
+
+func TestPublicIntegerConversionAPI(t *testing.T) {
+	t.Parallel()
+
+	codec := requireFixedDecimalCodec[sailfish.AmountInUint256Units[sailfish.DecimalPlaces18]](t)
+	source := new(big.Int).Lsh(big.NewInt(1), 192)
+	value, err := codec.FromBigInt(source)
+	if err != nil {
+		t.Fatal(err)
+	}
+	units := value.ToU256()
+	fromUnits, err := codec.FromU256(units)
+	if err != nil {
+		t.Fatal(err)
+	}
+	var destination big.Int
+	if err = fromUnits.ToBigInt(&destination); err != nil || destination.Cmp(source) != 0 {
+		t.Fatalf("round trip = %s, %v", destination.String(), err)
 	}
 }
 

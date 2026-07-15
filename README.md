@@ -16,7 +16,7 @@ no heap allocations.
 
 Sailfish requires Go 1.26.5 or newer.
 
-The current release is `v1.0.4`. On the documented Apple M1 Max / Go
+The current release is `v1.1.0`. On the documented Apple M1 Max / Go
 1.26.5 benchmark host, common native formatting is 9.8 ns, runtime-scale
 uint256 parsing is 8.69 ns, and direct uint256 CBOR decode is 4.20 ns. These
 caller-buffer operations track measured implementation kernels and perform no
@@ -133,6 +133,35 @@ if err != nil {
 }
 // amount.String() == "1.234567"
 ```
+
+Convert already-scaled `big.Int` or `uint256.Int` units at integration
+boundaries without formatting and reparsing:
+
+```go
+type AmountFormat = sailfish.AmountInUint256Units[sailfish.DecimalPlaces18]
+
+codec, err := sailfish.NewFixedDecimalCodec[AmountFormat]()
+if err != nil {
+	return err
+}
+amount, err := codec.FromU256(onchainUnits)
+if err != nil {
+	return err
+}
+
+// Reuse caller-owned storage to keep repeated wide output allocation-free.
+var destination big.Int
+if err := amount.ToBigInt(&destination); err != nil {
+	return err
+}
+```
+
+`FromBigInt` and `FromU256` accept integer units that are already scaled for
+the format. They do not multiply, divide, normalize, or change fractional
+decimal places. Inputs are copied by value and never retained. `ToU256`
+returns an inline four-limb value. `ToBigInt` writes into its destination;
+reusing a destination with four-word capacity is allocation-free, while a
+fresh wide `big.Int` must allocate its owned words once.
 
 Use distinct formats for domain boundaries:
 
@@ -326,6 +355,7 @@ There is no mutable lazy cache, so concurrent reads do not race.
 | Parse retained canonical text | `NewFixedDecimal`, `FixedDecimalCodec.Parse` |
 | Parse without retaining input | `NewCompactFixedDecimal`, `NewFixedDecimalFromBytes`, codec equivalents |
 | Construct/read scaled units | `NewFixedDecimalFromUnits`, `FixedDecimalCodec.FromUnits`, `Units` |
+| Convert integer packages | `FixedDecimalCodec.FromBigInt`, `FixedDecimalCodec.FromU256`, `ToBigInt`, `ToU256` |
 | Parse/format compact unit batches | `FixedDecimalCodec.ParseUnits`, `FixedDecimalCodec.ParseUnitsBytes`, `FixedDecimalCodec.AppendUnits`, `FixedDecimalCodec.UnitsLen` |
 | Validate and cache a static format | `NewFixedDecimalCodec`, `FixedDecimalCodec.FractionalDecimalPlaces`, `FixedDecimalCodec.MaxIntegerDigits` |
 | Replace or inspect value state | `SetUnits`, `IsZero`, `HasRepresentation` |
@@ -631,6 +661,22 @@ Every width-scaling parse and append row above is `0 B/op`, `0 allocs/op`.
 | Cross-scale/backend compare | 50.7 ns | 0 | 0 |
 | Checked `uint64` add-assign | 4.38 ns | 0 | 0 |
 | Checked `uint256.Int` add-assign | 13.2 ns | 0 | 0 |
+
+### Integer conversions
+
+| Operation | Time | B/op | allocs/op |
+|---|---:|---:|---:|
+| `FromBigInt`, `uint64` backend | 3.93 ns | 0 | 0 |
+| `FromBigInt`, `uint256.Int` backend | 8.30 ns | 0 | 0 |
+| `FromU256`, `uint64` backend | 2.90 ns | 0 | 0 |
+| `FromU256`, `uint256.Int` backend | 7.29 ns | 0 | 0 |
+| `ToU256`, `uint64` / `uint256.Int` | 2.19 / 3.00 ns | 0 | 0 |
+| `ToBigInt`, reused `uint64` / `uint256.Int` destination | 4.21 / 6.15 ns | 0 | 0 |
+| `ToBigInt`, fresh wide destination | 27.1 ns | 32 | 1 |
+
+The fresh-destination allocation is `math/big`'s required owned four-word
+backing storage, not a Sailfish conversion allocation. Prefer a reused
+destination in hot loops.
 
 ### Serialization
 
