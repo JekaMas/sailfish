@@ -75,6 +75,37 @@ func TestPublicIntegerConversionAPI(t *testing.T) {
 	}
 }
 
+func TestPublicRationalCrossScaleAndDenominatedAPI(t *testing.T) {
+	t.Parallel()
+
+	type Price2 = sailfish.PriceInUint64Units[sailfish.DecimalPlaces2]
+	type Price5 = sailfish.PriceInUint64Units[sailfish.DecimalPlaces5]
+	codec2 := requireFixedDecimalCodec[Price2](t)
+	codec5 := requireFixedDecimalCodec[Price5](t)
+
+	value, err := codec5.FromBigRat(big.NewRat(12_331_232, 100_000))
+	if err != nil {
+		t.Fatal(err)
+	}
+	var rational big.Rat
+	var workspace sailfish.BigRatWorkspace
+	if err = value.ToBigRat(&rational, &workspace); err != nil || rational.Cmp(big.NewRat(385_351, 3_125)) != 0 {
+		t.Fatalf("rational = %s, %v", rational.String(), err)
+	}
+
+	type Asset struct {
+		Chain uint32
+		Token string
+	}
+	asset := Asset{Chain: 1, Token: "USDC"}
+	left := sailfish.NewDenominated(asset, codec2.FromUnits(120))
+	right := sailfish.NewDenominated(asset, codec5.FromUnits(3))
+	sum, err := sailfish.AddDenominatedAs[Price5](left, right)
+	if err != nil || sum.Denomination() != asset || sum.Decimal().Units() != 120_003 {
+		t.Fatalf("sum = %#v, %v", sum, err)
+	}
+}
+
 func TestPublicCBORToArrayAPI(t *testing.T) {
 	t.Parallel()
 

@@ -13,5 +13,7 @@
 // paths are allocation-free when caller-owned output buffers have capacity.
 // FixedDecimalCodec converts already-scaled big.Int and uint256.Int units
 // without decimal rescaling; ToBigInt accepts caller-owned storage so repeated
-// wide conversions can also remain allocation-free.
+// wide conversions can also remain allocation-free. Exact BigRat conversion,
+// explicit cross-scale Rescale/AddAs/SubAs operations, and denomination-aware
+// arithmetic are available without implicit rounding or scale inference.
 package sailfish

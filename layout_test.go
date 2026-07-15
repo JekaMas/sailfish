@@ -54,3 +54,23 @@ func TestFixedDecimalCodecAndFormatLayoutsRemainMinimal(t *testing.T) {
 		t.Fatalf("Uint256FixedDecimalCodec size = %d, want 1", size)
 	}
 }
+
+func TestDenominatedLayoutAddsOnlyIdentityStorage(t *testing.T) {
+	t.Parallel()
+
+	if strconv.IntSize != 64 {
+		t.Skip("64-bit layout assertion")
+	}
+	type native = Denominated[uint32, PriceInUint64Units[DecimalPlaces5], uint64]
+	type stringIdentity = Denominated[string, PriceInUint64Units[DecimalPlaces5], uint64]
+	type wide = Denominated[uint32, AmountInUint256Units[DecimalPlaces18], uint256.Int]
+	if got := unsafe.Sizeof(native{}); got != 32 {
+		t.Fatalf("native denominated size = %d, want 32", got)
+	}
+	if got := unsafe.Sizeof(stringIdentity{}); got != 40 {
+		t.Fatalf("string denominated size = %d, want 40", got)
+	}
+	if got := unsafe.Sizeof(wide{}); got != 56 {
+		t.Fatalf("wide denominated size = %d, want 56", got)
+	}
+}

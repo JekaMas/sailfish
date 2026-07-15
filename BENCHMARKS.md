@@ -424,3 +424,30 @@ read-only unsafe load is selected at build time for amd64/arm64 SWAR words;
 other architectures use the portable load. Assembly and runtime feature
 dispatch still require a concrete production target and repeatable evidence
 that one new implementation wins across the supported workload.
+
+## Rational and cross-scale arithmetic
+
+Run the public operations and their standard-library/arithmetic ceilings with:
+
+```sh
+GOMAXPROCS=1 GOWORK=off go test -run '^$' \
+  -bench 'Benchmark(BigRatCeilings|CrossScaleCeilings|RationalAndCrossScaleOperations)$' \
+  -benchmem -count=10
+```
+
+Representative Apple M1 Max / Go 1.26.5 results:
+
+| Operation | Typical result | B/op | allocs/op |
+|---|---:|---:|---:|
+| Exact native `FromBigRat` | about 10 ns | 0 | 0 |
+| Exact wide `FromBigRat` | about 31 ns | 0 | 0 |
+| Integral native `ToBigRat` | about 11 ns | 0 | 0 |
+| Fractional native `ToBigRat` | about 108 ns | 24 | 3 |
+| Native scale-2 to scale-5 `Rescale` | about 14 ns | 0 | 0 |
+| Native mixed-scale `AddAs` | about 20 ns | 0 | 0 |
+| Same-scale `Denominated` add | about 4.8 ns | 0 | 0 |
+| Mixed-scale `AddDenominatedAs` | about 21 ns | 0 | 0 |
+
+`BenchmarkBigRatCeilings` reports `SetFrac`, `SetUint64`, numerator/denominator
+read, and four-limb multiply separately. This prevents `math/big` allocations
+from being attributed to Sailfish's allocation-free conversion kernels.

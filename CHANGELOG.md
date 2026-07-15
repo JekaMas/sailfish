@@ -1,5 +1,24 @@
 # Changelog
 
+## v1.2.0 - 2026-07-15
+
+- Added exact, fail-closed conversion to and from non-negative `math/big.Rat`.
+  Exact input conversion is allocation-free; whole-integer output bypasses
+  rational normalization, while fractional output documents the unavoidable
+  `math/big.Rat.SetFrac` ownership/allocation floor.
+- Added exact `Rescale`, `AddAs`, and `SubAs` operations across fractional
+  decimal places and unit backends. Native results use a measured native
+  checked kernel; wide results retain four-limb arithmetic.
+- Added `Denominated` for attaching comparable token/market identity without
+  inferring scale or taking over metadata, serialization, or lifecycle
+  ownership. Same-format and cross-format arithmetic reject identity mismatch.
+- Added randomized `big.Int`/`big.Rat` reference tests, fuzz targets,
+  allocation assertions, layout checks, public examples, CPU/allocation
+  profiles, escape/BCE evidence, and component ceilings.
+- Rejected a provider-method max-scale candidate after it regressed rescale
+  and mixed-scale add. No compatibility API, legacy path, fallback, unsafe
+  rational access, pooling, or assembly was added.
+
 ## v1.1.0 - 2026-07-15
 
 - Added direct, range-checked conversion between `FixedDecimal` and

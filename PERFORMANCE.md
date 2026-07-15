@@ -536,3 +536,51 @@ hide that ownership cost or retain/alias the source. No unsafe conversion,
 assembly, pooling, compatibility path, or fallback is used: the residual wide
 constructor time is dominated by the public 48-byte value return, and the
 portable implementation is already below the target.
+
+## 2026-07-15: Exact Rational, Cross-Scale, And Denominated Arithmetic
+
+**Decision:** support `math/big.Rat` as an exact-only boundary, use a native
+checked rescale kernel when the selected result backend is native, and attach
+runtime token/market identity with a comparable generic wrapper. Do not infer
+fractional decimal places from identity and do not introduce rounding.
+
+CPU profiles of the first cross-scale implementation showed four-limb
+conversion/multiplication on native values plus repeated scale validation as
+the dominant owners. Selecting a native multiply/divide kernel for native
+results reduced scale-2 to scale-5 `Rescale` from about 15.5 ns to 14.0 ns and
+mixed-scale `AddAs` from about 38.4 ns to 20.1 ns. Both remain 0 B/op and zero
+allocations. A same-scale `Denominated` add with a compact identity measures
+about 4.8 ns; mixed-scale denomination checking adds roughly one nanosecond to
+the underlying operation.
+
+The rational profile separates package work from standard-library ownership:
+
+- reading a reduced `big.Rat` numerator/denominator into `uint256.Int` is about
+  5.4 ns and allocation-free;
+- `FromBigRat` is allocation-free for native and wide values;
+- `math/big.Rat.SetFrac` alone is roughly 90-120 ns and 24 B / 3 allocations
+  for the measured native fraction;
+- wide fractional `ToBigRat` inherits additional `math/big` word copies and
+  GCD work;
+- whole-integer output uses `SetUint64` or `SetInt`, bypassing GCD and reaching
+  zero allocations.
+
+Rejected candidates:
+
+- replacing the closed-unit max-scale type switch with a provider interface
+  method regressed `Rescale` from about 14.0 ns to 16.3 ns and `AddAs` from
+  about 20.1 ns to 22.4 ns because generic dictionary dispatch replaced the
+  predictable switch;
+- a special wide one-limb denominator probe did not improve `FromBigRat` and
+  was removed;
+- unsafe access to private `math/big.Rat` words could avoid its ownership
+  floor but is rejected as an unstable runtime contract;
+- per-scale generated division and assembly are not justified: the remaining
+  native public overhead is validation/API dispatch, while raw checked
+  multiply/add ceilings are already about 3-5 ns.
+
+Randomized tests compare rescale/add/subtract with `math/big.Int`, rational
+round trips with exact `math/big.Rat`, and every accepted path with explicit
+overflow, underflow, precision, identity, and allocation assertions. There is
+one exact implementation, no compatibility alias, fallback, or legacy
+rational/arithmetic path.

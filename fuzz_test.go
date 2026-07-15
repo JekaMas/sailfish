@@ -135,6 +135,49 @@ func FuzzIntegerUnitConversions(f *testing.F) {
 	})
 }
 
+func FuzzBigRatExactRoundTrip(f *testing.F) {
+	for _, seed := range []uint64{0, 1, 10, 99_999, 100_000, ^uint64(0)} {
+		f.Add(seed)
+	}
+
+	codec := testFixedDecimalCodec[PriceInUint64Units[DecimalPlaces5]]()
+	denominator := new(big.Int).SetUint64(100_000)
+	f.Fuzz(func(t *testing.T, units uint64) {
+		source := new(big.Rat).SetFrac(new(big.Int).SetUint64(units), denominator)
+		value, err := codec.FromBigRat(source)
+		if err != nil || value.Units() != units {
+			t.Fatalf("FromBigRat(%s) = %d, %v", source.String(), value.Units(), err)
+		}
+		var destination big.Rat
+		var workspace BigRatWorkspace
+		if err = value.ToBigRat(&destination, &workspace); err != nil || destination.Cmp(source) != 0 {
+			t.Fatalf("ToBigRat(%d) = %s, %v; want %s", units, destination.String(), err, source.String())
+		}
+	})
+}
+
+func FuzzCrossScaleExactArithmetic(f *testing.F) {
+	for _, seed := range [][2]uint32{{0, 0}, {120, 3}, {999_999, 1}, {1, 999_999}} {
+		f.Add(seed[0], seed[1])
+	}
+
+	codec2 := testFixedDecimalCodec[PriceInUint64Units[DecimalPlaces2]]()
+	codec3 := testFixedDecimalCodec[PriceInUint32Units[DecimalPlaces3]]()
+	f.Fuzz(func(t *testing.T, leftUnits, rightUnits uint32) {
+		left := codec2.FromUnits(uint64(leftUnits))
+		right := codec3.FromUnits(rightUnits)
+		sum, err := AddAs[PriceInUint64Units[DecimalPlaces5]](left, right)
+		want := uint64(leftUnits)*1_000 + uint64(rightUnits)*100
+		if err != nil || sum.Units() != want {
+			t.Fatalf("sum(%d,%d) = %d, %v; want %d", leftUnits, rightUnits, sum.Units(), err, want)
+		}
+		round, err := SubAs[PriceInUint64Units[DecimalPlaces5]](sum, right)
+		if err != nil || round.Units() != uint64(leftUnits)*1_000 {
+			t.Fatalf("round(%d,%d) = %d, %v", leftUnits, rightUnits, round.Units(), err)
+		}
+	})
+}
+
 func FuzzJSONRoundTrip(f *testing.F) {
 	for _, seed := range []string{"0", "1.2", "123.31232", "!!!", `\u0031.20000`} {
 		f.Add(seed)

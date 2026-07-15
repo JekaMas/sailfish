@@ -16,7 +16,7 @@ no heap allocations.
 
 Sailfish requires Go 1.26.5 or newer.
 
-The current release is `v1.1.0`. On the documented Apple M1 Max / Go
+The current release is `v1.2.0`. On the documented Apple M1 Max / Go
 1.26.5 benchmark host, common native formatting is 9.8 ns, runtime-scale
 uint256 parsing is 8.69 ns, and direct uint256 CBOR decode is 4.20 ns. These
 caller-buffer operations track measured implementation kernels and perform no
@@ -162,6 +162,75 @@ decimal places. Inputs are copied by value and never retained. `ToU256`
 returns an inline four-limb value. `ToBigInt` writes into its destination;
 reusing a destination with four-word capacity is allocation-free, while a
 fresh wide `big.Int` must allocate its owned words once.
+
+Convert exact rational values without text or floating point:
+
+```go
+price, err := priceCodec.FromBigRat(big.NewRat(385_351, 3_125))
+if err != nil {
+	return err
+}
+
+var rational big.Rat
+var rationalWorkspace sailfish.BigRatWorkspace
+if err := price.ToBigRat(&rational, &rationalWorkspace); err != nil {
+	return err
+}
+// price.String() == "123.31232"
+// rational.String() == "385351/3125"
+```
+
+`FromBigRat` accepts only non-negative rational values whose reduced
+denominator divides `10^fractionalDecimalPlaces`; it rejects values that would
+require rounding. `ToBigRat` is always exact. `math/big.Rat.SetFrac` copies
+and normalizes private integer words, so fractional `ToBigRat` output has a
+measured `math/big` allocation floor even with a reused destination and
+workspace. Whole-integer decimals bypass rational normalization and remain
+allocation-free. There is no `math/big.Fraq` type; the supported rational
+boundary is `math/big.Rat`.
+
+Rescale or combine different fixed-decimal formats explicitly:
+
+```go
+price2, _ := sailfish.NewFixedDecimal[
+	sailfish.PriceInUint64Units[sailfish.DecimalPlaces2],
+]("1.20")
+delta5, _ := sailfish.NewFixedDecimal[
+	sailfish.PriceInUint64Units[sailfish.DecimalPlaces5],
+]("0.00003")
+
+sum, err := sailfish.AddAs[
+	sailfish.PriceInUint64Units[sailfish.DecimalPlaces5],
+](price2, delta5)
+// sum.String() == "1.20003"
+```
+
+`Rescale`, `AddAs`, and `SubAs` never round. Downscaling rejects nonzero
+discarded units with `ErrPrecision`; upscaling and result construction reject
+overflow. Same-format `Add`/`Sub` remain the smaller and faster path.
+
+Attach chain/token or market identity without coupling it to decimal places:
+
+```go
+type Asset struct {
+	Chain uint32
+	Token string
+}
+
+asset := Asset{Chain: 1, Token: "USDC"}
+left := sailfish.NewDenominated(asset, price2)
+right := sailfish.NewDenominated(asset, delta5)
+total, err := sailfish.AddDenominatedAs[
+	sailfish.PriceInUint64Units[sailfish.DecimalPlaces5],
+](left, right)
+```
+
+`Denominated` checks identity before compare/add/subtract and preserves it
+through exact rescaling. The identity can be a token key, chain/token key, or
+base/quote market key. It is never consulted to infer scale, normalize text,
+resolve metadata, or serialize a domain record. This makes it suitable as the
+numeric core inside an application type such as `assetscale`, while the
+application remains responsible for tokenlist lookup and venue metadata.
 
 Use distinct formats for domain boundaries:
 
@@ -356,6 +425,7 @@ There is no mutable lazy cache, so concurrent reads do not race.
 | Parse without retaining input | `NewCompactFixedDecimal`, `NewFixedDecimalFromBytes`, codec equivalents |
 | Construct/read scaled units | `NewFixedDecimalFromUnits`, `FixedDecimalCodec.FromUnits`, `Units` |
 | Convert integer packages | `FixedDecimalCodec.FromBigInt`, `FixedDecimalCodec.FromU256`, `ToBigInt`, `ToU256` |
+| Convert exact rational values | `FixedDecimalCodec.FromBigRat`, `ToBigRat`, `BigRatWorkspace` |
 | Parse/format compact unit batches | `FixedDecimalCodec.ParseUnits`, `FixedDecimalCodec.ParseUnitsBytes`, `FixedDecimalCodec.AppendUnits`, `FixedDecimalCodec.UnitsLen` |
 | Validate and cache a static format | `NewFixedDecimalCodec`, `FixedDecimalCodec.FractionalDecimalPlaces`, `FixedDecimalCodec.MaxIntegerDigits` |
 | Replace or inspect value state | `SetUnits`, `IsZero`, `HasRepresentation` |
@@ -370,6 +440,8 @@ There is no mutable lazy cache, so concurrent reads do not race.
 | Cross-scale/backend ordering | package-level `Compare` |
 | Checked arithmetic | `Add`, `Sub`, `AddAssign`, `SubAssign` |
 | Overflow-style arithmetic | `AddOverflow`, `SubUnderflow` |
+| Exact cross-scale arithmetic | `Rescale`, `AddAs`, `SubAs` |
+| Runtime-denominated values | `Denominated`, `NewDenominated`, `RescaleDenominated`, `AddDenominatedAs`, `SubDenominatedAs` |
 
 Use `FixedDecimalCodec[V, U]` for repeated work with a compile-time format. Its zero value
 is valid; `NewFixedDecimalCodec` additionally validates and caches the format metadata.
@@ -678,6 +750,23 @@ The fresh-destination allocation is `math/big`'s required owned four-word
 backing storage, not a Sailfish conversion allocation. Prefer a reused
 destination in hot loops.
 
+### Rational, rescale, and denomination operations
+
+| Operation | Typical result | B/op | allocs/op |
+|---|---:|---:|---:|
+| `FromBigRat`, native exact value | about 10 ns | 0 | 0 |
+| `FromBigRat`, `uint256.Int` exact value | about 31 ns | 0 | 0 |
+| `ToBigRat`, whole native integer | about 11 ns | 0 | 0 |
+| `ToBigRat`, fractional native value | about 108 ns | 24 | 3 |
+| Native scale-2 to scale-5 `Rescale` | about 14 ns | 0 | 0 |
+| Native mixed-scale `AddAs` | about 20 ns | 0 | 0 |
+| Same-scale denominated add, compact identity | about 4.8 ns | 0 | 0 |
+| Mixed-scale denominated add | about 21 ns | 0 | 0 |
+
+The fractional `ToBigRat` bytes and allocations are owned by
+`math/big.Rat.SetFrac`'s mandatory copy/GCD normalization. Sailfish's exact
+input, rescale, add/subtract, and denomination kernels do not allocate.
+
 ### Serialization
 
 | Operation | Time | B/op | allocs/op |
@@ -730,6 +819,10 @@ short-token latency does not justify their call and maintenance cost.
 | Type dispatch | Concrete backend embedded in each format; cached scale in `FixedDecimalCodec` | Avoids generic backend type switches and repeated metadata work |
 | Errors | Pre-boxed typed string constants | Comparable errors with zero per-call failure allocation |
 | Numeric batch locality | Contiguous raw units with `ParseUnits` / `AppendUnits` | Avoids scanning optional text-cache state when only numeric units are used |
+| Exact cross-scale arithmetic | Native checked multiply/divide for native results; four-limb arithmetic otherwise | Avoids routing ordinary CEX prices through `uint256` while preserving overflow and precision checks |
+| Rational input | Reduced `big.Rat` numerator/denominator into native or four-limb units | Exact-only conversion with zero heap allocation |
+| Rational output | Whole-integer fast path; public `math/big.Rat.SetFrac` otherwise | Integer values avoid GCD/allocation; fractional values retain standard-library ownership and normalization |
+| Runtime identity | Generic comparable `Denominated` wrapper | Token/market identity is checked without inferring decimal places or adding interface dispatch |
 | Profile-guided optimization | Production CPU profile owned by the consuming `main` package | PGO optimizes the whole executable; Sailfish does not ship a benchmark-trained library profile |
 
 Measured alternatives are not retained in production: base-`1e9` and

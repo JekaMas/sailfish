@@ -7,7 +7,7 @@ allocations or wire-format drift.
 
 Current package contract:
 
-- release: `v1.1.0`;
+- release: `v1.2.0`;
 - Go: `1.26.5` or newer;
 - numbers: unsigned, fixed scale, integer-backed;
 - numeric value: `units / 10^fractionalDecimalPlaces`;
@@ -218,6 +218,22 @@ These methods never rescale or normalize. The source integer must already use
 the format's scaled units. Reuse the `big.Int` destination in hot paths;
 creating fresh wide `big.Int` storage requires one ownership allocation.
 
+Convert exact rational boundaries with `math/big.Rat`:
+
+```go
+price, err := priceCodec.FromBigRat(sourceRat)
+
+var destination big.Rat
+var workspace sailfish.BigRatWorkspace
+err = price.ToBigRat(&destination, &workspace)
+```
+
+`FromBigRat` rejects negative, inexact, and out-of-range values. It never
+rounds. `ToBigRat` is exact. Whole-integer output is allocation-free after
+warmup; fractional output necessarily inherits `math/big.Rat.SetFrac`'s owned
+copies and GCD normalization. Do not claim zero-allocation fractional
+`ToBigRat`, and do not use unsafe access to `math/big` private words.
+
 Read units by value:
 
 ```go
@@ -248,6 +264,36 @@ state.
 Use package-level `sailfish.Compare(a, b)` for exact comparison across scales
 or backends. It does not rescale either integer and therefore avoids rescaling
 overflow.
+
+Use explicit output format for arithmetic across fractional decimal places:
+
+```go
+rescaled, err := sailfish.Rescale[TargetFormat](source)
+sum, err := sailfish.AddAs[TargetFormat](left, right)
+difference, err := sailfish.SubAs[TargetFormat](left, right)
+```
+
+These functions are exact-only. Downscaling with discarded nonzero units
+returns `ErrPrecision`; no operation rounds or truncates.
+
+Use `Denominated[D, V, U]` when a value must carry comparable runtime identity:
+
+```go
+type Asset struct {
+	Chain uint32
+	Token string
+}
+
+left := sailfish.NewDenominated(asset, amount)
+sum, err := left.Add(other)
+mixed, err := sailfish.AddDenominatedAs[TargetFormat](left, otherScale)
+```
+
+`D` may be a token identifier, chain/token key, or market key. It is compared
+before arithmetic. It does not supply decimal places, metadata, balances,
+serialization, or lifecycle behavior. For `assetscale`-like integration, use
+Sailfish as the numeric component and keep tokenlist/venue resolution in the
+application owner.
 
 ## 7. Format Without Accidental Ownership
 
@@ -350,12 +396,19 @@ Expected allocation-free hot APIs, with sufficient destination capacity:
 - `ParseUnits` / `ParseUnitsBytes`;
 - `AppendTo`, `AppendUnits`, `AppendJSON`, `AppendCBOR`;
 - direct CBOR decode and prefix decode;
-- comparisons and checked arithmetic.
+- comparisons and checked same/cross-scale arithmetic;
+- exact `FromBigRat` input conversion;
+- whole-integer `ToBigRat` with reused destination/workspace;
+- denomination-aware arithmetic.
 
 Owned result APIs allocate by contract:
 
 - a newly formatted `String()`;
 - `MarshalText`, `MarshalJSON`, and `MarshalCBOR` result slices.
+
+Fractional `ToBigRat` also allocates inside `math/big.Rat.SetFrac`; that is a
+standard-library ownership and normalization contract, not a Sailfish parser
+allocation.
 
 Do not claim an allocation regression or improvement from intuition. Add a
 focused benchmark with `-benchmem` and use escape analysis or a memory profile
@@ -375,7 +428,10 @@ Exported errors are comparable typed string constants:
 - `ErrUnsupportedFractionalDecimalPlaces`;
 - `ErrOverflow`;
 - `ErrUnderflow`;
+- `ErrDenominationMismatch`;
+- `ErrNilSource`;
 - `ErrNilDestination`;
+- `ErrNilWorkspace`;
 - `ErrCBORSyntax`;
 - `ErrCBORNonDeterministic`.
 
@@ -413,6 +469,7 @@ Do not:
 | Runtime codec construction | `NewUint256FixedDecimalCodec` |
 | Numeric state | `Units`, `SetUnits`, `IsZero` |
 | Integer-package conversion | `FromBigInt`, `FromU256`, `ToBigInt`, `ToU256` |
+| Exact rational conversion | `FromBigRat`, `ToBigRat`, `BigRatWorkspace` |
 | Text-cache state | `HasRepresentation`, `Canonical` |
 | Lengths | `Len`, `UnitsLen`, `CBORLen`, `MaxCBORSize` |
 | Text parsing | `Parse`, `ParseCompact`, `ParseBytes`, `ParseUnits`, `ParseUnitsBytes`, runtime `ParseInto` forms |
@@ -421,7 +478,9 @@ Do not:
 | CBOR | `AppendCBOR`, `MarshalCBOR`, `UnmarshalCBOR`, `ParseCBOR`, `ParseCBORFirst`, runtime `Into` forms |
 | Same-format comparison | `Compare`, `Cmp`, `Equal`, `Less` methods |
 | Cross-format comparison | package-level `Compare` |
-| Arithmetic | `Add`, `AddAssign`, `AddOverflow`, `Sub`, `SubAssign`, `SubUnderflow` |
+| Same-format arithmetic | `Add`, `AddAssign`, `AddOverflow`, `Sub`, `SubAssign`, `SubUnderflow` |
+| Exact cross-scale arithmetic | `Rescale`, `AddAs`, `SubAs` |
+| Runtime-denominated values | `Denominated`, `NewDenominated`, `RescaleDenominated`, `AddDenominatedAs`, `SubDenominatedAs` |
 
 `Unit` is a closed set. Custom semantic formats embed one of the exported unit
 providers and implement `FractionalDecimalPlaces()` on a zero-sized value type;

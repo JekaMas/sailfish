@@ -80,6 +80,59 @@ func ExampleFixedDecimal_integerConversions() {
 	// 1250000000000000000
 }
 
+func ExampleFixedDecimal_rationalConversions() {
+	codec, err := sailfish.NewFixedDecimalCodec[examplePriceFormat]()
+	if err != nil {
+		fmt.Println(err)
+		return
+	}
+
+	price, err := codec.FromBigRat(big.NewRat(385_351, 3_125))
+	if err != nil {
+		fmt.Println(err)
+		return
+	}
+	var rational big.Rat
+	var workspace sailfish.BigRatWorkspace
+	if err = price.ToBigRat(&rational, &workspace); err != nil {
+		fmt.Println(err)
+		return
+	}
+
+	fmt.Println(price.String())
+	fmt.Println(rational.String())
+	// Output:
+	// 123.31232
+	// 385351/3125
+}
+
+func ExampleAddDenominatedAs() {
+	type Asset struct {
+		Chain uint32
+		Token string
+	}
+	type Price2 = sailfish.PriceInUint64Units[sailfish.DecimalPlaces2]
+	type Price5 = sailfish.PriceInUint64Units[sailfish.DecimalPlaces5]
+
+	asset := Asset{Chain: 1, Token: "USDC"}
+	price2, _ := sailfish.NewFixedDecimal[Price2]("1.20")
+	price5, _ := sailfish.NewFixedDecimal[Price5]("0.00003")
+	left := sailfish.NewDenominated(asset, price2)
+	right := sailfish.NewDenominated(asset, price5)
+
+	sum, err := sailfish.AddDenominatedAs[Price5](left, right)
+	if err != nil {
+		fmt.Println(err)
+		return
+	}
+
+	fmt.Println(sum.Denomination().Token)
+	fmt.Println(sum.Decimal().String())
+	// Output:
+	// USDC
+	// 1.20003
+}
+
 func ExampleUint256FixedDecimalCodec() {
 	codec, err := sailfish.NewUint256FixedDecimalCodec(18)
 	if err != nil {
