@@ -16,9 +16,9 @@ no heap allocations.
 
 Sailfish requires Go 1.26.5 or newer.
 
-The first stable release is `v1.0.0`. On the documented Apple M1 Max / Go
-1.26.5 benchmark host, runtime-scale uint256 parsing is 8.75 ns and direct
-uint256 CBOR decode is 4.24 ns; both are within 0.12 ns of their measured
+The current release is `v1.0.1`. On the documented Apple M1 Max / Go
+1.26.5 benchmark host, runtime-scale uint256 parsing is 8.69 ns and direct
+uint256 CBOR decode is 4.20 ns; both track their measured
 same-binary implementation kernels and perform no heap allocations. See
 [BENCHMARKS.md](BENCHMARKS.md) and [PERFORMANCE.md](PERFORMANCE.md) for the
 complete matrix and rejected alternatives.
@@ -27,7 +27,7 @@ complete matrix and rejected alternatives.
 
 `main` contains one current implementation and one canonical wire format. It
 does not retain compatibility codecs, legacy decoders, alternate encodings, or
-runtime fallback implementations. Decimal CBOR is always the preferred
+compatibility fallback implementations. Decimal CBOR is always the preferred
 shortest unsigned integer representation, using tag 2 only when a
 `uint256.Int` does not fit in `uint64`. Input in any other representation is
 rejected instead of being normalized or decoded by an older path.
@@ -281,17 +281,26 @@ There is no mutable lazy cache, so concurrent reads do not race.
 | Parse retained canonical text | `New`, `Codec.Parse` |
 | Parse without retaining input | `NewCompact`, `NewBytes`, codec equivalents |
 | Construct/read scaled units | `NewFromUnits`, `Codec.FromUnits`, `Units` |
-| Inspect backend integer capacity | `Codec.MaxIntegerDigits` |
-| Runtime-scale uint256 boundary | `Uint256Codec.Parse`, `ParseInto`, `AppendTo` |
+| Validate and cache a static format | `NewCodec`, `Codec.Scale`, `Codec.MaxIntegerDigits` |
+| Replace or inspect value state | `SetUnits`, `IsZero`, `HasRepresentation` |
+| Exact encoded lengths | `Len`, `CBORLen`, codec equivalents |
+| Runtime-scale uint256 text | `NewUint256Codec`, `Parse`, `ParseBytes`, `ParseInto`, `ParseBytesInto`, `AppendTo` |
 | Caller-buffer serialization | `AppendTo`, `AppendJSON`, `AppendText` |
 | Caller-buffer CBOR | `AppendCBOR`, `Codec.AppendCBOR`, `Uint256Codec.AppendCBOR` |
-| Strict CBOR decode | `UnmarshalCBOR`, `Codec.ParseCBOR`, `Uint256Codec.ParseCBOR` |
-| Positional-array CBOR decode | `Codec.ParseCBORFirst`, `Uint256Codec.ParseCBORFirst`, `ParseCBORFirstInto` |
-| Owned serialization | `String`, `MarshalText`, `MarshalJSON` |
+| Strict CBOR decode | `UnmarshalCBOR`, `Codec.ParseCBOR`, `Uint256Codec.ParseCBOR`, `Uint256Codec.ParseCBORInto` |
+| Positional-array CBOR decode | `Codec.ParseCBORFirst`, `Uint256Codec.ParseCBORFirst`, `Uint256Codec.ParseCBORFirstInto` |
+| Owned or retained serialization | `String`, `Canonical`, `MarshalText`, `MarshalJSON`, `MarshalCBOR` |
 | Same-venue ordering | `Compare`, `Cmp`, `Equal`, `Less` methods |
 | Cross-scale/backend ordering | package-level `Compare` |
 | Checked arithmetic | `Add`, `Sub`, `AddAssign`, `SubAssign` |
 | Overflow-style arithmetic | `AddOverflow`, `SubUnderflow` |
+
+Use `Codec[V, U]` for repeated work with a compile-time format. Its zero value
+is valid; `NewCodec` additionally validates and caches the format metadata.
+Use `Uint256Codec` when a trusted venue definition supplies scale at runtime.
+Its `Into` methods leave the destination unchanged on error. Invalid formats,
+inputs, and arithmetic return errors or status values; the package does not
+use panics as an API contract.
 
 ## Serialization and deserialization
 
@@ -543,25 +552,25 @@ portable guarantees; compare changes on the same host and toolchain.
 
 | Operation | Time | B/op | allocs/op |
 |---|---:|---:|---:|
-| Parse canonical `uint64` through `Codec` | 7.76 ns | 0 | 0 |
-| Parse canonical `uint256.Int` | 49.4 ns | 0 | 0 |
-| Parse maximum 78-digit `uint256.Int` | 64.8 ns | 0 | 0 |
-| Append retained `uint64` | 2.95 ns | 0 | 0 |
-| Append formatted `uint64` | 12.9 ns | 0 | 0 |
-| Append formatted four-limb `uint256.Int` | 113 ns | 0 | 0 |
-| Return retained `String` | 2.11 ns | 0 | 0 |
-| Return newly formatted `String` | 27.1 ns | 16 | 1 |
+| Parse canonical `uint64` through `Codec` | 7.75 ns | 0 | 0 |
+| Parse canonical `uint256.Int` | 49.2 ns | 0 | 0 |
+| Parse maximum 78-digit `uint256.Int` | 64.6 ns | 0 | 0 |
+| Append retained `uint64` | 2.90 ns | 0 | 0 |
+| Append formatted `uint64` | 12.8 ns | 0 | 0 |
+| Append formatted four-limb `uint256.Int` | 112 ns | 0 | 0 |
+| Return retained `String` | 2.12 ns | 0 | 0 |
+| Return newly formatted `String` | 27.0 ns | 16 | 1 |
 
 ### Width scaling
 
 | Dense parse kernel | 19 digits | 38 digits | 57 digits | 77 digits |
 |---|---:|---:|---:|---:|
-| `string` input | 9.53 ns | 19.1 ns | 28.6 ns | 43.5 ns |
-| `[]byte` input | 9.30 ns | 18.3 ns | 28.0 ns | 42.8 ns |
+| `string` input | 9.56 ns | 18.9 ns | 28.5 ns | 43.3 ns |
+| `[]byte` input | 9.39 ns | 18.2 ns | 28.0 ns | 42.8 ns |
 
 | Formatted width | One limb | Two limbs | Three limbs | Four limbs | Maximum |
 |---|---:|---:|---:|---:|---:|
-| Wide formatting kernel | 17.9 ns | 43.8 ns | 70.1 ns | 108 ns | 129 ns |
+| Wide formatting kernel | 17.0 ns | 43.6 ns | 69.2 ns | 107 ns | 129 ns |
 
 Every width-scaling parse and append row above is `0 B/op`, `0 allocs/op`.
 
@@ -570,28 +579,28 @@ Every width-scaling parse and append row above is `0 B/op`, `0 allocs/op`.
 | Operation | Time | B/op | allocs/op |
 |---|---:|---:|---:|
 | Same-scale `uint64` compare | 2.10 ns | 0 | 0 |
-| Same-scale `uint256.Int` compare | 6.44 ns | 0 | 0 |
-| Cross-scale/backend compare | 53.2 ns | 0 | 0 |
-| Checked `uint64` add-assign | 4.45 ns | 0 | 0 |
-| Checked `uint256.Int` add-assign | 13.3 ns | 0 | 0 |
+| Same-scale `uint256.Int` compare | 6.37 ns | 0 | 0 |
+| Cross-scale/backend compare | 50.7 ns | 0 | 0 |
+| Checked `uint64` add-assign | 4.38 ns | 0 | 0 |
+| Checked `uint256.Int` add-assign | 13.2 ns | 0 | 0 |
 
 ### Serialization
 
 | Operation | Time | B/op | allocs/op |
 |---|---:|---:|---:|
-| Append retained / formatted native JSON | 4.29 / 15.5 ns | 0 | 0 |
-| Append retained / formatted wide JSON | 7.49 / 176 ns | 0 | 0 |
-| Owned native retained / formatted `MarshalJSON` | 20.2 / 37.5 ns | 16 | 1 |
-| Owned wide retained / formatted `MarshalJSON` | 33.0 / 213 ns | 96 | 1 |
-| Unmarshal canonical native / wide JSON | 14.0 / 82.9 ns | 0 | 0 |
+| Append retained / formatted native JSON | 4.43 / 15.6 ns | 0 | 0 |
+| Append retained / formatted wide JSON | 7.46 / 139 ns | 0 | 0 |
+| Owned native retained / formatted `MarshalJSON` | 21.1 / 38.3 ns | 16 | 1 |
+| Owned wide retained / formatted `MarshalJSON` | 36.2 / 175 ns | 96 | 1 |
+| Unmarshal canonical native / wide JSON | 14.4 / 78.8 ns | 0 | 0 |
 | Unmarshal escaped native JSON | 120 ns | 40 | 2 |
-| Append native CBOR scalar | 3.55 ns | 0 | 0 |
-| Decode native CBOR scalar | 8.15 ns | 0 | 0 |
-| Runtime-codec `uint256` append, one limb / maximum | 4.13 / 6.89 ns | 0 | 0 |
-| Runtime-codec `uint256` decode, one limb / maximum | 6.73 / 9.31 ns | 0 | 0 |
-| Owned native / `uint256` `MarshalCBOR` | 20.1 / 27.8 ns | 16 / 32 | 1 |
-| fxamacker two-field `toarray` marshal / unmarshal | 176 / 149 ns | 120 / 0 | 4 / 0 |
-| Manual 14-field positional CBOR encode / decode | 51.2 / 93.6 ns | 0 / 8 | 0 / 1 |
+| Append native / `uint256` CBOR scalar | 3.54 / 8.03 ns | 0 | 0 |
+| Decode native / `uint256` CBOR scalar | 8.07 / 12.8 ns | 0 | 0 |
+| Runtime-codec `uint256` append, one limb / maximum | 4.03 / 6.52 ns | 0 | 0 |
+| Runtime-codec `uint256` decode, one limb / maximum | 4.17 / 5.81 ns | 0 | 0 |
+| Owned native / `uint256` `MarshalCBOR` | 20.2 / 28.3 ns | 16 / 32 | 1 |
+| fxamacker two-field `toarray` marshal / unmarshal | 175 / 146 ns | 120 / 0 | 4 / 0 |
+| Manual 14-field positional CBOR encode / decode | 50.1 / 93.8 ns | 0 / 8 | 0 / 1 |
 
 The manual record decoder's one allocation owns its parent string field;
 Sailfish numeric field decoding is allocation-free. Owned `String` and marshal
@@ -613,12 +622,15 @@ short-token latency does not justify their call and maintenance cost.
 
 | Area | Current algorithm | Reason |
 |---|---|---|
+| Scale model | Zero-sized compile-time format or one-byte `Uint256Codec` | Static strategies carry no runtime scale; dynamic venue metadata validates scale once |
 | Numeric model | One unsigned scaled integer | Exact comparison/arithmetic with no floating-point state |
-| Native parsing | Pairwise accumulation plus known-point SWAR for exact 8/16-digit shapes | Keeps irregular inputs simple while bringing the common `123.31232` parse to 7.76 ns |
+| Native parsing | Pairwise accumulation plus known-point SWAR for exact 8/16-digit shapes | Keeps irregular inputs simple while bringing the common `123.31232` parse to 7.75 ns |
 | Wide parsing | One or two independent eight-digit SWAR blocks plus a scalar tail | Reduced 19-78 digit parse time by roughly 9-19% in the latest round |
+| SWAR loads | One read-only unaligned native load on amd64/arm64; byte shifts elsewhere | Removes load assembly on release architectures without retaining or mutating input memory |
 | Native formatting | Pairwise digits plus direct integer/fraction placement | Avoids a temporary decimal-point prefix copy |
 | Wide formatting | Base-`1e19` chunks using precomputed-reciprocal 2-by-1 division | Avoids serial hardware division and reduced two-to-four-limb formatting by roughly 9-24% |
 | Repeated output | Retain immutable canonical input or call `Canonical` once | Repeated append becomes a short string copy |
+| JSON | Direct quoted append and parse-first unescaped decode | Keeps canonical JSON encode/decode allocation-free; escaped input uses the standards-compliant slow path |
 | CBOR | Preferred unsigned integer; tag 2 only above `uint64` | Small deterministic wire with strict decoding |
 | Hot aggregate CBOR | Caller-buffer scalar append and positional prefix decode | Avoids reflection and owned per-field slices |
 | Type dispatch | Concrete backend embedded in each format; cached scale in `Codec` | Avoids generic backend type switches and repeated metadata work |
