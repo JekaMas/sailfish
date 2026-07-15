@@ -330,7 +330,22 @@ if err := decoded.UnmarshalJSON(jsonValue); err != nil {
 ```
 
 `AppendText` and `AppendJSON` reuse caller capacity. `MarshalText` and
-`MarshalJSON` return owned slices and therefore allocate their result.
+`MarshalJSON` return owned slices and therefore allocate their result once.
+The direct JSON decoder parses ordinary quoted decimals from the input bytes
+without allocating. Escaped JSON strings take the standards-compliant
+`go-json` unescape path before decimal parsing.
+
+For a hot aggregate encoder, reuse caller capacity rather than asking each
+field for an owned result:
+
+```go
+wire := make([]byte, 0, 32)
+wire = price.AppendJSON(wire[:0])
+```
+
+`MarshalJSON` reserves the exact native/retained size. For an unretained
+`uint256.Int`, it reserves the bounded maximum and performs the expensive
+wide decimal split only once.
 
 ### Compact deterministic CBOR
 
@@ -542,6 +557,12 @@ Every width-scaling parse and append row above is `0 B/op`, `0 allocs/op`.
 
 | Operation | Time | B/op | allocs/op |
 |---|---:|---:|---:|
+| Append retained / formatted native JSON | 4.29 / 15.5 ns | 0 | 0 |
+| Append retained / formatted wide JSON | 7.49 / 176 ns | 0 | 0 |
+| Owned native retained / formatted `MarshalJSON` | 20.2 / 37.5 ns | 16 | 1 |
+| Owned wide retained / formatted `MarshalJSON` | 33.0 / 213 ns | 96 | 1 |
+| Unmarshal canonical native / wide JSON | 14.0 / 82.9 ns | 0 | 0 |
+| Unmarshal escaped native JSON | 120 ns | 40 | 2 |
 | Append native CBOR scalar | 3.55 ns | 0 | 0 |
 | Decode native CBOR scalar | 8.15 ns | 0 | 0 |
 | Runtime-codec `uint256` append, one limb / maximum | 4.13 / 6.89 ns | 0 | 0 |

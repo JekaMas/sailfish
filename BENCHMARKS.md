@@ -42,6 +42,10 @@ GOMAXPROCS=1 GOWORK=off go test -run '^$' \
 GOMAXPROCS=1 GOWORK=off go test -run '^$' \
   -bench '^BenchmarkPerformanceCeilings$' \
   -benchmem -benchtime=500ms -count=15
+
+GOMAXPROCS=1 GOWORK=off go test -run '^$' \
+  -bench 'BenchmarkJSONHotPaths/(append|marshal_direct|marshal_go_json|unmarshal_direct|unmarshal_go_json)/' \
+  -benchmem -benchtime=500ms -count=10
 ```
 
 ## Snapshot
@@ -70,6 +74,45 @@ GOMAXPROCS=1 GOWORK=off go test -run '^$' \
 | `AddAssign/uint64` | 4.48 ns/op | 0 | 0 |
 | `AddAssign/uint256` | 13.8 ns/op | 0 | 0 |
 | `ReferenceStrconvSplitUint64` | 19.3 ns/op | 0 | 0 |
+
+## JSON
+
+JSON uses a quoted fixed-scale decimal string. `AppendJSON` is the
+caller-buffer API; `MarshalJSON` returns one owned result; `UnmarshalJSON`
+parses canonical quoted decimals directly and delegates escaped JSON strings
+to `goccy/go-json` for standards-compliant unescaping.
+
+| Benchmark | Typical result | B/op | allocs/op |
+|---|---:|---:|---:|
+| `JSONHotPaths/append/native_retained` | 4.29 ns/op | 0 | 0 |
+| `JSONHotPaths/append/native_formatted` | 15.5 ns/op | 0 | 0 |
+| `JSONHotPaths/append/wide_retained` | 7.49 ns/op | 0 | 0 |
+| `JSONHotPaths/append/wide_formatted` | 176 ns/op | 0 | 0 |
+| `JSONHotPaths/marshal_direct/native_retained` | 20.2 ns/op | 16 | 1 |
+| `JSONHotPaths/marshal_direct/native_formatted` | 37.5 ns/op | 16 | 1 |
+| `JSONHotPaths/marshal_direct/wide_retained` | 33.0 ns/op | 96 | 1 |
+| `JSONHotPaths/marshal_direct/wide_formatted` | 213 ns/op | 96 | 1 |
+| `JSONHotPaths/unmarshal_direct/native_canonical` | 14.0 ns/op | 0 | 0 |
+| `JSONHotPaths/unmarshal_direct/wide_canonical` | 82.9 ns/op | 0 | 0 |
+| `JSONHotPaths/unmarshal_direct/native_escaped` | 120 ns/op | 40 | 2 |
+| `JSONHotPaths/marshal_go_json/wide_formatted` | 464 ns/op | 240 | 3 |
+| `JSONHotPaths/unmarshal_go_json/wide_canonical` | 224 ns/op | 192 | 2 |
+
+The selected wide `MarshalJSON` reserves the maximum possible uint256 text
+size instead of computing an exact length before formatting. This removes a
+duplicate four-limb decimal split: ten controlled runs improved the formatted
+wide path from 346 ns to 213 ns (-38.4%) while preserving its single owned
+result allocation. Parse-first canonical decode improved the native path from
+16.5 ns to 14.0 ns (-15.1%) at zero allocations. Escaped input is a colder
+standards path and changed from 109 ns to 120 ns; its two allocations remain
+owned by JSON unescaping.
+
+CPU profiles attribute formatted wide output to `bits.Div64` and
+`splitUint256Decimal`; canonical decode is decimal parsing and scale
+validation. Allocation and escape profiles attribute the direct marshal's
+single allocation to its returned slice. Canonical direct decode allocates
+nothing. The goccy integration rows include interface and library ownership
+in addition to Sailfish work.
 
 ## CBOR
 
@@ -226,6 +269,8 @@ Escape analysis identifies only these relevant classes:
 - `make([]byte, n)` in `growBy`: only when caller capacity is insufficient;
 - `MarshalText` and `MarshalJSON` result slices: required owned encoding
   results;
+- escaped `UnmarshalJSON`: JSON unescape string/interface ownership in
+  `goccy/go-json`; canonical quoted decimals bypass this path;
 - an unrecognized `Error` value uses direct interface conversion. Every error
   produced by the package is a pre-boxed fixed constant and returns with zero
   per-call allocations.

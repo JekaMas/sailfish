@@ -6,6 +6,7 @@ import (
 	"testing"
 
 	"github.com/goccy/go-json"
+	"github.com/holiman/uint256"
 )
 
 func TestTextEncodingRoundTrip(t *testing.T) {
@@ -47,14 +48,66 @@ func TestJSONEncodingRoundTrip(t *testing.T) {
 	}
 }
 
+func TestJSONWideMaximumRoundTrip(t *testing.T) {
+	t.Parallel()
+
+	codec := testCodec[uint256Scale18]()
+	value := codec.FromUnits(uint256.Int{
+		^uint64(0), ^uint64(0), ^uint64(0), ^uint64(0),
+	})
+	wire, err := value.MarshalJSON()
+	if err != nil {
+		t.Fatal(err)
+	}
+	if got, want := string(wire),
+		`"115792089237316195423570985008687907853269984665640564039457.584007913129639935"`; got != want {
+		t.Fatalf("MarshalJSON = %q, want %q", got, want)
+	}
+
+	var decoded wide18
+	if err := decoded.UnmarshalJSON(wire); err != nil {
+		t.Fatal(err)
+	}
+	if decoded.Units() != value.Units() {
+		t.Fatalf("UnmarshalJSON units = %#v, want %#v", decoded.Units(), value.Units())
+	}
+}
+
 func TestJSONRejectsNonStringAndInvalidDecimal(t *testing.T) {
 	t.Parallel()
 
-	for _, input := range []string{`12.3`, `null`, `true`, `" 12.30000"`, `"-1.00000"`} {
-		var value price5
+	initial, _ := New[PriceUint64[Fraction5]]("1.00000")
+	inputs := []string{
+		`12.3`,
+		`null`,
+		`true`,
+		`" 12.30000"`,
+		`"-1.00000"`,
+		`"12.3000x"`,
+		`"12.30000\q"`,
+		`"\u0031\u0032.3000x"`,
+		`"\u0031\u0032.30000`,
+	}
+	for _, input := range inputs {
+		value := initial
 		if err := json.Unmarshal([]byte(input), &value); err == nil {
 			t.Fatalf("UnmarshalJSON(%s) unexpectedly succeeded", input)
 		}
+		if !value.Equal(initial) || value.String() != initial.String() {
+			t.Fatalf("UnmarshalJSON(%s) changed receiver", input)
+		}
+	}
+}
+
+func TestJSONUnmarshalEscapedDecimal(t *testing.T) {
+	t.Parallel()
+
+	var value price5
+	if err := value.UnmarshalJSON([]byte(`"\u0031\u0032\u002e30000"`)); err != nil {
+		t.Fatal(err)
+	}
+	if got, want := value.String(), "12.30000"; got != want {
+		t.Fatalf("UnmarshalJSON = %q, want %q", got, want)
 	}
 }
 
@@ -81,5 +134,11 @@ func TestUnmarshalPreservesReceiverOnError(t *testing.T) {
 	}
 	if !value.Equal(before) || value.String() != before.String() {
 		t.Fatal("UnmarshalText changed receiver on error")
+	}
+	if err := value.UnmarshalJSON([]byte(`"bad"`)); !errors.Is(err, ErrSyntax) {
+		t.Fatalf("UnmarshalJSON error = %v, want %v", err, ErrSyntax)
+	}
+	if !value.Equal(before) || value.String() != before.String() {
+		t.Fatal("UnmarshalJSON changed receiver on error")
 	}
 }

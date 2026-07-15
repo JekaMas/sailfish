@@ -238,3 +238,55 @@ Artifacts:
 The v1 release therefore keeps pure Go, one implementation per operation,
 strict constructor-only canonicalization, and zero allocation across all
 caller-buffer runtime codec hot paths.
+
+## 2026-07-15: JSON Uses Single-Pass Wide Marshal And Parse-First Decode
+
+**Decision:** keep manual quoted-decimal `AppendJSON`, reserve the bounded
+maximum output for unretained `uint256.Int` values in `MarshalJSON`, and parse
+ordinary quoted decimal bytes before scanning for JSON escapes. Escaped JSON
+strings continue through `goccy/go-json`; no second decimal implementation is
+retained.
+
+The former wide marshal computed `Len` and then formatted. Both operations
+split a multi-limb uint256 into decimal chunks, so an unretained wide value did
+the expensive work twice. Reserving 81 bytes (maximum decimal text plus two
+quotes) preserves the one required result allocation and formats once.
+
+Ten `GOMAXPROCS=1`, 500 ms runs measured:
+
+| Operation | Before | After | Heap |
+|---|---:|---:|---:|
+| Wide formatted `MarshalJSON` | 346 ns | 213 ns (-38.4%) | 96 B / 1 alloc |
+| Wide retained `MarshalJSON` | 34.6 ns | 33.0 ns (-4.6%) | 96 B / 1 alloc |
+| Native canonical `UnmarshalJSON` | 16.5 ns | 14.0 ns (-15.1%) | 0 B / 0 allocs |
+| Wide canonical `UnmarshalJSON` | 83.3 ns | 82.9 ns (-0.5%) | 0 B / 0 allocs |
+| Native escaped `UnmarshalJSON` | 109 ns | 120 ns (+10.0%) | 40 B / 2 allocs |
+
+The escaped-path regression is accepted because ordinary trading API payloads
+contain unescaped ASCII digits and a decimal point, while escaped JSON must
+still use a complete standards decoder. Receiver-preservation tests cover
+invalid decimals, malformed escapes, non-string JSON, and truncated input.
+Allocation tests enforce zero-allocation caller-buffer append and canonical
+decode, plus exactly one allocation for each owned marshal result.
+
+Rejected benchmark-only alternatives were removed:
+
+- stack-format followed by copy performed two allocations and copied the
+  result;
+- generic `go-json` marshal/unmarshal remained substantially slower and more
+  allocation-heavy than the direct methods;
+- a separate manual JSON unescaper was not introduced because it would
+  duplicate standards behavior for a cold path.
+
+Artifacts:
+
+- `.codex_tmp/json_optimization/baseline_corrected.txt`
+- `.codex_tmp/json_optimization/production_after.txt`
+- `.codex_tmp/json_optimization/production_after_benchstat.txt`
+- `.codex_tmp/json_optimization/final/json_cpu.pprof`
+- `.codex_tmp/json_optimization/final/json_mem.pprof`
+- `.codex_tmp/json_optimization/final/json_escape.txt`
+
+No JSON syntax, decimal normalization, canonicalization, scale, or numeric
+semantics changed. There is one current JSON implementation, no compatibility
+codec, no legacy decoder, and no normalization fallback.
