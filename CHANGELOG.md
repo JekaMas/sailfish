@@ -1,5 +1,18 @@
 # Changelog
 
+## v1.0.3 - 2026-07-15
+
+- Added selective reverse-SWAR native formatting for measured 5-8 and 14-20
+  digit scaled values, improving the common caller-buffer append by about 22%
+  with zero allocations.
+- Inserted decimal points in packed registers and retained exact-width stores;
+  caller-owned capacity beyond the returned slice is never modified.
+- Added permanent per-width benchmarks, randomized packed-digit checks,
+  caller-tail ownership tests, CPU/allocation profiles, BCE diagnostics, and
+  assembly-backed width-selector evidence.
+- Kept pair-table formatting for rejected widths and retained base `1e19` for
+  `uint256`; no alternate formatter, compatibility path, or fallback remains.
+
 ## v1.0.2 - 2026-07-15
 
 - Added contiguous raw-unit batch APIs for cache-efficient numeric scans.

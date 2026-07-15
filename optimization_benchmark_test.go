@@ -180,6 +180,46 @@ func BenchmarkOptimizationFormatNative(b *testing.B) {
 	}
 }
 
+// BenchmarkOptimizationFormatReverseSWAR covers both selected packed widths
+// and the adjacent pair-table widths protected from dispatch regressions.
+func BenchmarkOptimizationFormatReverseSWAR(b *testing.B) {
+	cases := []struct {
+		name  string
+		units uint64
+		scale int
+	}{
+		{name: "digits_2_scale_1", units: 77, scale: 1},
+		{name: "digits_3_scale_2", units: 777, scale: 2},
+		{name: "digits_4_scale_2", units: 7_777, scale: 2},
+		{name: "digits_5_scale_2", units: 77_777, scale: 2},
+		{name: "digits_6_scale_5", units: 777_777, scale: 5},
+		{name: "digits_7_scale_5", units: 7_777_777, scale: 5},
+		{name: "digits_8_scale_1", units: 77_777_777, scale: 1},
+		{name: "digits_8_scale_5", units: 77_777_777, scale: 5},
+		{name: "digits_8_scale_7", units: 77_777_777, scale: 7},
+		{name: "digits_9_scale_5_protected", units: 777_777_777, scale: 5},
+		{name: "digits_11_scale_5_protected", units: 77_777_777_777, scale: 5},
+		{name: "digits_12_scale_9", units: 777_777_777_777, scale: 9},
+		{name: "digits_13_scale_9", units: 7_777_777_777_777, scale: 9},
+		{name: "digits_14_scale_9", units: 77_777_777_777_777, scale: 9},
+		{name: "digits_15_scale_9", units: 777_777_777_777_777, scale: 9},
+		{name: "digits_16_scale_9", units: 7_777_777_777_777_777, scale: 9},
+		{name: "digits_17_scale_9", units: 77_777_777_777_777_777, scale: 9},
+		{name: "digits_18_scale_9", units: 777_777_777_777_777_777, scale: 9},
+		{name: "digits_19_scale_18", units: 7_777_777_777_777_777_777, scale: 18},
+		{name: "digits_20_scale_18", units: ^uint64(0), scale: 18},
+	}
+	var buffer [maxUint64TextLen]byte
+	for _, test := range cases {
+		b.Run(test.name, func(b *testing.B) {
+			b.ReportAllocs()
+			for b.Loop() {
+				benchBytesSink = appendUint64Decimal(buffer[:0], test.units, test.scale)
+			}
+		})
+	}
+}
+
 func BenchmarkOptimizationFormatWide(b *testing.B) {
 	cases := []struct {
 		name  string

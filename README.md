@@ -16,10 +16,11 @@ no heap allocations.
 
 Sailfish requires Go 1.26.5 or newer.
 
-The current release is `v1.0.2`. On the documented Apple M1 Max / Go
-1.26.5 benchmark host, runtime-scale uint256 parsing is 8.69 ns and direct
-uint256 CBOR decode is 4.20 ns; both track their measured
-same-binary implementation kernels and perform no heap allocations. See
+The current release is `v1.0.3`. On the documented Apple M1 Max / Go
+1.26.5 benchmark host, common native formatting is 9.8 ns, runtime-scale
+uint256 parsing is 8.69 ns, and direct uint256 CBOR decode is 4.20 ns. These
+caller-buffer operations track measured implementation kernels and perform no
+heap allocations. See
 [BENCHMARKS.md](BENCHMARKS.md) and [PERFORMANCE.md](PERFORMANCE.md) for the
 complete matrix and rejected alternatives.
 
@@ -582,10 +583,10 @@ portable guarantees; compare changes on the same host and toolchain.
 | Parse canonical `uint256.Int` | 49.2 ns | 0 | 0 |
 | Parse maximum 78-digit `uint256.Int` | 64.6 ns | 0 | 0 |
 | Append retained `uint64` | 2.90 ns | 0 | 0 |
-| Append formatted `uint64` | 12.6 ns | 0 | 0 |
+| Append formatted `uint64` | 9.8 ns | 0 | 0 |
 | Append formatted four-limb `uint256.Int` | 112 ns | 0 | 0 |
 | Return retained `String` | 2.12 ns | 0 | 0 |
-| Return newly formatted `String` | 27.0 ns | 16 | 1 |
+| Return newly formatted `String` | 27.1 ns | 16 | 1 |
 
 ### Width scaling
 
@@ -596,7 +597,7 @@ portable guarantees; compare changes on the same host and toolchain.
 
 | Formatted width | One limb | Two limbs | Three limbs | Four limbs | Maximum |
 |---|---:|---:|---:|---:|---:|
-| Wide formatting kernel | 17.0 ns | 43.6 ns | 69.2 ns | 107 ns | 129 ns |
+| Wide formatting kernel | 17.2 ns | 46.0 ns | 72.9 ns | 107 ns | 131 ns |
 
 Every width-scaling parse and append row above is `0 B/op`, `0 allocs/op`.
 
@@ -614,10 +615,10 @@ Every width-scaling parse and append row above is `0 B/op`, `0 allocs/op`.
 
 | Operation | Time | B/op | allocs/op |
 |---|---:|---:|---:|
-| Append retained / formatted native JSON | 4.43 / 15.6 ns | 0 | 0 |
-| Append retained / formatted wide JSON | 7.46 / 139 ns | 0 | 0 |
-| Owned native retained / formatted `MarshalJSON` | 21.1 / 38.3 ns | 16 | 1 |
-| Owned wide retained / formatted `MarshalJSON` | 36.2 / 175 ns | 96 | 1 |
+| Append retained / formatted native JSON | 4.41 / 14.4 ns | 0 | 0 |
+| Append retained / formatted wide JSON | 7.31 / 141 ns | 0 | 0 |
+| Owned native retained / formatted `MarshalJSON` | 20.1 / 34.9 ns | 16 | 1 |
+| Owned wide retained / formatted `MarshalJSON` | 32.4 / 181 ns | 96 | 1 |
 | Unmarshal canonical native / wide JSON | 14.4 / 78.8 ns | 0 | 0 |
 | Unmarshal escaped native JSON | 120 ns | 40 | 2 |
 | Append native / `uint256` CBOR scalar | 3.54 / 8.03 ns | 0 | 0 |
@@ -653,7 +654,7 @@ short-token latency does not justify their call and maintenance cost.
 | Native parsing | Pairwise accumulation plus known-point SWAR for exact 8/16-digit shapes | Keeps irregular inputs simple while bringing the common `123.31232` parse to 7.75 ns |
 | Wide parsing | One or two independent eight-digit SWAR blocks plus a scalar tail | Reduced 19-78 digit parse time by roughly 9-19% in the latest round |
 | SWAR loads | One read-only unaligned native load on amd64/arm64; byte shifts elsewhere | Removes load assembly on release architectures without retaining or mutating input memory |
-| Native formatting | Pairwise digits, direct placement, and branchless bit-length digit count | Avoids a temporary decimal-point prefix copy and a data-dependent decimal-width comparison tree |
+| Native formatting | Pairwise digits plus selected reverse-SWAR widths and branchless digit count | Arithmetic-packed 5-8 and 14-20 digit scaled values improve 5-29%; other widths retain the smaller pair-table path |
 | Wide formatting | Base-`1e19` chunks using precomputed-reciprocal 2-by-1 division | Avoids serial hardware division and reduced two-to-four-limb formatting by roughly 9-24% |
 | Repeated output | Retain immutable canonical input or call `Canonical` once | Repeated append becomes a short string copy |
 | JSON | Direct quoted append and parse-first unescaped decode | Keeps canonical JSON encode/decode allocation-free; escaped input uses the standards-compliant slow path |
@@ -664,11 +665,12 @@ short-token latency does not justify their call and maintenance cost.
 | Numeric batch locality | Contiguous raw units with `ParseUnits` / `AppendUnits` | Avoids scanning optional text-cache state when only numeric units are used |
 | Profile-guided optimization | Production CPU profile owned by the consuming `main` package | PGO optimizes the whole executable; Sailfish does not ship a benchmark-trained library profile |
 
-Measured alternatives are not retained in production: base-`1e9` wide
-formatting was 14-56% slower, direct decimal placement across wide chunks was
-2-5% slower, base-`1e8` native formatting regressed every measured width,
-generated per-scale masks duplicated code for a narrower kernel, and a `0-99`
-cache penalized representative misses. See
+Measured alternatives are not retained in production: base-`1e9` and
+base-`1e16` wide formatting were slower outside narrow synthetic cases, direct
+decimal placement across wide chunks was 2-5% slower, applying base-`1e8`
+native formatting to every width regressed protected paths, generated
+per-scale masks duplicated code, overstore violated caller-buffer ownership,
+and a `0-99` cache penalized representative misses. See
 [PERFORMANCE.md](PERFORMANCE.md) for the benchmark artifacts and acceptance
 decisions.
 
@@ -716,6 +718,21 @@ fixed-width, and market-shaped inputs. Thirty paired, order-alternated runs of
 the public formatted-`uint64` append path improved from 12.9 ns to 12.6 ns
 (-1.98%, p=0.000), with 0 B/op and 0 allocs/op. The complete native-format
 width matrix remained neutral outside that aggregate public-path gain.
+
+The next formatter round adopted an Abseil-style reverse-SWAR conversion only
+for measured 5-8 and 14-20 digit scaled widths. A rotated width bitset avoids
+the guards emitted for variable shifts, packed point insertion avoids a
+temporary copy for eight-digit values, and explicit BCE proofs collapse two
+range checks into one. The common `123.31232` append improved from 12.6 ns to
+9.8 ns (-22.2%); selected widths improved 5-29%, with 0 B/op and 0 allocs/op.
+Adjacent pair-table widths remain within roughly 0-1.3% of the prior path.
+
+Architecture-specific AVX-512 IFMA/VBMI formatting remains out of scope: the
+[published algorithm](https://arxiv.org/abs/2604.26019) cannot be executed on
+the arm64 release host, while the selected scalar kernels already complete in
+about 7-14 ns. The portable comparison also includes Go's
+[pair-table formatter](https://go.dev/src/strconv/itoa.go), retained for widths
+where its smaller dependency chain wins.
 
 Two broader branchless changes were rejected. A four-threshold arithmetic
 CBOR-length calculation was 13-15% slower than the predictable switch, and

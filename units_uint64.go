@@ -1,10 +1,15 @@
 package sailfish
 
-import "math"
+import (
+	"math"
+	"math/bits"
+)
 
 const (
-	maxUint64Scale   = 19
-	maxUint64TextLen = 21
+	maxUint64Scale          = 19
+	maxUint64TextLen        = 21
+	reverseSWARScaledWidths = 1<<5 | 1<<6 | 1<<7 | 1<<8 |
+		1<<14 | 1<<15 | 1<<16 | 1<<17 | 1<<18 | 1<<19 | 1<<20
 )
 
 // Uint64Units is a zero-sized unit provider. Embed it in a venue type.
@@ -315,21 +320,52 @@ func appendUint64Decimal(dst []byte, units uint64, scale int) []byte {
 	switch {
 	case scale == 0:
 		fillUnsigned64(out, units)
-	case digits > scale:
-		power := powersOf10Uint64[scale]
-		integer := units / power
-		fraction := units - integer*power
-		integerDigits := digits - scale
-		fillUnsigned64(out[:integerDigits], integer)
-		out[integerDigits] = '.'
-		fillFixed64(out[integerDigits+1:], fraction)
-	default:
+	case digits <= scale:
+		// Keep the below-scale formatter before the larger packed dispatch.
+		// This path is common for sub-unit prices and stays on the original
+		// pair-table algorithm because reverse SWAR did not win end to end.
 		out[0] = '0'
 		out[1] = '.'
 		for i := 2; i < len(out)-digits; i++ {
 			out[i] = '0'
 		}
 		fillUnsigned64(out[len(out)-digits:], units)
+	default:
+		integerDigits := digits - scale
+		// Whole-path benchmarks select only widths 5-8 and 14-20. Rotating the
+		// width bitset compiles to one RORW plus a bit test on arm64; unlike a
+		// variable shift, it needs no generated sign or shift-width guards.
+		if bits.RotateLeft32(reverseSWARScaledWidths, -digits)&1 == 0 {
+			power := powersOf10Uint64[scale]
+			integer := units / power
+			fraction := units - integer*power
+			fillUnsigned64(out[:integerDigits], integer)
+			out[integerDigits] = '.'
+			fillFixed64(out[integerDigits+1:], fraction)
+		} else {
+			fillPackedScaled64(out, units, digits, integerDigits)
+		}
 	}
 	return dst
+}
+
+// fillPackedScaled64 owns the reverse-SWAR scaled widths selected by whole-path
+// benchmarks. Keeping these kernels outside appendUint64Decimal preserves the
+// compact instruction footprint of unscaled, below-scale, and 9-11 digit paths.
+func fillPackedScaled64(out []byte, units uint64, digits, integerDigits int) {
+	if digits < 8 {
+		putPackedDigitsWithPoint(out, uint32(units), digits, integerDigits)
+		return
+	}
+	if digits == 8 {
+		// The point and seven digits fit in the first word; byte nine is the
+		// displaced final digit. No prefix copy or overstore is needed.
+		putPacked8WithPoint(out, uint32(units), integerDigits)
+		return
+	}
+
+	// Widths 14-20 amortize block conversion and one short prefix move.
+	fillPacked64(out[1:], units)
+	copy(out, out[1:integerDigits+1])
+	out[integerDigits] = '.'
 }

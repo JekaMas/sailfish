@@ -91,6 +91,61 @@ Two alternatives were rejected and removed:
   formatting by about 2-5%. The bounded prefix copy remains the sole wide
   formatting implementation.
 
+## 2026-07-15: Selected Native Widths Use Reverse SWAR
+
+**Decision:** use arithmetic-packed eight-digit conversion for scaled native
+values with 5-8 or 14-20 digits. Keep the pair-table integer/fraction writer
+for every other width. The public API, one-scaled-integer representation, and
+canonical text remain unchanged.
+
+The selected kernel converts two four-digit lanes, then four two-digit lanes,
+in parallel inside one `uint64`. Reciprocal multiply/shift arithmetic replaces
+the serial divide-by-100 chain. For 5-8 digits the decimal point is inserted in
+the packed word before exact-width stores. For 14-20 digits, independent base
+`1e8` blocks are written with one bounded prefix move. A rotated width bitset
+selects the measured widths with one `RORW` and bit test on arm64; an ordinary
+variable shift was rejected because Go emitted sign and shift-width guards.
+
+Same-host, same-toolchain comparisons against `v1.0.2` measured:
+
+| Complete formatting workload | Time change | Allocations |
+|---|---:|---:|
+| Public `AppendTo`, 8 digits / scale 5 | -22.2% | 0 -> 0 |
+| Public newly formatted `String` | -9.4% | 1 -> 1 |
+| 5 / 6 / 7 scaled digits | -6.2% / -5.3% / -11.4% | 0 -> 0 |
+| 8 scaled digits, scales 1 / 5 / 7 | -28.8% / -26.0% / -23.7% | 0 -> 0 |
+| 14 / 15 / 16 scaled digits | -10.7% / -10.0% / -17.3% | 0 -> 0 |
+| 17 / 18 / 19 / 20 scaled digits | about -5% / -9% / -17% / -18% | 0 -> 0 |
+| Rejected adjacent widths 2-4 and 9-13 | within 0-1.3% dispatch cost | 0 -> 0 |
+
+The formatter retains exact caller-buffer ownership. A faster eight-byte
+overstore for short tails was rejected because it mutated capacity beyond the
+returned slice. Tests lock this contract and compare 100,000 packed values
+against `strconv`, all scale/digit boundaries against `math/big`, and randomized
+format/parse round trips.
+
+Measured alternatives were removed:
+
+- Separate integer/fraction storage did not improve the complete scale-5 path
+  and would duplicate numeric state.
+- A base-`1e16` `uint256` formatter was slightly faster at two limbs but 9-23%
+  slower at three and four limbs; base `1e19` remains the sole wide format.
+- Raw decimal text insertion lost on protected 9-11 digit values.
+- AVX-512 IFMA/VBMI cannot be executed or validated on the arm64 release host,
+  and its call/dispatch contract is unjustified for a 7-14 ns scalar kernel.
+
+Artifacts:
+
+- `.codex_tmp/format_reverse_round/final/public_format_benchstat.txt`
+- `.codex_tmp/format_reverse_round/final/reverse_swar_benchstat.txt`
+- `.codex_tmp/format_reverse_round/final/profile_benchmark.txt`
+- `.codex_tmp/format_reverse_round/final/format_cpu_top.txt`
+- `.codex_tmp/format_reverse_round/final/format_mem_top.txt`
+- `.codex_tmp/format_reverse_round/final/escape_bce.txt`
+- `.codex_tmp/format_reverse_round/final/bce_after_focus.txt`
+- `.codex_tmp/format_reverse_round/final/format_assembly.txt`
+- `.codex_tmp/format_reverse_round/final/format_assembly_focus.txt`
+
 ## 2026-07-15: Wide Formatting Keeps Base 1e19
 
 **Decision:** retain `1e19` as the sole decimal chunk base for `uint256`

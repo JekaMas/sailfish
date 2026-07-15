@@ -44,6 +44,10 @@ GOMAXPROCS=1 GOWORK=off go test -run '^$' \
   -benchmem -benchtime=500ms -count=15
 
 GOMAXPROCS=1 GOWORK=off go test -run '^$' \
+  -bench '^BenchmarkOptimizationFormatReverseSWAR$' \
+  -benchmem -benchtime=300ms -count=10
+
+GOMAXPROCS=1 GOWORK=off go test -run '^$' \
   -bench 'BenchmarkJSONHotPaths/(append|marshal_direct|marshal_go_json|unmarshal_direct|unmarshal_go_json)/' \
   -benchmem -benchtime=500ms -count=10
 
@@ -72,16 +76,46 @@ GOMAXPROCS=1 GOWORK=off go test -run '^$' \
 | `Uint256MarketHotPaths/append_retained/scale18_four_limb` | 4.22 ns/op | 0 | 0 |
 | `Uint256MarketHotPaths/append_runtime_codec/cex_scale6_one_limb` | 12.1 ns/op | 0 | 0 |
 | `AppendTo/uint64/retained` | 2.95 ns/op | 0 | 0 |
-| `AppendTo/uint64/formatted` | 12.9 ns/op | 0 | 0 |
+| `AppendTo/uint64/formatted` | 9.8 ns/op | 0 | 0 |
 | `AppendTo/uint256/formatted` | 113 ns/op | 0 | 0 |
 | `String/uint64/retained` | 2.14 ns/op | 0 | 0 |
-| `String/uint64/formatted` | 32.8 ns/op | 16 | 1 |
+| `String/uint64/formatted` | 27.1 ns/op | 16 | 1 |
 | `Compare/uint64/same-scale` | 2.14 ns/op | 0 | 0 |
 | `Compare/uint256/same-scale` | 6.57 ns/op | 0 | 0 |
 | `Compare/cross-scale` | 52.7 ns/op | 0 | 0 |
 | `AddAssign/uint64` | 4.48 ns/op | 0 | 0 |
 | `AddAssign/uint256` | 13.8 ns/op | 0 | 0 |
 | `ReferenceStrconvSplitUint64` | 19.3 ns/op | 0 | 0 |
+
+## Native reverse-SWAR formatting
+
+The native formatter keeps the pair-table path for scale zero, below-scale
+values, and measured widths where its shorter dependency chain wins. Scaled
+widths 5-8 and 14-20 use arithmetic-packed eight-digit blocks. The permanent
+matrix includes selected and adjacent protected widths:
+
+| Scaled digit width | v1.0.2 | Current | Change | B/op | allocs/op |
+|---:|---:|---:|---:|---:|---:|
+| 5 | 8.51 ns | 7.98 ns | -6.2% | 0 | 0 |
+| 7 | 8.71 ns | 7.72 ns | -11.4% | 0 | 0 |
+| 8, scale 5 | 9.59 ns | 7.09 ns | -26.0% | 0 | 0 |
+| 9, protected | 9.80 ns | 9.93 ns | +1.3% | 0 | 0 |
+| 12, protected | 11.7 ns | 11.8 ns | +1.1% | 0 | 0 |
+| 14 | 13.0 ns | 11.6 ns | -10.7% | 0 | 0 |
+| 16 | 14.2 ns | 11.8 ns | -17.3% | 0 | 0 |
+| 19 | 16.9 ns | 14.0 ns | -16.9% | 0 | 0 |
+| 20 | 17.1 ns | 13.9 ns typical | about -18% | 0 | 0 |
+
+The width selector is a rotated compile-time bitset. Disassembly shows one
+`RORW` and one bit test on arm64, avoiding the sign and width guards emitted
+for an ordinary variable shift. Explicit helper preconditions leave one
+intentional bounds proof per output shape; all downstream block-slice checks
+are eliminated. The common public append moved from 12.6 ns to 9.8 ns.
+
+CPU profiles assign the selected path to `packedASCII8`,
+`putPacked8WithPoint`, `fillPackedScaled64`, digit counting, and output growth.
+The allocation profile contains only profiler infrastructure: caller-buffer
+formatting remains `0 B/op, 0 allocs/op`.
 
 ## JSON
 
@@ -92,19 +126,19 @@ to `goccy/go-json` for standards-compliant unescaping.
 
 | Benchmark | Typical result | B/op | allocs/op |
 |---|---:|---:|---:|
-| `JSONHotPaths/append/native_retained` | 4.29 ns/op | 0 | 0 |
-| `JSONHotPaths/append/native_formatted` | 15.5 ns/op | 0 | 0 |
-| `JSONHotPaths/append/wide_retained` | 7.49 ns/op | 0 | 0 |
-| `JSONHotPaths/append/wide_formatted` | 176 ns/op | 0 | 0 |
-| `JSONHotPaths/marshal_direct/native_retained` | 20.2 ns/op | 16 | 1 |
-| `JSONHotPaths/marshal_direct/native_formatted` | 37.5 ns/op | 16 | 1 |
-| `JSONHotPaths/marshal_direct/wide_retained` | 33.0 ns/op | 96 | 1 |
-| `JSONHotPaths/marshal_direct/wide_formatted` | 213 ns/op | 96 | 1 |
-| `JSONHotPaths/unmarshal_direct/native_canonical` | 14.0 ns/op | 0 | 0 |
-| `JSONHotPaths/unmarshal_direct/wide_canonical` | 82.9 ns/op | 0 | 0 |
-| `JSONHotPaths/unmarshal_direct/native_escaped` | 120 ns/op | 40 | 2 |
-| `JSONHotPaths/marshal_go_json/wide_formatted` | 464 ns/op | 240 | 3 |
-| `JSONHotPaths/unmarshal_go_json/wide_canonical` | 224 ns/op | 192 | 2 |
+| `JSONHotPaths/append/native_retained` | 4.41 ns/op | 0 | 0 |
+| `JSONHotPaths/append/native_formatted` | 14.4 ns/op | 0 | 0 |
+| `JSONHotPaths/append/wide_retained` | 7.31 ns/op | 0 | 0 |
+| `JSONHotPaths/append/wide_formatted` | 141 ns/op | 0 | 0 |
+| `JSONHotPaths/marshal_direct/native_retained` | 20.1 ns/op | 16 | 1 |
+| `JSONHotPaths/marshal_direct/native_formatted` | 34.9 ns/op | 16 | 1 |
+| `JSONHotPaths/marshal_direct/wide_retained` | 32.4 ns/op | 96 | 1 |
+| `JSONHotPaths/marshal_direct/wide_formatted` | 181 ns/op | 96 | 1 |
+| `JSONHotPaths/unmarshal_direct/native_canonical` | 15.2 ns/op | 0 | 0 |
+| `JSONHotPaths/unmarshal_direct/wide_canonical` | 81.0 ns/op | 0 | 0 |
+| `JSONHotPaths/unmarshal_direct/native_escaped` | 121 ns/op | 40 | 2 |
+| `JSONHotPaths/marshal_go_json/wide_formatted` | 506 ns/op | 240 | 3 |
+| `JSONHotPaths/unmarshal_go_json/wide_canonical` | 232 ns/op | 192 | 2 |
 
 The selected wide `MarshalJSON` reserves the maximum possible uint256 text
 size instead of computing an exact length before formatting. This removes a
@@ -363,6 +397,10 @@ The wide-value profile is dominated by:
 - four-limb decimal multiplication/addition while parsing;
 - reciprocal `bits.Mul64` reductions and fixed-width chunk formatting while
   appending uint256 values.
+
+The native formatting profile separates into branchless decimal digit count,
+reverse-SWAR lane conversion, in-register point insertion, and exact-width
+stores. No table lookup or divide-by-100 loop remains on selected widths.
 
 The market-shape matrix separates ordinary CEX values from maximum-width
 values. Runtime-scale one-limb parsing uses `Uint256Codec` and stays below
